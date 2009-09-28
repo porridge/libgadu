@@ -80,6 +80,7 @@ binary-arch: build install
 	   debian/libgadu-dev/usr/share/doc/libgadu-dev/api
 	dh_installexamples
 	dh_installchangelogs
+	dh_installchangelogs -plibgadu3 ChangeLog
 	dh_link
 	dh_strip --dbg-package=libgadu3-dbg
 	dh_compress
