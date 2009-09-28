@@ -1,3 +1,11 @@
+libgadu (1:1.8.0+r592-2) unstable; urgency=medium
+
+  * Patched libgadu.c to fix a file sending corruption
+  * Added ChangeLog and NEWS files from upstream, which contain some useful
+    URLs
+
+ -- Marcin Owsiany <porridge@debian.org>  Fri, 25 Jul 2008 20:14:16 -0700
+
 libgadu (1:1.8.0+r592-1) unstable; urgency=low
 
   * First release of libgadu as a separate source package. Most of the
