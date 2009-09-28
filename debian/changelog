@@ -1,3 +1,12 @@
+libgadu (1:1.8.0+r592-3) unstable; urgency=high
+
+  * Security upload for lenny and sid
+  * Patched a medium severity security issue in src/events.c:
+    - CVE-2008-4776 A size check error in status packet parsing routine which
+      could lead to accessing uninitialized memory resulting in a crash.
+
+ -- Marcin Owsiany <porridge@debian.org>  Wed, 29 Oct 2008 11:11:56 +0000
+
 libgadu (1:1.8.0+r592-2) unstable; urgency=medium
 
   * Patched libgadu.c to fix a file sending corruption
