@@ -1,0 +1,10 @@
+Document: libgadu-api
+Title: Libgadu API
+Author: various
+Abstract: This is libgadu API documentation.
+ It describes what data structures and functions the library provides.
+Section: Programming
+
+Format: HTML
+Index: /usr/share/doc/libgadu-dev/api/index.html
+Files: /usr/share/doc/libgadu-dev/api/*.html /usr/share/doc/libgadu-dev/api/*.png /usr/share/doc/libgadu-dev/api/*.gif /usr/share/doc/libgadu-dev/api/*.css

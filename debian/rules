@@ -1,0 +1,95 @@
+#!/usr/bin/make -f
+# Sample debian/rules that uses debhelper.
+# GNU copyright 1997 to 1999 by Joey Hess.
+# Adapted for ekg and then libgadu package by Marcin Owsiany.
+# GNU copyright 2002-2008
+
+#export DH_VERBOSE=1
+
+# Help cross-compiling
+DEB_HOST_GNU_TYPE   ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
+DEB_BUILD_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
+
+CFLAGS += -g -D_REENTRANT
+ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
+	CFLAGS += -O0
+else
+	CFLAGS += -O2
+endif
+export CFLAGS
+
+# dh_strip will take care of nostrip
+
+checkperms-stamp:
+	for f in depcomp missing config.guess config.sub compile install-sh configure ; do \
+	if [ -e $$f -a ! -x $$f ] ; then chmod +x $$f ; fi ; done
+	touch checkperms-stamp
+
+config.status: configure checkperms-stamp
+	dh_testdir
+# Remember to update README.Debian as well...
+	./configure \
+		--host=$(DEB_HOST_GNU_TYPE) \
+		--build=$(DEB_BUILD_GNU_TYPE) \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--mandir=\$${prefix}/share/man \
+		--infodir=\$${prefix}/share/info \
+		--with-pthread \
+		--without-bind \
+		--without-openssl
+# Remember to update README.Debian as well...
+
+
+build: build-stamp
+build-stamp:  config.status
+	dh_testdir
+	$(MAKE)
+	$(MAKE) -C docs
+	touch build-stamp
+
+clean:
+	dh_testdir
+	dh_testroot
+	rm -f build-stamp checkperms-stamp
+	if [ -e Makefile ] ; then $(MAKE) distclean ; fi
+	-test -r /usr/share/misc/config.sub && \
+	  cp -f /usr/share/misc/config.sub config.sub
+	-test -r /usr/share/misc/config.guess && \
+	  cp -f /usr/share/misc/config.guess config.guess
+	dh_clean
+
+install: build
+	dh_testdir
+	dh_testroot
+	dh_clean -k
+	dh_installdirs
+	$(MAKE) install prefix=$(CURDIR)/debian/tmp/usr
+
+
+binary-indep: build install
+# We have nothing to do.
+
+binary-arch: build install
+	dh_testdir
+	dh_testroot
+	dh_movefiles
+	dh_installdocs
+# nicer name for api docs directory
+	mv debian/libgadu-dev/usr/share/doc/libgadu-dev/html \
+	   debian/libgadu-dev/usr/share/doc/libgadu-dev/api
+	dh_installexamples
+	dh_installchangelogs
+	dh_link
+	dh_strip --dbg-package=libgadu3-dbg
+	dh_compress
+	dh_makeshlibs -V
+	dh_installdeb
+	dh_shlibdeps
+	dh_gencontrol
+	dh_md5sums
+	dh_fixperms
+	dh_builddeb
+
+binary: binary-indep binary-arch
+.PHONY: build clean binary-indep binary-arch binary install 

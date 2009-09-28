@@ -1,0 +1,6 @@
+libgadu (1:1.8.0+r592-1) unstable; urgency=low
+
+  * First release of libgadu as a separate source package. Most of the
+    packaging taken from the ekg package.
+
+ -- Marcin Owsiany <porridge@debian.org>  Tue,  8 Apr 2008 14:47:44 +0100

@@ -1,0 +1,39 @@
+Source: libgadu
+Section: libs
+Priority: optional
+Maintainer: Marcin Owsiany <porridge@debian.org>
+Build-Depends: debhelper (>= 4.1.1), doxygen
+Standards-Version: 3.7.3
+
+Package: libgadu3
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Gadu-Gadu protocol library - runtime files
+ Gadu-Gadu is an instant messaging program, very popular in
+ Poland. libgadu is a Gadu-Gadu protocol implementation
+ library.
+ .
+ This package contains the shared library.
+
+Package: libgadu3-dbg
+Section: libdevel
+Priority: extra
+Architecture: any
+Depends: libgadu3 (= ${binary:Version}), ${misc:Depends}
+Description: Gadu-Gadu protocol library - debug symbols
+ Gadu-Gadu is an instant messaging program, very popular in
+ Poland. libgadu is a Gadu-Gadu protocol implementation
+ library.
+ .
+ This package contains the debug symbols.
+
+Package: libgadu-dev
+Section: libdevel
+Architecture: any
+Depends: libgadu3 (= ${binary:Version}), ${misc:Depends}
+Description: Gadu-Gadu protocol library - development files
+ Gadu-Gadu is an instant messaging program, very popular in
+ Poland. libgadu is a Gadu-Gadu protocol implementation
+ library.
+ .
+ This package contains the development files.
