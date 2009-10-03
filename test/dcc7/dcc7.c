@@ -14,6 +14,7 @@
 #include <netinet/in.h>
 
 #include <libgadu.h>
+#include "../../include/compat.h"
 
 #define debug(msg...) \
 	do { \
@@ -218,6 +219,8 @@ int main(int argc, char **argv)
 			exit(1);
 		}
 
+		now = time(NULL);
+
 		if (last != now) {
 			if (gs->timeout != -1 && gs->timeout-- == 0 && !gs->soft_timeout) {
 				debug("Timeout\n");
@@ -231,8 +234,6 @@ int main(int argc, char **argv)
 
 			last = now;
 		}
-
-		now = time(NULL);
 
 		if (gs->state == GG_STATE_CONNECTED && ping && now - ping > 60) {
 			ping = now;

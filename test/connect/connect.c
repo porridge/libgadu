@@ -404,7 +404,7 @@ void serve(void)
 	time_t started[3];
 	int i;
 	char buf[4096];
-	int len;
+	int len = 0;
 
 	for (i = 0; i < 4; i++) {
 		struct sockaddr_in sin;
@@ -451,7 +451,7 @@ void serve(void)
 			if (sfds[i] > max)
 				max = sfds[i];
 
-			if (cfds[i] != -1) {
+			if (i < 2 && cfds[i] != -1) {
 				FD_SET(cfds[i], &rd);
 				
 				if (cfds[i] > max)
