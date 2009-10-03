@@ -17,7 +17,7 @@ Description: Gadu-Gadu protocol library - runtime files
  This package contains the shared library.
 
 Package: libgadu3-dbg
-Section: libdevel
+Section: debug
 Priority: extra
 Architecture: any
 Depends: libgadu3 (= ${binary:Version}), ${misc:Depends}

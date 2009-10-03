@@ -7,8 +7,9 @@ libgadu (1:1.9.0~rc1+r837-1) experimental; urgency=low
   * Bumped versioned dependency on debhelper to match debian/compat
   * Added a Homepage field to debian/control
   * Support standardized DEB_BUILD_OPTIONS, changed some makefile indentation
+  * Moved the -dbg package to the new debug section (from libdevel).
 
- -- Marcin Owsiany <porridge@debian.org>  Sat, 03 Oct 2009 17:22:17 +0100
+ -- Marcin Owsiany <porridge@debian.org>  Sat, 03 Oct 2009 17:26:17 +0100
 
 libgadu (1:1.8.0+r592-3) unstable; urgency=high
 
