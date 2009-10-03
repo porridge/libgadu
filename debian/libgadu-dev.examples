@@ -1,2 +1,2 @@
-examples/Makefile
+debian/README.examples
 examples/*.c

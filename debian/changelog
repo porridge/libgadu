@@ -11,8 +11,10 @@ libgadu (1:1.9.0~rc1+r837-1) experimental; urgency=low
   * Bumped Standards-Version to 3.8.3
   * Added the new gg_(session|http|global)_(set|get)_resolver* symbols to
     debian/libgadu3.symbols
+  * Replaced the now useless when standalone Makefile for example programs
+    with a tiny README file explaining how to build the programs.
 
- -- Marcin Owsiany <porridge@debian.org>  Sat, 03 Oct 2009 18:09:03 +0100
+ -- Marcin Owsiany <porridge@debian.org>  Sat, 03 Oct 2009 18:34:15 +0100
 
 libgadu (1:1.8.0+r592-3) unstable; urgency=high
 

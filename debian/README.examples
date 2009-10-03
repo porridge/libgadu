@@ -1,0 +1,6 @@
+In order to compile an example program, try:
+
+  make <program_name> LDFLAGS=-lgadu
+
+Yes, there is no Makefile, but you do not need one! Make is smart enough to
+figure out what to do.
