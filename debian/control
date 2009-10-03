@@ -4,6 +4,7 @@ Priority: optional
 Maintainer: Marcin Owsiany <porridge@debian.org>
 Build-Depends: debhelper (>= 5), doxygen
 Standards-Version: 3.7.3
+Homepage: http://toxygen.net/libgadu/
 
 Package: libgadu3
 Architecture: any

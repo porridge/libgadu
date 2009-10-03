@@ -5,8 +5,9 @@ libgadu (1:1.9.0~rc1+r837-1) experimental; urgency=low
   * Bumped API version to 10 in library file name
   * Do not run make in docs/ - now integrated in automake's makefiles
   * Bumped versioned dependency on debhelper to match debian/compat
+  * Added a Homepage field to debian/control
 
- -- Marcin Owsiany <porridge@debian.org>  Sat, 03 Oct 2009 17:04:00 +0100
+ -- Marcin Owsiany <porridge@debian.org>  Sat, 03 Oct 2009 17:14:57 +0100
 
 libgadu (1:1.8.0+r592-3) unstable; urgency=high
 
