@@ -4,8 +4,9 @@ libgadu (1:1.9.0~rc1+r837-1) experimental; urgency=low
   * Noted in debian/copyright the license of MD5 code.
   * Bumped API version to 10 in library file name
   * Do not run make in docs/ - now integrated in automake's makefiles
+  * Bumped versioned dependency on debhelper to match debian/compat
 
- -- Marcin Owsiany <porridge@debian.org>  Sat, 03 Oct 2009 13:29:10 +0100
+ -- Marcin Owsiany <porridge@debian.org>  Sat, 03 Oct 2009 17:04:00 +0100
 
 libgadu (1:1.8.0+r592-3) unstable; urgency=high
 

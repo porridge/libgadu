@@ -2,7 +2,7 @@ Source: libgadu
 Section: libs
 Priority: optional
 Maintainer: Marcin Owsiany <porridge@debian.org>
-Build-Depends: debhelper (>= 4.1.1), doxygen
+Build-Depends: debhelper (>= 5), doxygen
 Standards-Version: 3.7.3
 
 Package: libgadu3
