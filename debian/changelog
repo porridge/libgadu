@@ -1,3 +1,12 @@
+libgadu (1:1.9.0~rc1+r837-1) experimental; urgency=low
+
+  * New upstream release candidate, until SVN rev 837
+  * Noted in debian/copyright the license of MD5 code.
+  * Bumped API version to 10 in library file name
+  * Do not run make in docs/ - now integrated in automake's makefiles
+
+ -- Marcin Owsiany <porridge@debian.org>  Sat, 03 Oct 2009 13:29:10 +0100
+
 libgadu (1:1.8.0+r592-3) unstable; urgency=high
 
   * Security upload for lenny and sid

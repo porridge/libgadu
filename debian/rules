@@ -45,7 +45,6 @@ build: build-stamp
 build-stamp:  config.status
 	dh_testdir
 	$(MAKE)
-	$(MAKE) -C docs
 	touch build-stamp
 
 clean:
