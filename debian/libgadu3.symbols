@@ -55,10 +55,16 @@ libgadu.so.3 libgadu3 #MINVER#
  gg_free_session@Base 1:1.8.0+r592
  gg_get_line@Base 1:1.8.0+r592
  gg_gethostbyname@Base 1:1.8.0+r592
+ gg_global_get_resolver@Base 1:1.9.0~rc1+r837
+ gg_global_set_custom_resolver@Base 1:1.9.0~rc1+r837
+ gg_global_set_resolver@Base 1:1.9.0~rc1+r837
  gg_http_connect@Base 1:1.8.0+r592
  gg_http_free@Base 1:1.8.0+r592
  gg_http_free_fields@Base 1:1.8.0+r592
+ gg_http_get_resolver@Base 1:1.9.0~rc1+r837
  gg_http_hash@Base 1:1.8.0+r592
+ gg_http_set_custom_resolver@Base 1:1.9.0~rc1+r837
+ gg_http_set_resolver@Base 1:1.9.0~rc1+r837
  gg_http_stop@Base 1:1.8.0+r592
  gg_http_watch_fd@Base 1:1.8.0+r592
  gg_image_queue_remove@Base 1:1.8.0+r592
@@ -121,6 +127,9 @@ libgadu.so.3 libgadu3 #MINVER#
  gg_send_message_ctcp@Base 1:1.8.0+r592
  gg_send_message_richtext@Base 1:1.8.0+r592
  gg_send_packet@Base 1:1.8.0+r592
+ gg_session_get_resolver@Base 1:1.9.0~rc1+r837
+ gg_session_set_custom_resolver@Base 1:1.9.0~rc1+r837
+ gg_session_set_resolver@Base 1:1.9.0~rc1+r837
  gg_token@Base 1:1.8.0+r592
  gg_token_free@Base 1:1.8.0+r592
  gg_token_watch_fd@Base 1:1.8.0+r592
