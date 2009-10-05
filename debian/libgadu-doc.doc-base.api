@@ -6,5 +6,5 @@ Abstract: This is libgadu API documentation.
 Section: Programming
 
 Format: HTML
-Index: /usr/share/doc/libgadu-dev/api/index.html
-Files: /usr/share/doc/libgadu-dev/api/*.html /usr/share/doc/libgadu-dev/api/*.png /usr/share/doc/libgadu-dev/api/*.gif /usr/share/doc/libgadu-dev/api/*.css
+Index: /usr/share/doc/libgadu-doc/api/index.html
+Files: /usr/share/doc/libgadu-doc/api/*.html /usr/share/doc/libgadu-doc/api/*.png /usr/share/doc/libgadu-doc/api/*.gif /usr/share/doc/libgadu-doc/api/*.css

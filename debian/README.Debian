@@ -26,10 +26,11 @@ Configuration options
 Changelog
 ---------
 
-  API changes are listed in the html documentation (api/index.html contains a link).
+  API changes are listed in the html documentation provided in the libgadu-doc
+  package (api/index.html contains a link).
   All other changes can be found in the SVN changelog, available via websvn
   interface at http://toxygen.net/websvn/listing.php?repname=libgadu&path=/&sc=0
 
 
- -- Marcin Owsiany <porridge@debian.org>, Tue, 15 Apr 2008 21:06:29 +0100
+ -- Marcin Owsiany <porridge@debian.org>, Mon, 05 Oct 2009 08:38:16 +0100
 
