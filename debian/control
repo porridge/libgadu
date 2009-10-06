@@ -38,3 +38,14 @@ Description: Gadu-Gadu protocol library - development files
  library.
  .
  This package contains the development files.
+
+Package: libgadu-doc
+Section: doc
+Architecture: all
+Suggests: libgadu-dev
+Description: Gadu-Gadu protocol library - documentation
+ Gadu-Gadu is an instant messaging program, very popular in
+ Poland. libgadu is a Gadu-Gadu protocol implementation
+ library.
+ .
+ This package contains the documentation and example programs.

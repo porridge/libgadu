@@ -1,3 +1,12 @@
+libgadu (1:1.9.0~rc1+r844-1) experimental; urgency=low
+
+  * New upstream SVN snapshot: r844
+  * Moved HTML documentation and examples to a newly created
+    arch-independent "libgadu-doc" package
+  * Mentioned the -DASYNC flag in examples' README file
+
+ -- Marcin Owsiany <porridge@debian.org>  Mon, 05 Oct 2009 09:12:39 +0100
+
 libgadu (1:1.9.0~rc1+r837-1) experimental; urgency=low
 
   * New upstream release candidate, until SVN rev 837
