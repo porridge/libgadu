@@ -1,11 +1,13 @@
-libgadu (1:1.9.0~rc1+r844-1) experimental; urgency=low
+libgadu (1:1.9.0~rc1+r844-1) unstable; urgency=low
 
   * New upstream SVN snapshot: r844
   * Moved HTML documentation and examples to a newly created
     arch-independent "libgadu-doc" package
+  * Disabled compression of the JavaScript file referenced by the HTML
+    documentation.
   * Mentioned the -DASYNC flag in examples' README file
 
- -- Marcin Owsiany <porridge@debian.org>  Mon, 05 Oct 2009 09:12:39 +0100
+ -- Marcin Owsiany <porridge@debian.org>  Tue, 06 Oct 2009 10:39:03 +0100
 
 libgadu (1:1.9.0~rc1+r837-1) experimental; urgency=low
 
