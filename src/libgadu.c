@@ -723,7 +723,15 @@ struct gg_session *gg_login(const struct gg_login_params *p)
 	sess->server_addr = p->server_addr;
 	sess->external_port = p->external_port;
 	sess->external_addr = p->external_addr;
-	sess->protocol_features = (p->protocol_features != 0 || p->protocol_features_zero) ? p->protocol_features : (GG_FEATURE_STATUS80 | GG_FEATURE_MSG80);
+
+	sess->protocol_features = (p->protocol_features & ~(GG_FEATURE_STATUS77 | GG_FEATURE_MSG77));
+
+	if (!(p->protocol_features & GG_FEATURE_STATUS77))
+		sess->protocol_features |= GG_FEATURE_STATUS80;
+
+	if (!(p->protocol_features & GG_FEATURE_MSG77))
+		sess->protocol_features |= GG_FEATURE_MSG80;
+
 	sess->protocol_version = (p->protocol_version) ? p->protocol_version : GG_DEFAULT_PROTOCOL_VERSION;
 
 	if (p->era_omnix)
@@ -1114,7 +1122,7 @@ static int gg_change_status_common(struct gg_session *sess, int status, const ch
 		struct gg_new_status80 p;
 
 		p.status		= gg_fix32(status);
-		p.flags			= gg_fix32(0x01);
+		p.flags			= gg_fix32(0x00800001);
 		p.description_size	= gg_fix32(descr_len);
 		res = gg_send_packet(sess,
 				packet_type,
@@ -1305,12 +1313,10 @@ static int gg_convert_to_html(char *dst, const char *utf_msg, const unsigned cha
 	int char_pos = 0;
 	int format_idx = 3;
 	unsigned char old_attr = 0;
-
-	unsigned char color[3];
+	const unsigned char *color = (const unsigned char*) "\x00\x00\x00";
 	int len, i;
 
 	len = 0;
-	memset(color, 0, sizeof(color));
 
 	for (i = 0; utf_msg[i] != 0; i++) {
 		unsigned char attr;
@@ -1318,7 +1324,7 @@ static int gg_convert_to_html(char *dst, const char *utf_msg, const unsigned cha
 
 		if (format_idx + 3 <= format_len) {
 			attr_pos = format[format_idx] | (format[format_idx + 1] << 8);
-			attr = format[format_idx + 3];
+			attr = format[format_idx + 2];
 		} else {
 			attr_pos = -1;
 			attr = 0;
@@ -1342,14 +1348,18 @@ static int gg_convert_to_html(char *dst, const char *utf_msg, const unsigned cha
 				}
 
 				if (((attr & GG_FONT_COLOR) != 0) && (format_idx + 3 <= format_len)) {
-					memcpy(color, &format[format_idx], 3);
+					color = &format[format_idx];
 					format_idx += 3;
 				} else {
-					memset(color, 0, 3);
+					color = (const unsigned char*) "\x00\x00\x00";
 				}
 
 				if (dst != NULL)
 					sprintf(&dst[len], span_fmt, color[0], color[1], color[2]);
+				len += span_len;
+			} else if (char_pos == 0) {
+				if (dst != NULL)
+					sprintf(&dst[len], span_fmt, 0, 0, 0);
 				len += span_len;
 			}
 
@@ -1365,14 +1375,14 @@ static int gg_convert_to_html(char *dst, const char *utf_msg, const unsigned cha
 			if (((attr & GG_FONT_IMAGE) != 0) && (format_idx + 10 <= format_len)) {
 				if (dst != NULL) {
 					sprintf(&dst[len], img_fmt,
-						format[format_idx + 2],
-						format[format_idx + 3], 
-						format[format_idx + 4],
-						format[format_idx + 5], 
-						format[format_idx + 6],
+						format[format_idx + 9],
+						format[format_idx + 8], 
 						format[format_idx + 7],
-						format[format_idx + 8],
-						format[format_idx + 9]);
+						format[format_idx + 6], 
+						format[format_idx + 5],
+						format[format_idx + 4],
+						format[format_idx + 3],
+						format[format_idx + 2]);
 				}
 
 				len += img_len;
@@ -1529,7 +1539,7 @@ int gg_send_message_confer_richtext(struct gg_session *sess, int msgclass, int r
 
 		sess->seq = seq_no;
 
-		if (format == NULL || formatlen == 0) {
+		if (format == NULL || formatlen < 3) {
 			format = (unsigned char*) "\x02\x06\x00\x00\x00\x08\x00\x00\x00";
 			formatlen = 9;
 		}
