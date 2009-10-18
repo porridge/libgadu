@@ -1,3 +1,11 @@
+libgadu (1:1.9.0~rc1+r868-1) unstable; urgency=medium
+
+  * New upstream SVN snapshot: r868
+  * Urgency medium, as the previous version contained some API changes which
+    are now gone, so the sooner we hide them from people, the better.
+
+ -- Marcin Owsiany <porridge@debian.org>  Sun, 18 Oct 2009 22:08:02 +0100
+
 libgadu (1:1.9.0~rc1+r844-1) unstable; urgency=low
 
   * New upstream SVN snapshot: r844
