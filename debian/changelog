@@ -1,3 +1,10 @@
+libgadu (1:1.9.0~rc1+r874-1) unstable; urgency=medium
+
+  * New upstream SVN snapshot: r874
+  * Urgency medium kept since previous upload has not made it to testing yet
+
+ -- Marcin Owsiany <porridge@debian.org>  Tue, 20 Oct 2009 12:03:05 +0100
+
 libgadu (1:1.9.0~rc1+r868-1) unstable; urgency=medium
 
   * New upstream SVN snapshot: r868
