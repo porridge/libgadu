@@ -54,9 +54,12 @@ conn_async_OBJECTS = conn-async.$(OBJEXT)
 conn_async_LDADD = $(LDADD)
 conn_async_DEPENDENCIES = ../src/libgadu.la
 httphash_SOURCES = httphash.c
-httphash_OBJECTS = httphash.$(OBJEXT)
+httphash_OBJECTS = httphash-httphash.$(OBJEXT)
 httphash_LDADD = $(LDADD)
 httphash_DEPENDENCIES = ../src/libgadu.la
+httphash_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
+	--mode=link $(CCLD) $(httphash_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
+	$(LDFLAGS) -o $@
 am_register_async_OBJECTS = register_async-register.$(OBJEXT)
 register_async_OBJECTS = $(am_register_async_OBJECTS)
 register_async_LDADD = $(LDADD)
@@ -242,6 +245,7 @@ target_alias = @target_alias@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 LDADD = ../src/libgadu.la
+httphash_CFLAGS = -DGG_IGNORE_DEPRECATED
 register_sync_SOURCES = register.c
 register_async_SOURCES = register.c
 register_async_CFLAGS = -DASYNC
@@ -296,7 +300,7 @@ conn-async$(EXEEXT): $(conn_async_OBJECTS) $(conn_async_DEPENDENCIES)
 	$(LINK) $(conn_async_OBJECTS) $(conn_async_LDADD) $(LIBS)
 httphash$(EXEEXT): $(httphash_OBJECTS) $(httphash_DEPENDENCIES) 
 	@rm -f httphash$(EXEEXT)
-	$(LINK) $(httphash_OBJECTS) $(httphash_LDADD) $(LIBS)
+	$(httphash_LINK) $(httphash_OBJECTS) $(httphash_LDADD) $(LIBS)
 register-async$(EXEEXT): $(register_async_OBJECTS) $(register_async_DEPENDENCIES) 
 	@rm -f register-async$(EXEEXT)
 	$(register_async_LINK) $(register_async_OBJECTS) $(register_async_LDADD) $(LIBS)
@@ -329,7 +333,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/conn-async.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/httphash.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/httphash-httphash.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/register.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/register_async-register.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/remind.Po@am__quote@
@@ -359,6 +363,20 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LTCOMPILE) -c -o $@ $<
+
+httphash-httphash.o: httphash.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(httphash_CFLAGS) $(CFLAGS) -MT httphash-httphash.o -MD -MP -MF $(DEPDIR)/httphash-httphash.Tpo -c -o httphash-httphash.o `test -f 'httphash.c' || echo '$(srcdir)/'`httphash.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/httphash-httphash.Tpo $(DEPDIR)/httphash-httphash.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='httphash.c' object='httphash-httphash.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(httphash_CFLAGS) $(CFLAGS) -c -o httphash-httphash.o `test -f 'httphash.c' || echo '$(srcdir)/'`httphash.c
+
+httphash-httphash.obj: httphash.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(httphash_CFLAGS) $(CFLAGS) -MT httphash-httphash.obj -MD -MP -MF $(DEPDIR)/httphash-httphash.Tpo -c -o httphash-httphash.obj `if test -f 'httphash.c'; then $(CYGPATH_W) 'httphash.c'; else $(CYGPATH_W) '$(srcdir)/httphash.c'; fi`
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/httphash-httphash.Tpo $(DEPDIR)/httphash-httphash.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='httphash.c' object='httphash-httphash.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(httphash_CFLAGS) $(CFLAGS) -c -o httphash-httphash.obj `if test -f 'httphash.c'; then $(CYGPATH_W) 'httphash.c'; else $(CYGPATH_W) '$(srcdir)/httphash.c'; fi`
 
 register_async-register.o: register.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(register_async_CFLAGS) $(CFLAGS) -MT register_async-register.o -MD -MP -MF $(DEPDIR)/register_async-register.Tpo -c -o register_async-register.o `test -f 'register.c' || echo '$(srcdir)/'`register.c

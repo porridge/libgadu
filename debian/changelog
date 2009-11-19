@@ -1,3 +1,9 @@
+libgadu (1:1.9.0~rc2-1) unstable; urgency=low
+
+  * New upstream release candidate: RC2
+
+ -- Marcin Owsiany <porridge@debian.org>  Thu, 19 Nov 2009 21:50:08 +0000
+
 libgadu (1:1.9.0~rc1+r874-1) unstable; urgency=medium
 
   * New upstream SVN snapshot: r874
