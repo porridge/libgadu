@@ -53,6 +53,8 @@ build-stamp:  config.status
 ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
 	# TODO: Code to run the package test suite.
 endif
+	# work-around #591387
+	rm -f docs/html/installdox
 	touch build-stamp
 
 clean:
