@@ -1,3 +1,11 @@
+libgadu (1:1.9.0-1) unstable; urgency=low
+
+  * New upstream release: 1.9.0
+    - also contains fixes for a memory leak and invalid memory access from the
+      1.9 branch
+
+ -- Marcin Owsiany <porridge@debian.org>  Mon, 02 Aug 2010 14:17:32 +0100
+
 libgadu (1:1.9.0~rc2-1) unstable; urgency=low
 
   * New upstream release candidate: RC2
