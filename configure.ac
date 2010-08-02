@@ -1,7 +1,7 @@
 dnl $Id$
 
 AC_INIT(src/libgadu.c)
-AM_INIT_AUTOMAKE(libgadu, 1.9.0-rc2)
+AM_INIT_AUTOMAKE(libgadu, 1.9.0)
 
 AC_PREREQ(2.50)
 AC_CANONICAL_HOST
@@ -195,16 +195,22 @@ if test "x$have_openssl" = "xyes"; then
 fi
 
 dnl
-dnl  Sprawdź, czy można korzystać z __funkcji w libc.
+dnl  Sprawdź, czy możemy kompilować testy.
 dnl 
 
 AC_SUBST([OPTIONAL_TESTS])
-AC_CHECK_LIB(c, __connect, [
-	OPTIONAL_TESTS="dcc7 connect resolver"
-],
-[
-	OPTIONAL_TESTS=""
-])
+OPTIONAL_TESTS=""
+
+AC_ARG_ENABLE(tests, 
+	[  --disable-tests         do not compile tests])
+
+if test "x$enable_tests" != "xno"; then 
+	AC_CHECK_LIB(c, __connect, [OPTIONAL_TESTS="$OPTIONAL_TESTS dcc7 connect resolver"])
+	AC_CHECK_PROG(PERL, [perl], [perl])
+	if test "x$PERL" != "x"; then
+		OPTIONAL_TESTS="$OPTIONAL_TESTS protocol"
+	fi
+fi
 
 dnl
 dnl  Sprawdź, czy mamy czym generować dokumentację
