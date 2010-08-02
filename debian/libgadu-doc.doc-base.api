@@ -7,4 +7,4 @@ Section: Programming
 
 Format: HTML
 Index: /usr/share/doc/libgadu-doc/api/index.html
-Files: /usr/share/doc/libgadu-doc/api/*.html /usr/share/doc/libgadu-doc/api/*.png /usr/share/doc/libgadu-doc/api/*.gif /usr/share/doc/libgadu-doc/api/*.css
+Files: /usr/share/doc/libgadu-doc/api/*.html /usr/share/doc/libgadu-doc/api/*.png /usr/share/doc/libgadu-doc/api/*.css
