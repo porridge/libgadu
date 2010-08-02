@@ -3,8 +3,10 @@ libgadu (1:1.9.0-1) unstable; urgency=low
   * New upstream release: 1.9.0
     - also contains fixes for a memory leak and invalid memory access from the
       1.9 branch
+  * Bumped Standards-Version to 3.9.1:
+    - Do not pass add -D_REENTRANT to CFLAGS, it is obsolete.
 
- -- Marcin Owsiany <porridge@debian.org>  Mon, 02 Aug 2010 14:17:32 +0100
+ -- Marcin Owsiany <porridge@owsiany.pl>  Mon, 02 Aug 2010 17:10:36 +0000
 
 libgadu (1:1.9.0~rc2-1) unstable; urgency=low
 
