@@ -1,3 +1,11 @@
+libgadu (1:1.9.0-2) unstable; urgency=high
+
+  * RC bugfix release targeted at squeeze and sid
+  * Cherry-picked a fix for memory corruption in dcc7 session removal,
+    Closes: #605551
+
+ -- Marcin Owsiany <porridge@debian.org>  Tue, 30 Nov 2010 19:23:50 -0800
+
 libgadu (1:1.9.0-1) unstable; urgency=low
 
   * New upstream release: 1.9.0
