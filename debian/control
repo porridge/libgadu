@@ -2,7 +2,7 @@ Source: libgadu
 Section: libs
 Priority: optional
 Maintainer: Marcin Owsiany <porridge@debian.org>
-Build-Depends: debhelper (>= 5), doxygen
+Build-Depends: debhelper (>= 5), libgnutls-dev, doxygen
 Standards-Version: 3.9.1
 Homepage: http://toxygen.net/libgadu/
 

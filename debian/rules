@@ -42,7 +42,8 @@ config.status: configure checkperms-stamp
 		--infodir=\$${prefix}/share/info \
 		--with-pthread \
 		--without-bind \
-		--without-openssl
+		--without-openssl \
+		--with-gnutls
 # Remember to update README.Debian as well...
 
 
