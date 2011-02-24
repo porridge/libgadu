@@ -34,6 +34,7 @@ config.status: configure checkperms-stamp
 	dh_testdir
 # Remember to update README.Debian as well...
 	./configure \
+		--disable-silent-rules \
 		--host=$(DEB_HOST_GNU_TYPE) \
 		--build=$(DEB_BUILD_GNU_TYPE) \
 		--prefix=/usr \
@@ -42,7 +43,8 @@ config.status: configure checkperms-stamp
 		--infodir=\$${prefix}/share/info \
 		--with-pthread \
 		--without-bind \
-		--without-openssl
+		--without-openssl \
+		--with-gnutls
 # Remember to update README.Debian as well...
 
 

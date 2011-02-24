@@ -12,13 +12,16 @@
 /* Defined if this machine has gethostbyname_r(). */
 #undef GG_CONFIG_HAVE_GETHOSTBYNAME_R
 
+/* Defined if libgadu was compiled and linked with GnuTLS support. */
+#undef GG_CONFIG_HAVE_GNUTLS
+
 /* Defined if uintX_t types are defined in <inttypes.h>. */
 #undef GG_CONFIG_HAVE_INTTYPES_H
 
 /* Defined if this machine supports long long. */
 #undef GG_CONFIG_HAVE_LONG_LONG
 
-/* Defined if libgadu was compiled and linked with TLS support. */
+/* Defined if libgadu was compiled and linked with OpenSSL support. */
 #undef GG_CONFIG_HAVE_OPENSSL
 
 /* Defined if libgadu was compiled and linked with pthread support. */
@@ -54,6 +57,9 @@
 /* Define to 1 if you have the `gethostbyname_r' function. */
 #undef HAVE_GETHOSTBYNAME_R
 
+/* define if you have GnuTLS */
+#undef HAVE_GNUTLS
+
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
@@ -78,11 +84,17 @@
 /* Define to 1 if you have the <string.h> header file. */
 #undef HAVE_STRING_H
 
+/* Defined if this machine has strtoull(). */
+#undef HAVE_STRTOULL
+
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #undef HAVE_SYS_STAT_H
 
 /* Define to 1 if you have the <sys/types.h> header file. */
 #undef HAVE_SYS_TYPES_H
+
+/* Defined if this machine has uint64_t . */
+#undef HAVE_UINT64_T
 
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H

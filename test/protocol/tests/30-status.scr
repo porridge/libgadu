@@ -24,6 +24,11 @@ call {
 
 expect data (38 00 00 00, auto, 01 00 00 00, 01 00 80 00, 00 00 00 00)
 
+call {
+	// Revert state change
+	session->state = GG_STATE_CONNECTED;
+}
+
 #-----------------------------------------------------------------------------
 
 call {
@@ -31,6 +36,11 @@ call {
 }
 
 expect data (38 00 00 00, auto, 15 00 00 00, 01 00 80 00, 04 00 00 00, "Test")
+
+call {
+	// Revert state change
+	session->state = GG_STATE_CONNECTED;
+}
 
 #-----------------------------------------------------------------------------
 
@@ -79,4 +89,19 @@ call {
 }
 
 expect data (38 00 00 00, 0b 01 00 00, 02 00 00 00, 01 00 80 00, ff 00 00 00, "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA<This_part_should_not_be_truncated>")
+
+#-----------------------------------------------------------------------------
+# Changing status flags
+#-----------------------------------------------------------------------------
+
+call {
+	gg_change_status_flags(session, 0x11223344);
+	gg_change_status(session, GG_STATUS_AVAIL);
+}
+
+expect data (38 00 00 00, auto, 02 00 00 00, 44 33 22 11, 00 00 00 00)
+
+call {
+	gg_change_status_flags(session, 0x00800001);
+}
 

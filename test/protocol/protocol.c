@@ -94,7 +94,7 @@ int main(int argc, char **argv)
 	for (;;) {
 		fd_set rds, wds;
 		struct timeval tv;
-		int res, maxfd = -1;
+		int res, maxfd;
 
 		if (script[state].type == ACTION_END) {
 			debug("state %d: ending\n", state);
@@ -111,6 +111,7 @@ int main(int argc, char **argv)
 			glp.server_addr = inet_addr(LOCALHOST);
 			glp.server_port = LOCALPORT;
 			glp.async = 1;
+			glp.resolver = GG_RESOLVER_PTHREAD;
 
 			if (!(gs = gg_login(&glp))) {
 				perror("gg_login");
@@ -221,7 +222,7 @@ int main(int argc, char **argv)
 		}
 
 		if (time(NULL) - last >= 5) {
-			debug("state %d: timeout\n", state);
+			error(state, "Timeout\n");
 			exit(1);
 		}
 
@@ -230,8 +231,6 @@ int main(int argc, char **argv)
 
 		tv.tv_sec = 1;
 		tv.tv_usec = 0;
-
-		maxfd = -1;
 
 		FD_SET(lfd, &rds);
 		maxfd = lfd;
@@ -347,7 +346,7 @@ int main(int argc, char **argv)
 				}
 
 				if ((script[state].event != -1 && ge->type != script[state].event)) {
-					error(state, "Invalid event %d\n", ge->type);
+					error(state, "Invalid event %d, expected %d\n", ge->type, script[state].event);
 					exit(1);
 				}
 

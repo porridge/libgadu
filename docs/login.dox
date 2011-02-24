@@ -41,7 +41,7 @@ events "obsłudze zdarzeń".
 Nowe statusy (nie przeszkadzać, poGGadaj ze mną), opisy graficzne i wiadomości
 kodowane UTF-8 będą dostępne dopiero po ustawieniu odpowiednich parametrów
 połączenia. Jest to niezbędne, ponieważ starsze klienty mogłyby nie działać
-prawidłowo, gdyby przy domyślnych parametrach połączenia zmieniłoby się
+prawidłowo, gdyby przy domyślnych parametrach połączenia zmieniło się
 zachowanie biblioteki.
 
 \code
@@ -107,5 +107,24 @@ celu należy co minutę wywoływać funkcję \c gg_ping().
 Aby się wylogować, należy użyć funkcji \c gg_logoff(), a następnie zwolnić
 zasoby związane z sesją za pomocą funkcji \c gg_free_session(). Aby ustawić
 status z opisem, należy wcześniej wywołać funkcję \c gg_change_status_descr().
+
+\section login-multi Multilogowanie
+
+Około wersji Gadu-Gadu 10 pojawiła się możliwość łączenia kilku sesji
+jednocześnie. Aby włączyć tę funkcję należy do
+\c gg_login_params.protocol_features dodać \c GG_FEATURE_MULTILOGON. Domyślnie
+ta opcja jest wyłączona, więc zwykle będzie to wyglądać następująco:
+
+\code
+parametry.protocol_features = GG_FEATURE_ALL | GG_FEATURE_MULTILOGON;
+\endcode
+
+Po połączeniu z włączoną możliwością multilogowania, inne sesje nie zostaną
+rozłączone. W momencie połączenia dodatkowej sesji, aplikacja otrzyma zdarzenie
+\ref events-list "\c GG_EVENT_MULTILOGON_INFO". Wiadomości przychodzące są
+przekazywane do wszystkich sesji, a wychodzące do rozmówców z jednej sesji
+do pozostałych za pomocą zdarzenia
+\ref events-list "\c GG_EVENT_MULTILOGON_MSG". Aby zdalnie rozłączyć inną
+sesję, należy użyć funkcji \c gg_multilogon_disconnect().
 
 */

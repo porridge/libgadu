@@ -4,14 +4,13 @@ libgadu Debian package
 Configuration options
 ---------------------
 
-  As of February 16th 2006 libgadu is build with OpenSSL disabled for libgadu.
-  This makes linking other pure-GPL programs against libgadu feasible, all the
-  more since GG servers no longer support TLS connections.
-  
+  libgadu is built with GnuTLS rather than OpenSSL, as this makes linking other
+  pure-GPL programs against libgadu feasible
   
   Here are the library build configuration options for your convenience:
 
 	./configure \
+		--disable-silent-rules \
 		--host=$(DEB_HOST_GNU_TYPE) \
 		--build=$(DEB_BUILD_GNU_TYPE) \
 		--prefix=/usr \
@@ -20,7 +19,8 @@ Configuration options
 		--infodir=\$${prefix}/share/info \
 		--with-pthread \
 		--without-bind \
-		--without-openssl
+		--without-openssl \
+		--with-gnutls
 
 
 Changelog
