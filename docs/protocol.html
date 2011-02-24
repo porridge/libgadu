@@ -1,32 +1,33 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-
 <html>
 <head>
-<meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Protokół Gadu-Gadu</title>
 <style type="text/css">
 body { font-family: tahoma, verdana, arial, helvetica, sans-serif; }
 .tab { background-color: #a0a0a0; }
 .tabh { background-color: #d0d0d0; }
 .tabf { background-color: white; }
 .tabf2 { background-color: white; color: silver; }
-.check { background-color: white; color: silver; font-size: 0.7em; }
-.warn { font-family: monospace; padding: 0.7em; background-color: red; border: 1px solid #80a0a0; }
+.check { background-color: white; color: silver; padding: 0.7em; border: 1px dashed silver; }
+.warn { font-family: monospace; padding: 0.7em; background-color: #ffe0e0; border: 1px solid #a08080; }
 .c { font-family: monospace; padding: 0.7em; background-color: #e0e0e0; border: 1px solid #a0a0a0; }
 .http { font-family: monospace; padding: 0.7em; background-color: #c0f0c0; border: 1px solid #80a080; }
 .example { font-family: monospace; padding: 0.7em; background-color: #c0f0f0; border: 1px solid #80a0a0; }
 pre { margin: 0px; }
+.main { max-width: 800px; text-align: left; }
+.footer { font-family: monospace; color: silver; }
 </style>
-<title>Protokół Gadu-Gadu</title>
 </head>
 
 <body bgcolor="white" text="black">
 
 <center>
-<table width="600" border="0"><tr><td>
+<div class="main">
 
 <center>
 <h1>Protokół Gadu-Gadu</h1>
-<h3>&copy; Copyright 2001-2009 <a href="#ch4">Autorzy</a></h3>
+<h3>&copy; Copyright 2001-2010 <a href="#ch4">Autorzy</a></h3>
 </center>
 
 <hr />
@@ -44,13 +45,15 @@ pre { margin: 0px; }
 		1.5.&nbsp;&nbsp;<a href="#ch1.5">Ludzie przychodzą, ludzie odchodzą</a><br />
 		1.6.&nbsp;&nbsp;<a href="#ch1.6">Wysyłanie wiadomości</a><br />
 		1.7.&nbsp;&nbsp;<a href="#ch1.7">Otrzymywanie wiadomości</a><br />
-		1.8.&nbsp;&nbsp;<a href="#ch1.8">Ping, pong</a><br />
-		1.9.&nbsp;&nbsp;<a href="#ch1.9">Rozłączenie</a><br />
-		1.10.&nbsp;&nbsp;<a href="#ch1.10">Wiadomości systemowe</a><br />
-		1.11.&nbsp;&nbsp;<a href="#ch1.11">Wiadomości GG_XML_ACTION</a><br />
-		1.12.&nbsp;&nbsp;<a href="#ch1.12">Katalog publiczny</a><br />
-		1.13.&nbsp;&nbsp;<a href="#ch1.13">Lista kontaktów</a><br />
-		1.14.&nbsp;&nbsp;<a href="#ch1.14">Indeks pakietów</a><br />
+		1.8.&nbsp;&nbsp;<a href="#ch1.8">Powiadomienie o pisaniu ("pisak")</a><br />
+		1.9.&nbsp;&nbsp;<a href="#ch1.9">Multilogowanie</a><br />
+		1.10.&nbsp;&nbsp;<a href="#ch1.10">Ping, pong</a><br />
+		1.11.&nbsp;&nbsp;<a href="#ch1.11">Rozłączenie</a><br />
+		1.12.&nbsp;&nbsp;<a href="#ch1.12">Wiadomości systemowe</a><br />
+		1.13.&nbsp;&nbsp;<a href="#ch1.13">Wiadomości GG_XML_ACTION</a><br />
+		1.14.&nbsp;&nbsp;<a href="#ch1.14">Katalog publiczny</a><br />
+		1.15.&nbsp;&nbsp;<a href="#ch1.15">Lista kontaktów</a><br />
+		1.16.&nbsp;&nbsp;<a href="#ch1.16">Indeks pakietów</a><br />
 	</li>
 	<li><a href="#ch2">Usługi HTTP</a><br />
 		2.1.&nbsp;&nbsp;<a href="#ch2.1">Format danych</a><br />
@@ -60,10 +63,12 @@ pre { margin: 0px; }
 		2.5.&nbsp;&nbsp;<a href="#ch2.5">Zmiana hasła</a><br />
 		2.6.&nbsp;&nbsp;<a href="#ch2.6">Przypomnienie hasła pocztą</a><br />
 	</li>
-	<li><a href="#ch3">Połączenia bezpośrednie</a><br />
-		3.1.&nbsp;&nbsp;<a href="#ch3.1">Nawiązanie połączenia</a><br />
+	<li><a href="#ch3">Połączenia między klientami</a><br />
+		3.1.&nbsp;&nbsp;<a href="#ch3.1">Identyfikator połączenia</a><br />
 		3.2.&nbsp;&nbsp;<a href="#ch3.2">Przesyłanie plików</a><br />
-		3.3.&nbsp;&nbsp;<a href="#ch3.3">Rozmowy głosowe</a><br />
+		3.3.&nbsp;&nbsp;<a href="#ch3.3">Połączenie bezpośrednie</a><br />
+		3.4.&nbsp;&nbsp;<a href="#ch3.4">Połączenie przez serwer</a><br />
+		3.5.&nbsp;&nbsp;<a href="#ch3.5">Rozmowy głosowe</a><br />
 	</li>
 	<li><a href="#ch4">Autorzy</a></li>
 </ol>
@@ -236,35 +241,45 @@ struct gg_login80 {
         char hash_type;       <i>/* rodzaj funkcji skrótu hasła */</i>
         char hash[64];        <i>/* skrót hasła dopełniony \0 */</i>
         int status;           <i>/* początkowy status połączenia */</i>
-        int flags;            <i>/* flagi (przeznaczenie nieznane) */</i>
-        int features;         <i>/* opcje protokołu (0x00000007)*/</i>
+        int flags;            <i>/* początkowe flagi połączenia */</i>
+        int features;         <i>/* opcje protokołu (0x00000367)*/</i>
         int local_ip;         <i>/* lokalny adres połączeń bezpośrednich (nieużywany) */</i>
         short local_port;     <i>/* lokalny port połączeń bezpośrednich (nieużywany) */</i>
         int external_ip;      <i>/* zewnętrzny adres (nieużywany) */</i>
         short external_port;  <i>/* zewnętrzny port (nieużywany) */</i>
         char image_size;      <i>/* maksymalny rozmiar grafiki w KB */</i>
-        char unknown2;        <i>/* 0x64 */</i>
-        int version_len;      <i>/* długość ciągu z wersją (0x21) */</i>
-        char version[];       <i>/* "Gadu-Gadu Client build 8.0.0.7669" (bez \0) */</i>
+        char unknown1;        <i>/* 0x64 */</i>
+        int version_len;      <i>/* długość ciągu z wersją (0x23) */</i>
+        char version[];       <i>/* "Gadu-Gadu Client build 10.0.0.10450" (bez \0) */</i>
         int description_size; <i>/* rozmiar opisu */</i>
         char description[];   <i>/* opis (nie musi wystąpić, bez \0) */</i>
 };</pre>
-
 </div>
 
 <p>
 Pola określające adresy i port są pozostałościami po poprzednich wersjach
-protokołów i w obecnej wersji zawierają zera.</p>
-<p>Pole z flagami jest przekazywane innym kontaktom, ale jego znaczenie nie jest jeszcze znane.
-Ustalono jedynie, że wartość <tt>0x00100000</tt> powoduje wyświetlenie ikony telefonu komórkowego
-na liście kontaktów, a bitmaska <tt>0x00800000</tt> wyłącza "cenzurowanie" linków</p>
-<p>Pole opcji protokołu zawsze zawiera wartość <tt>0x00000007</tt> i jest mapą bitową:</p>
+protokołów i w obecnej wersji zawierają zera.
+</p>
+
+<p>
+Pole <tt>features</tt> jest mapą bitową informującą serwer, które z funkcji
+protokołu obsługujemy. Do minimalnej zgodności z protokołem Nowego Gadu-Gadu
+niezbędna jest co najmniej wartość <tt>0x00000007</tt>.
+</p>
 
 <table class="tab" border="0" cellspacing="1" cellpadding="2" width="100%">
 <tr class="tabh"><td><b>Bit</b></td><td><b>Wartość</b></td><td><b>Znaczenie</b></td></tr>
 <tr class="tabf"><td>0</td><td><tt>0x00000001</tt></td><td>Rodzaj pakietu informującego o zmianie stanu kontaktów (patrz bit 2)<br /><tt>0</tt> &mdash; <tt>GG_STATUS77</tt>, <tt>GG_NOTIFY_REPLY77</tt><br /><tt>1</tt> &mdash; <tt>GG_STATUS80BETA</tt>, <tt>GG_NOTIFY_REPLY80BETA</tt></td></tr>
 <tr class="tabf"><td>1</td><td><tt>0x00000002</tt></td><td>Rodzaj pakietu z otrzymają wiadomością<br /><tt>0</tt> &mdash; <tt>GG_RECV_MSG</tt><br /><tt>1</tt> &mdash; <tt>GG_RECV_MSG80</tt></td></tr>
 <tr class="tabf"><td>2</td><td><tt>0x00000004</tt></td><td>Rodzaj pakietu informującego o zmianie stanu kontaktów (patrz bit 0)<br /><tt>0</tt> &mdash; wybrany przez bit 0<br /><tt>1</tt> &mdash; <tt>GG_STATUS80</tt>, <tt>GG_NOTIFY_REPLY80</tt></td></tr>
+<tr class="tabf"><td>4</td><td><tt>0x00000010</tt></td><td>Klient obsługuje statusy "nie przeszkadzać" i "poGGadaj ze mną"</td></tr>
+<tr class="tabf"><td>5</td><td><tt>0x00000020</tt></td><td>Klient obsługuje statusy graficzne i <tt>GG_STATUS_DESCR_MASK</tt> (patrz <a href="#ch1.4">Zmiana stanu</a>)</td></tr>
+<tr class="tabf"><td>6</td><td><tt>0x00000040</tt></td><td>Znaczenie nie jest znane, ale klient otrzyma w przypadku błędnego hasła pakiet <tt>GG_LOGIN80_FAILED</tt> zamiast <tt>GG_LOGIN_FAILED</tt></td></tr>
+<tr class="tabf"><td>7</td><td><tt>0x00000100</tt></td><td>Znaczenie nie jest znane, ale jest używane przez nowe klienty</td></tr>
+<tr class="tabf"><td>9</td><td><tt>0x00000200</tt></td><td>Klient obsługuje <a href="#ch1.5.1">dodatkowe informacje o liście kontaktów</a></td></tr>
+<tr class="tabf"><td>10</td><td><tt>0x00000400</tt></td><td>Klient wysyła <a href="#ch1.7.1">potwierdzenia odebrania wiadomości</a></td></tr>
+<tr class="tabf"><td>13</td><td><tt>0x00002000</tt></td><td>Klient obsługuje <a href="#ch1.8">powiadomienia o pisaniu</a></td></tr>
+<tr class="tabf"><td>13</td><td><tt>0x00004000</tt></td><td>Klient obsługuje <a href="#ch1.9">multilogowanie</a></td></tr>
 </table>
 
 <p>
@@ -277,9 +292,9 @@ Skrót hasła można liczyć na dwa sposoby:
 </div>
 
 <p>
-Pierwszy algorytm (<tt>GG_LOGIN_HASH_GG32</tt>) został wymyślony na potrzeby
-Gadu-Gadu i zwraca 32-bitową wartość dla danego ziarna i hasła. Jego
-implementacja w języku C wygląda następująco:
+Pierwszy, nieużywany już algorytm (<tt>GG_LOGIN_HASH_GG32</tt>) został
+wymyślony na potrzeby Gadu-Gadu i zwraca 32-bitową wartość dla danego ziarna
+i hasła. Jego implementacja w języku C wygląda następująco:
 </p>
 
 <div class="c">
@@ -346,7 +361,19 @@ struct gg_login80_ok {
 </div>
 
 <p>
-W przypadku błędu autoryzacji otrzymamy pusty pakiet:
+W przypadku błędu autoryzacji otrzymamy pakiet:
+</p>
+
+<div class="c">
+<pre>#define GG_LOGIN80_FAILED 0x0043
+
+struct gg_login80_failed {
+	int unknown1;	<i>/* 01 00 00 00 */</i>
+};</pre>
+</div>
+
+<p>
+Starsze wersje oraz klienty z otrzymywały pusty pakiet:
 </p>
 
 <div class="c">
@@ -366,8 +393,8 @@ Gadu-Gadu przewiduje kilka stanów klienta, które zmieniamy pakietem typu:
 <pre>#define GG_NEW_STATUS80 0x0038
 
 struct gg_new_status80 {
-	int status;		<i>/* na jaki zmienić? */</i>
-	int flags;              <i>/* flagi (nieznane przeznaczenie) */</i>
+	int status;		<i>/* nowy status */</i>
+	int flags;              <i>/* nowe flagi */</i>
 	int description_size;   <i>/* rozmiar opisu */</i>
 	char description[];	<i>/* opis (nie musi wystąpić, bez \0) */</i>
 };</pre>
@@ -392,10 +419,31 @@ Możliwe stany to:
 <tr class="tabf"><td><tt>GG_STATUS_INVISIBLE</tt></td><td><tt>0x0014</tt></td><td>Niewidoczny</td></tr>
 <tr class="tabf"><td><tt>GG_STATUS_INVISIBLE_DESCR</tt></td><td><tt>0x0016</tt></td><td>Niewidoczny (z opisem)</td></tr>
 <tr class="tabf"><td><tt>GG_STATUS_BLOCKED</tt></td><td><tt>0x0006</tt></td><td>Zablokowany</td></tr>
-<tr class="tabf"><td><tt>GG_STATUS80_DESCR_MASK</tt></td><td><tt>0x0100</tt></td><td>Maska bitowa oznaczająca ustawiony opis graficzny</td></tr>
-<tr class="tabf"><td><tt>GG_STATUS80_DESCR_MASK</tt></td><td><tt>0x4000</tt></td><td>Maska bitowa oznaczająca ustawiony opis</td></tr>
+<tr class="tabf"><td><tt>GG_STATUS_IMAGE_MASK</tt></td><td><tt>0x0100</tt></td><td>Maska bitowa oznaczająca ustawiony opis graficzny (tylko odbierane)</td></tr>
+<tr class="tabf"><td><tt>GG_STATUS_ADAPT_STATUS_MASK</tt></td><td><tt>0x0400</tt></td>
+<td>Maska bitowa informująca serwer, że jeśli istnieje już inne połączenie na tym numerze to nasze ma przyjać jego stan (podany przez nas zostanie zignorowany). Jeśli połączenia innego nie ma, to ustawiany jest stan podany przez nas.</td></tr>
+<tr class="tabf"><td><tt>GG_STATUS_DESCR_MASK</tt></td><td><tt>0x4000</tt></td><td>Maska bitowa oznaczająca ustawiony opis</td></tr>
 <tr class="tabf"><td><tt>GG_STATUS_FRIENDS_MASK</tt></td><td><tt>0x8000</tt></td><td>Maska bitowa oznaczająca tryb tylko dla przyjaciół</td></tr>
 </table>
+
+<p>
+Możliwe flagi to:
+</p>
+
+<table class="tab" border="0" cellspacing="1" cellpadding="2" width="100%">
+<tr class="tabh"><td><b>Bit</b></td><td><b>Wartość</b></td><td><b>Znaczenie</b></td></tr>
+<tr class="tabf"><td>0</td><td><tt>0x00000001</tt></td>
+<td>Prawdopodobnie połączenia audio</td></tr>
+<tr class="tabf"><td>1</td><td><tt>0x00000002</tt></td><td>Klient obsługuje wideorozmowy</td></tr>
+<tr class="tabf"><td>20</td><td><tt>0x00100000</tt></td><td>Klient mobilny (ikona telefonu komórkowego)</td></tr>
+<tr class="tabf"><td>23</td><td><tt>0x00800000</tt></td><td>Klient chce otrzymywać linki od nieznajomych</td></tr>
+</table>
+
+<p>
+Jeśli klient obsługuje statusy graficzne, to statusy opisowe będą dodatkowo
+określane przez dodanie flagi <tt>GG_STATUS_DESCR_MASK</tt>. Dotyczy to zarówno
+statusów wysyłanych, jak i odbieranych z serwera.
+</p>
 
 <p>
 Należy pamiętać, żeby przed rozłączeniem się z serwerem należy zmienić
@@ -469,17 +517,17 @@ zawierającym jedną lub więcej struktur <tt>gg_notify_reply80</tt>:
 </p>
 
 <div class="c">
-<pre>#define GG_NOTIFY_REPLY80 0x37
+<pre>#define GG_NOTIFY_REPLY80 0x0037
 	
 struct gg_notify_reply80 {
 	int uin;		<i>/* numer Gadu-Gadu kontaktu */</i>
 	int status;		<i>/* status */</i>
-	int flags;		<i>/* flagi (nieznane przeznaczenie) */</i>
+	int features;		<i>/* opcje protokołu (patrz GG_LOGIN80) */</i>
 	int remote_ip;		<i>/* adres IP bezpośrednich połączeń (nieużywane) */</i>
 	short remote_port;	<i>/* port bezpośrednich połączeń (nieużywane) */</i>
 	char image_size;	<i>/* maksymalny rozmiar obrazków w KB */</i>
-	char unknown2;		<i>/* 0x00 */</i>
-	int unknown3;		<i>/* 0x00000000 */</i>
+	char unknown1;		<i>/* 0x00 */</i>
+	int flags;		<i>/* flagi połączenia (patrz GG_LOGIN80) */</i>
 	int description_size;	<i>/* rozmiar opisu */</i>
 	char description[];	<i>/* opis (nie musi wystąpić, bez \0) */</i>
 };</pre>
@@ -535,6 +583,37 @@ którego struktura jest identyczna z <tt>GG_NOTIFY_REPLY80</tt>.
 <pre>#define GG_STATUS80 0x0036</pre>
 </div>
 
+<a name="ch1.5.1"></a>
+<h4>1.5.1 Dodatkowe informacje o kontaktach</h4>
+
+<p>
+Jeśli podczas logowania klient wyśle w polu <tt>features</tt> maskę bitową
+<tt>0x00000200</tt>, to będzie otrzymywał od serwera pakiety typu
+<tt>GG_USER_DATA</tt> o następującej strukturze:
+</p>
+
+<div class="c">
+<pre>#define GG_USER_DATA 0x0044
+
+struct gg_user_data {
+	int type;	<i>/* typ */</i>
+	int num;	<i>/* liczba struktur gg_user_data_user */</i>
+};
+
+struct gg_user_data_user {
+	int uin;	<i>/* numer użytkownika */</i>
+	int num;	<i>/* liczba struktur gg_user_data_attr */</i>
+};
+
+struct gg_user_data_attr {
+	int name_size;	<i>/* długość nazwy atrybutu */</i>
+	char name[];	<i>/* nazwa atrybutu (bez znaku \0) */</i>
+	int type;	<i>/* typ atrybutu */</i>
+	int value_size;	<i>/* długość wartości atrybutu */</i>
+	char value[];	<i>/* wartość atrybutu (bez znaku \0) */</i>
+};</pre>
+</div>
+
 <hr />
 
 <a name="ch1.6"></a>
@@ -584,11 +663,11 @@ Długość treści wiadomości nie powinna przekraczać 2000 znaków. Oryginalny
 klient zezwala na wysłanie do 1989 znaków. Treść w formacie HTML jest kodowana
 UTF-8. Treść zapisana czystym tekstem jest kodowana zestawem znaków CP1250.
 W obu przypadkach, mimo domyślnych atrybutów tekstu, oryginalny klient dodaje
-informacje o formatowaniu tekstu. Dla HTML wygląda to następująco:
+blok atrybutów tekstu. Dla HTML wygląda to następująco:
 </p>
 
 <div class="http">
-<pre>&lt;span style="color:#000000; font-family:'MS Shell Dlg 2'; font-size:9pt; "&gt;Treść&lt;/span&gt;</pre>
+<pre>&lt;span style="color:#000000; font-family:'MS Shell Dlg 2'; font-size:9pt; "&gt;Test&lt;/span&gt;</pre>
 </div>
 
 <p>
@@ -642,8 +721,64 @@ wiadomością o treści:
 <h4>1.6.2. Formatowanie tekstu</h4>
 
 <p>
+Dla protokołu Nowego Gadu-Gadu natywnym formatem jest HTML, ale blok
+atrybutów również jest przesyłany dla zachowania kompatybilności ze starszymi
+klientami.
+</p>
+
+<a name="ch1.6.2.1"></a>
+<h4>1.6.2.1. Format HTML</h4>
+
+<p>
+Każdy fragment tekstu o spójnych atrybutach jest zawarty w jednym znaczniku
+<tt>&lt;span&gt;</tt>, nawet jeśli są to atrybuty domyślne. Dla przykładu,
+wiadomość o treści &bdquo;Test&rdquo; wysłana bez zmiany atrybutów tekstu
+przedstawia się następująco:
+</p>
+
+<div class="http">
+<pre>&lt;span style="color:#000000; font-family:'MS Shell Dlg 2'; font-size:9pt; "&gt;Test&lt;/span&gt;</pre>
+</div>
+
+<p>
+Oryginalny klient korzysta z następujących znaczników HTML:
+</p>
+
+<ul>
+<li>pogrubienie &mdash; <tt>&lt;b&gt;</tt></li>
+<li>kursywa &mdash; <tt>&lt;i&gt;</tt></li>
+<li>podkreślenie &mdash; <tt>&lt;u&gt;</tt></li>
+<li>kolor tła &mdash; <tt>&lt;span style="background-color:#... "&gt;</tt></li>
+<li>kolor tekstu &mdash; <tt>&lt;span style="color:#... "&gt;</tt></li>
+<li>czcionka &mdash; <tt>&lt;span style="font-family:'...' "&gt;</tt></li>
+<li>rozmiar czcionki &mdash; <tt>&lt;span style="font-size:...pt "&gt;</tt></li>
+<li>nowa linia &mdash; <tt>&lt;br&gt;</tt></li>
+<li>obrazek &mdash; <tt>&lt;img name="..."&gt;</tt></li>
+</ul>
+
+<p>
+Źródło obrazka obrazka jest połączeniem heksadecymalnego zapisu (małymi
+literami) sumy kontrolnej CRC32 oraz rozmiaru dopełnionego do czterech
+bajtów. Dla obrazka o sumie kontrolnej <tt>0x45fb2e46</tt> i rozmiarze
+16568 bajtów źródłem będzie <tt>45fb2e46000040b8</tt>.
+</p>
+
+<p>
+Przykładowa wiadomość wykorzystująca wszystkie dostępne znaczniki oraz
+obrazek:
+</p>
+
+<div class="http">
+&lt;span style="background-color:#00ff00; color:#000000; font-family:'MS Shell Dlg 2'; font-size:9pt; "&gt;&lt;b&gt;&lt;i&gt;&lt;u&gt;Wiadomość&lt;br&gt;testowa&lt;/u&gt;&lt;/i&gt;&lt;/b&gt;&lt;img name="45fb2e46000040b8"&gt;&lt;/span&gt;
+</div>
+
+<a name="ch1.6.2.2"></a>
+<h4>1.6.2.2. Czysty tekst z atrybutami</h4>
+
+<p>
 Możliwe jest również dodawanie do wiadomości różnych atrybutów tekstu, jak
-pogrubienie czy kolory. Niezbędne jest dołączenie następującej struktury:
+pogrubienie czy kolory. Niezbędne jest dołączenie do wiadomości następującej
+struktury:
 </p>
 
 <div class="c">
@@ -692,7 +827,8 @@ obrazek umieszczony w wiadomości wygląda następująco:
 
 <div class="c">
 <pre>struct gg_msg_richtext_image {
-	short unknown1;	<i>/* 0x0109 */</i>
+	char length;	<i>/* długość opisu obrazka (0x09) */</i>
+	char type;	<i>/* rodzaj opisu obrazka (0x01) */</i>
 	int size;	<i>/* rozmiar obrazka */</i>
 	int crc32;	<i>/* suma kontrolna obrazka */</i>
 };</pre>
@@ -720,9 +856,11 @@ przed formatowaniem.
 </p>
 
 <p>
-Jeśli obrazek jest przesyłany w wiadomości bez tekstu, jej treść powinna
-zawierać znak niełamliwej spacji (kod 160 w kodowaniu CP1250). W innym
-przypadku nowsze klienty (np. Nowe Gadu-Gadu) nie wyświetlą obrazka.
+Jeśli obrazek jest przesyłany w wiadomości bez tekstu, jej treść zapisana
+czystym tekstem powinna zawierać znak niełamliwej spacji (kod 160 w kodowaniu
+CP1250). W innym przypadku nowsze klienty (np. Nowe Gadu-Gadu) nie wyświetlą
+obrazka. Wiadomość w formacie HTML może zawierać wyłącznie znacznik
+<tt>&lt;img&gt;</tt>.
 </p>
 
 <a name="ch1.6.3"></a>
@@ -854,10 +992,157 @@ jest struktura identyczna z <tt>gg_msg_recipients</tt> zawierająca pozostałych
 rozmówców.
 </p>
 
+<a name="ch1.7.1"></a>
+<h4>1.7.1. Potwierdzenie</h4>
+
+<p>
+Jeśli podczas logowania klient wyśle w polu <tt>features</tt> maskę bitową
+<tt>0x00000400</tt>, to zobowiązuje się wysłać potwierdzenie po każdej odebranej
+wiadomości. Wysyła je w postaci pakietu:
+</p>
+
+<div class="c">
+<pre>#define GG_RECV_MSG_ACK 0x0046
+	
+struct gg_recv_msg_ack {
+	int num;	<i>/* liczba odebranych wiadomości podczas tego połączenia */</i>
+};</pre>
+</div>
+
 <hr />
 
 <a name="ch1.8"></a>
-<h3>1.8. Ping, pong</h3>
+<h3>1.8. Powiadomienie o pisaniu (&quot;pisak&quot;)</h3>
+
+<p>
+Jeśli podczas logowania klient wyśle w polu <tt>features</tt> maskę bitową
+<tt>0x00002000</tt>, to może wtedy informować drugą stronę o tym czy piszemy
+wiadomość (oraz odbierać informacje czy druga strona coś pisze). Powiadomienia
+wysyłamy/otrzymujemy tym samym pakietem:
+</p>
+
+<div class="c">
+<pre>#define GG_TYPING_NOTIFY 0x0059
+
+struct gg_typing_notify {
+	short type;	<i>/* typ powiadomienia */</i>
+	int uin;	<i>/* do/od kogo wysyłamy/odebraliśmy */</i>
+};</pre>
+</div>
+
+<p>
+Gdzie pole typ może przyjmować następujące stałe wartości:
+</p>
+
+<div class="c">
+<pre>#define GG_TYPING_NOTIFY_TYPE_START	0x0001	<i>/* rozpoczelismy pisanie */</i>
+#define GG_TYPING_NOTIFY_TYPE_STOP	0x0000	<i>/* pozbyliśmy się wiadomości */</i></pre>
+</div>
+
+<p>
+Jeśli otrzymamy w polu type inną wartość, oznacza ona długość wpisanego przez
+drugą stronę w pole wysyłki tekstu.
+</p>
+
+<hr />
+
+<a name="ch1.9" id="ch1.9"></a>
+<h3>1.9. Multilogowanie</h3>
+
+<p>
+Czyli wiele klientów, z różnych miejsc &mdash; na jednym numerze. Co prawda
+do samego zalogowania się na dany numer wiele razy, wcale nie są potrzebne
+specjalne modyfikacje. To jeśli chcemy obsługiwać synchronziację wysyłanych
+wiadomości &mdash; obsługa dodatkowych pakietów będzie nam potrzebna. Aby
+otrzymywać pakiety związane z tą funkcją w polu features przy logowaniu
+dodajemy flagę <tt>0x00004000</tt>.
+</p>
+
+<a name="ch1.9.1" id="ch1.9.1"></a>
+<h4>1.9.1. Synchronizacja wiadomości</h4>
+
+<p>
+Jeśli z innego klienta zostanie wysłana wiadomośc (z naszego numeru) to
+otrzymamy pakiet:
+</p>
+
+<div class="c">
+<pre>#define GG_RECV_OWN_MSG 0x005A
+</pre>
+</div>
+
+<p>
+O takiej strukturze jak <tt>gg_recv_msg80</tt>.
+</p>
+
+<a name="ch1.9.2" id="ch1.9.2"></a>
+<h4>1.9.2. Informacje o innych połączeniach</h4>
+
+<p>
+Jeśli na nasz numer zaloguje się inny klient, lub kiedy my się logujemy,
+a inny klient jest już zalogowany to dostaniemy pakiet:
+</p>
+
+<div class="c">
+<pre>#define GG_MULTILOGON_INFO 0x005B
+
+struct gg_multilogon_info {
+	int count;	<i>/* ilość zalogowanych klientów / struktur gg_multilogon_item w tym pakiecie */</i>
+	struct gg_multilogon_item items[];
+};
+
+struct gg_multilogon_item {
+	int login_ip;		<i>/* IP z jakiego zalogowany jest dany klient */</i>
+	int flags;		<i>/* to co podał w &quot;flags&quot; przy logowaniu */</i>
+	int features;		<i>/* to co podał w &quot;features&quot; przy logowaniu */</i>
+	int logon_time;		<i>/* kiedy zdalny klient się zalogował na nasz numerek */</i>
+	long long conn_id;	<i>/* identyfikator polaczenia */</i>
+	int unknown;		<i>/* nie wiemy co to, zawsze zero */</i>
+	int client_name_size;	<i>/* rozmiar nazwy klieta uzytego po drugiej stronie */</i>
+	char client_name[];	<i>/* nazwa klienta uzywanego w tym polaczeniu */</i>
+};</pre>
+</div>
+
+<a name="ch1.9.3" id="ch1.9.3"></a>
+<h4>1.9.3. Dostosowanie stanu</h4>
+
+<p>
+Protokół GG udostępnia możliwość dostosowania stanu
+&bdquo;nowo-połaczonego&rdquo; klienta do tego jaki mają ustawione już
+zalogowane na naszym numerze komunikatory. W tym celu w pakiecie
+<tt>gg_login80</tt> w polu &bdquo;status&rdquo; dodajemy flagę <tt>0x0400</tt>.
+Jeśli to zrobimy, w momencie gdy łączymy się na numer na którym jest już
+obecny inny klient, stan który podajemy w pakiecie logowania zostanie przez
+serwer zignorowany. W takiej sytuacji powinnismy zaprezentować użytkownikowi
+stan przysłany do nas pakietem <tt>GG_NOTIFY_REPLY80</tt> gdzie
+&bdquo;uin&rdquo; będzie zawierał nasz numer.
+</p>
+
+<p>
+W wypadku kiedy &bdquo;inny&rdquo; klient zmieni stan naszego numeru także
+dostaniemy <tt>GG_NOTIFY_REPLY80</tt> z naszym nowym stanem.
+</p>
+
+<a name="ch1.9.3" id="ch1.9.4"></a>
+<h4>1.9.4. Rozłączenie zdalnego klienta</h4>
+
+<p>
+W razie kiedy chcemy rozłączyć którąś z sesji (podanych
+w <tt>GG_MULTILOGON_INFO</tt>), wysyłamy pakiet:
+</p>
+
+<div class="c">
+<pre>#define GG_MULTILOGON_DISCONNECT 0x0062
+
+struct gg_multilogon_disconnect {
+	long long conn_id; <i>/* id połączenia dostarczone w gg_multilogon_info */</i>
+};</pre>
+</div>
+
+<hr />
+
+<a name="ch1.10" id="ch1.10"></a>
+<h3>1.10. Ping, pong</h3>
 
 <p>
 Od czasu do czasu klient wysyła pakiet do serwera, by oznajmić, że połączenie
@@ -874,8 +1159,8 @@ zmienia się z wersji na wersję, więc najlepiej nie polegać na tym.
 
 <hr />
 
-<a name="ch1.9"></a>
-<h3>1.9. Rozłączenie</h3>
+<a name="ch1.11" id="ch1.11"></a>
+<h3>1.11. Rozłączenie</h3>
 
 <p>
 Jeśli serwer zechce nas rozłączyć, wyśle wcześniej pusty pakiet:
@@ -893,8 +1178,9 @@ ma wyższy priorytet).
 </p>
 
 <p>
-W nowych wersjach protokołu (prawdopodobnie od <tt>0x29</tt>), po wysłaniu
-pakietu zmieniającego status na niedostępny, serwer przysyła pakiet:
+W pewnych wersjach protokołu (prawdopodobnie od <tt>0x29</tt> do okolic
+Nowego Gadu-Gadu), po wysłaniu pakietu zmieniającego status na niedostępny,
+serwer przysyła pakiet:
 </p>
 
 <div class="c">
@@ -903,13 +1189,15 @@ pakietu zmieniającego status na niedostępny, serwer przysyła pakiet:
 
 <p>
 Jest to potwierdzenie, że serwer odebrał pakiet zmiany stanu i klient może
-zakończyć połączenie mając pewność, że zostanie ustawiony żądany opis.
+zakończyć połączenie mając pewność, że zostanie ustawiony żądany opis. Klient
+przedstawiający się jako Gadu-Gadu 10 takiego pakietu już nie dostaje &mdash;
+serwer sam zrywa połączenie po zmianie stanu na niedostępny.
 </p>
 
 <hr />
 
-<a name="ch1.10"></a>
-<h3>1.10. Wiadomości systemowe</h3>
+<a name="ch1.11"></a>
+<h3>1.11. Wiadomości systemowe</h3>
 
 <p>
 Od wersji 7.7 serwer może wysyłać nam wiadomości systemowe przy pomocy pakietu:
@@ -927,7 +1215,7 @@ Przykładowy kod:
 
 <div class="example">
 <pre>&lt;?xml version="1.0" encoding="utf-8"?&gt;
-&lt;event xmlns:ev="www.gadu-gadu.pl/Event/1.0" id ="" type="realtime" creation_time="1194732873" ttl="60"&gt;
+&lt;event xmlns:ev="www.gadu-gadu.pl/Event/1.0" id="" type="realtime" creation_time="1194732873" ttl="60"&gt;
   &lt;ev:actions&gt;
     &lt;ev:showMessage&gt;
       &lt;ev:text&gt;Wejdź na stronę EKG&lt;/ev:text&gt;
@@ -940,30 +1228,28 @@ Przykładowy kod:
 
 <hr />
 
-<a name="ch1.11"></a>
-<h3>1.11. Wiadomości GG_XML_ACTION</h3>
+<a name="ch1.12"></a>
+<h3>1.12. Wiadomości GG_XML_ACTION</h3>
 
 <div class="c">
 <pre>#define GG_XML_ACTION 0x002c</pre>
 </div>
 
-<a name="ch1.11.1"></a>
-<h4>1.11.1 Wiadomości GGLive</h4>
+<a name="ch1.12.1"></a>
+<h4>1.12.1 Wiadomości GGLive</h4>
 
 <div class="check">
-<p>Opisać usługi http://life.gadu-gadu.pl/<br/>
+Opisać usługi http://life.gadu-gadu.pl/<br/>
 Logowanie OAuth: /login?oauth_consumer_key=UIN&amp;oauth_nonce=....&amp;oauth_signature=...&amp;oauth_signature_method=HMAC-SHA1&amp;oauth_timestamp=...&amp;oauth_token=....&amp;oauth_version=1.0<br/>
 Wysyłanie: POST /send/message/?USER_IS_AUTHENTICATED=1&amp;uin=UIN&amp;token=TOKEN<br/>
 message=Testowa+wiadomo%C5%9B%C4%87&amp;send=Wy%C5%9Blij<br/>
-</p>
 </div>
 
 <p>
 Przykładowa otrzymana wiadomość:
 </p>
 <div class="example">
-<pre>
-&lt;events&gt;
+<pre>&lt;events&gt;
   &lt;event id="13106118792229117994"&gt;
   &lt;type&gt;1&lt;/type&gt;
   &lt;sender&gt;7496195&lt;/sender&gt;
@@ -979,13 +1265,12 @@ Przykładowa otrzymana wiadomość:
 </pre>
 </div>
 
-<a name="ch1.11.2"></a>
-<h4>1.11.2 Zmiana avatara przez znajomego</h4>
+<a name="ch1.12.2"></a>
+<h4>1.12.2 Zmiana avatara przez znajomego</h4>
 
 <p>Przykładowa informacja:</p>
 <div class="example">
-<pre>
-&lt;events&gt;
+<pre>&lt;events&gt;
   &lt;event id="13095886332244853765"&gt;
     &lt;type&gt;28&lt;/type&gt;
     &lt;sender&gt;3732&lt;/sender&gt;
@@ -999,13 +1284,12 @@ Przykładowa otrzymana wiadomość:
 </pre>
 </div>
 
-<a name="ch1.11.3"></a>
-<h4>1.11.3 Nowy wpis na blogu znajomego</h4>
+<a name="ch1.12.3"></a>
+<h4>1.12.3 Nowy wpis na blogu znajomego</h4>
 
 <p>Przykładowa informacja:</p>
 <div class="example">
-<pre>
-&lt;events&gt;
+<pre>&lt;events&gt;
   &lt;event id="13095868082578904423"&gt;
     &lt;type&gt;7&lt;/type&gt;
     &lt;sender&gt;3732&lt;/sender&gt;
@@ -1021,15 +1305,13 @@ Przykładowa otrzymana wiadomość:
 </pre>
 </div>
 
-<a name="ch1.11.4"></a>
-<h4>1.11.4 Opisy graficzne</h4>
-<div class="check">
-<p>Osobny rozdział XXX?</p>
-</div>
+<a name="ch1.12.4"></a>
+<h4>1.12.4 Opisy graficzne</h4>
 
 <p>
-Serwer Gadu-Gadu po kupnie opisu graficznego na stronie <a href="http://gadudodatki.pl/opisygraficzne">GaduDodatki</a>
-przesyła nam pakiet GG_XML_EVENT
+Serwer Gadu-Gadu po kupnie opisu graficznego na stronie
+<a href="http://gadudodatki.pl/opisygraficzne">GaduDodatki</a> przesyła nam
+pakiet <tt>GG_XML_EVENT</tt>:
 </p>
 
 <p>Przykładowy opis graficzny: Krol Popu</p>
@@ -1049,37 +1331,44 @@ przesyła nam pakiet GG_XML_EVENT
 </div>
 
 <p>
-Użytkownik powinien zostać zapytany czy chce ustawić ten opis i jeśli tak, to wysyłany jest pakiet GG_NEW_STATUS80
+Użytkownik powinien zostać zapytany czy chce ustawić ten opis i jeśli tak, to wysyłany jest pakiet GG_NEW_STATUS80.
 </p>
+
 <p>Przykładowe ustawienie opisu graficznego: Krol Popu</p>
 <div class="example">
 <pre>
 struct gg_new_status80 krol_popu = { 
-	.status           = GG_STATUS80_DESCR_MASK | GG_STATUS80_GRAPH_MASK | docelowy_opisowy_status; <i>/* 0x4100 | opis */</i>
+	.status           = GG_STATUS_DESCR_MASK | GG_STATUS_IMAGE_MASK | status;
 	.flags            = 0x03;
 	.description_size = 9;
-	.description      = "Krol Popu"
+	.description      = "Krol Popu";
 };</pre>
 </div>
 
 <p>
-Gdy użytkownik ma ustawiony opis graficzny (.status &amp; GG_STATUS80_GRAPH_MASK)
-możemy pobrać ZIP-paczkę z http://www.gadudodatki.pl/userbar/get/id/
+Gdy użytkownik ma ustawiony opis graficzny (flaga <tt>GG_STATUS_IMAGE_MASK</tt>)
+możemy pobrać archiwum spod adresu <tt>http://www.gadudodatki.pl/userbar/get/id/</tt>
 </p>
-<p>Dla przykładowego Króla Popu jest to adres: <span class="example">http://www.gadudodatki.pl/userbar/get/id/Krol%20Popu</span></p>
+
+<p>
+Dla przykładowego Króla Popu jest to adres <tt>http://www.gadudodatki.pl/userbar/get/id/Krol%20Popu</tt>
+</p>
 
 <hr />
 
-<a name="ch1.12"></a>
-<h3>1.12. Katalog publiczny</h3>
+<a name="ch1.13"></a>
+<h3>1.13. Katalog publiczny</h3>
 
 <div class="check">
-<p>Nowe Gadu-Gadu korzysta z OAutha do odczytu oraz zmian danych w katalogu, API opisane jest na:
+Nowe Gadu-Gadu korzysta z OAutha do odczytu oraz zmian danych w katalogu, API opisane jest na:
 <a href="http://dev.gadu-gadu.pl/api/pages/gaduapi.html">http://dev.gadu-gadu.pl/api/pages/gaduapi.html</a>
-</p>
-<p>Nowe Gadu-Gadu korzysta z wyszukiwarki dostępnej na:
-<a href="http://ipubdir.gadu-gadu.pl">http://ipubdir.gadu-gadu.pl</a>
-</p>
+</div>
+
+<p></p>
+
+<div class="check">
+Nowe Gadu-Gadu korzysta z wyszukiwarki dostępnej na: <a href="http://ipubdir.gadu-gadu.pl/ngg/">http://ipubdir.gadu-gadu.pl/ngg/</a><br />
+Starsza wersja: <a href="http://ipubdir.gadu-gadu.pl/">http://ipubdir.gadu-gadu.pl</a>
 </div>
 
 <p>
@@ -1193,11 +1482,11 @@ Wyszukiwanie <b>nie zwraca</b> nazwisk i płci znalezionych osób.
 
 <hr />
 
-<a name="ch1.13"></a>
-<h3>1.13. Lista kontaktów</h3>
+<a name="ch1.14"></a>
+<h3>1.14. Lista kontaktów</h3>
 
 <div class="check">
-<pre>Sprawdzić czy wszystkie #define dalej są potrzebne</pre>
+Sprawdzić czy wszystkie #define dalej są potrzebne
 </div>
 
 <p>
@@ -1286,8 +1575,8 @@ listę kontaktów czego wynikiem jest pole <tt>request</tt> o zawartości:
 
 <hr />
 
-<a name="ch1.14"></a>
-<h3>1.14. Indeks pakietów</h3>
+<a name="ch1.15"></a>
+<h3>1.15. Indeks pakietów</h3>
 
 <p>
 Pakiety wysyłane:
@@ -1320,9 +1609,13 @@ Pakiety wysyłane:
 <tr class="tabf2"><td><tt>0x0028</tt></td><td><tt>GG_NEW_STATUS80BETA</tt></td><td>Zmiana stanu przed Nowym Gadu-Gadu</td></tr>
 <tr class="tabf2"><td><tt>0x0029</tt></td><td><tt>GG_LOGIN80BETA</tt></td><td>Logowanie przed Nowym Gadu-Gadu</td></tr>
 <tr class="tabf"><td><tt>0x002d</tt></td><td><tt>GG_SEND_MSG80</tt></td><td>Wysłanie wiadomości</td></tr>
-<tr class="tabf"><td><tt>0x002f</tt></td><td><tt>GG_USERLIST_REQUEST80</tt></td><td>Zapytanie listy kontaktów na serwerze</td></tr>
+<tr class="tabf2"><td><tt>0x002f</tt></td><td><tt>GG_USERLIST_REQUEST80</tt></td><td>Zapytanie listy kontaktów na serwerze przed Gadu-Gadu 10</td></tr>
 <tr class="tabf"><td><tt>0x0031</tt></td><td><tt>GG_LOGIN80</tt></td><td>Logowanie</td></tr>
 <tr class="tabf"><td><tt>0x0038</tt></td><td><tt>GG_NEW_STATUS80</tt></td><td>Zmiana stanu</td></tr>
+<tr class="tabf"><td><tt>0x0040</tt></td><td><tt>GG_USERLIST_REQUEST100</tt></td><td>Zapytanie listy kontaktów na serwerze</td></tr>
+<tr class="tabf"><td><tt>0x0046</tt></td><td><tt>GG_RECV_MSG_ACK</tt></td><td>Potwierdzenie odebrania wiadomości przez klienta</td></tr>
+<tr class="tabf"><td><tt>0x0059</tt></td><td><tt>GG_TYPING_NOTIFY</tt></td><td>Powiadomienie o pisaniu</td></tr>
+<tr class="tabf"><td><tt>0x0062</tt></td><td><tt>GG_OWN_DISCONNECT</tt></td><td>Rozłączenie zdalnego klienta</td></tr>
 </table>
 
 <p>
@@ -1358,13 +1651,18 @@ Pakiety odbierane:
 <tr class="tabf"><td><tt>0x0025</tt></td><td><tt>GG_DCC7_ABORTED</tt></td><td></td></tr>
 <tr class="tabf"><td><tt>0x0027</tt></td><td><tt>GG_XML_EVENT</tt></td><td>Odebrano wiadomość systemową</td></tr>
 <tr class="tabf2"><td><tt>0x002a</tt></td><td><tt>GG_STATUS80BETA</tt></td><td>Zmiana stanu przed Nowym Gadu-Gadu</td></tr>
-<tr class="tabf"><td><tt>0x002b</tt></td><td><tt>GG_NOTIFY_REPLY80BETA</tt></td><td>Stan listy kontaktów przed Nowym Gadu-Gadu</td></tr>
+<tr class="tabf2"><td><tt>0x002b</tt></td><td><tt>GG_NOTIFY_REPLY80BETA</tt></td><td>Stan listy kontaktów przed Nowym Gadu-Gadu</td></tr>
 <tr class="tabf"><td><tt>0x002c</tt></td><td><tt>GG_XML_ACTION</tt></td><td></td></tr>
 <tr class="tabf"><td><tt>0x002e</tt></td><td><tt>GG_RECV_MSG80</tt></td><td>Przychodząca wiadomość</td></tr>
-<tr class="tabf"><td><tt>0x0030</tt></td><td><tt>GG_USERLIST_REPLY80</tt></td><td>Odpowiedź listy kontaktów na serwerze</td></tr>
+<tr class="tabf2"><td><tt>0x0030</tt></td><td><tt>GG_USERLIST_REPLY80</tt></td><td>Odpowiedź listy kontaktów na serwerze przed Gadu-Gadu 10</td></tr>
 <tr class="tabf"><td><tt>0x0035</tt></td><td><tt>GG_LOGIN_OK80</tt></td><td>Logowanie powiodło się</td></tr>
 <tr class="tabf"><td><tt>0x0036</tt></td><td><tt>GG_STATUS80</tt></td><td>Zmiana stanu</td></tr>
 <tr class="tabf"><td><tt>0x0037</tt></td><td><tt>GG_NOTIFY_REPLY80</tt></td><td>Stan listy kontaktów</td></tr>
+<tr class="tabf"><td><tt>0x0041</tt></td><td><tt>GG_USERLIST_REPLY100</tt></td><td>Odpowiedź listy kontaktów na serwerze</td></tr>
+<tr class="tabf"><td><tt>0x0044</tt></td><td><tt>GG_USER_DATA</tt></td><td>Dodatkowe informacje o liście kontaktów</td></tr>
+<tr class="tabf"><td><tt>0x0059</tt></td><td><tt>GG_TYPING_NOTIFY</tt></td><td>Powiadomienie o pisaniu</td></tr>
+<tr class="tabf"><td><tt>0x005A</tt></td><td><tt>GG_OWN_MESSAGE</tt></td><td>Własne wiadomości z innych klientów</td></tr>
+<tr class="tabf"><td><tt>0x005B</tt></td><td><tt>GG_OWN_RESOURCE_INFO</tt></td><td>Informacje o innych połączeniach na naszym numerze</td></tr>
 </table>
 
 <hr />
@@ -1464,12 +1762,9 @@ Nie są wysyłane żadne parametry. Przykład:
 </p>
 
 <div class="http">
-<pre>POST /appsvc/regtoken.asp HTTP/1.0
+<pre>GET /appsvc/regtoken.asp HTTP/1.1
+Connection: Keep-Alive
 Host: register.gadu-gadu.pl
-Content-Type: application/x-www-form-urlencoded
-User-Agent: Mozilla/4.0 (compatible; MSIE 5.0; Windows 98)
-Content-Length: 0
-Pragma: no-cache
 </pre>
 </div>
 
@@ -1491,9 +1786,9 @@ zwracającego obrazek z wartością tokenu. Przykładowa odpowiedź:
 </p>
 
 <div class="http">
-<pre>60 24 6
-06C05A44
-http://register.gadu-gadu.pl/appsvc/tokenpic.asp</pre></div>
+<pre>115 30 6
+e05622e7fcc844b3d582671e0458f0b1
+http://register.gadu-gadu.pl/regRndPictNew.php</pre></div>
 
 <p>
 Możemy teraz pobrać metodą GET z podanej ścieżki obrazek z tokenem, doklejając
@@ -1503,11 +1798,11 @@ przykładu to:
 </p>
 
 <div class="example">
-<pre>http://register.gadu-gadu.pl/appsvc/tokenpic.asp?tokenid=06C05A44</pre>
+<pre>http://register.gadu-gadu.pl/regRndPictNew.php?tokenid=e05622e7fcc844b3d582671e0458f0b1</pre>
 </div>
 
 <p>
-Pobrany obrazek (w tej chwili jest w formacie JPEG, ale prawdopodobnie może
+Pobrany obrazek (w tej chwili jest w formacie GIF, ale prawdopodobnie może
 się to zmienić na dowolny format obsługiwany domyślnie przez system Windows)
 najlepiej wyświetlić użytkownikowi, prosząc o podanie wartości na nim
 przedstawionej. Będzie ona niezbędna do przeprowadzenia kolejnych operacji.
@@ -1541,14 +1836,14 @@ Przykład:
 </p>
 
 <div class="http">
-<pre>POST /appsvc/fmregister3.asp HTTP/1.0
+<pre>POST /fmregister.php HTTP/1.1
 Host: register.gadu-gadu.pl
 Content-Type: application/x-www-form-urlencoded
-User-Agent: Mozilla/4.0 (compatible; MSIE 5.0; Windows 98)
-Content-Length: 76
+User-Agent: Mozilla/4.7 [en] (Win98; I)
+Content-Length: 99
 Pragma: no-cache
 		
-pwd=sekret&amp;email=abc&#64;xyz.pl<!-- &amp;qa=5~Maria -->&amp;tokenid=06C05A44&amp;tokenval=e94d56&amp;code=1104465363</pre>
+code=283395733&amp;email=abc&#64;xyz.pl&amp;pwd=sekret&amp;tokenid=e05622e7fcc844b3d582671e0458f0b1&amp;tokenval=SEKYCA</pre>
 </div>
 
 <p>
@@ -1556,7 +1851,7 @@ Jeśli wszystko przebiegło poprawnie, serwer odpowie:
 </p>
 
 <div class="http">
-<pre>Tokens okregisterreply_packet.reg.dwUserId=<b>UIN</b></pre>
+<pre>reg_success:<b>UIN</b></pre>
 </div>
 
 <p>
@@ -1576,52 +1871,9 @@ Jeśli został podany nieprawidłowy token, serwer odpowie:
 <a name="ch2.4"></a>
 <h3>2.4. Usunięcie konta</h3>
 
-<table class="tab" border="0" cellspacing="1" cellpadding="2" width="100%">
-<tr class="tabh"><td width="20%"><b>Pole nagłówka</b></td><td width="80%"><b>Wartość</b></td></tr>
-<tr class="tabf"><td><tt>HOST</tt></td><td><tt>register.gadu-gadu.pl</tt></td></tr>
-<tr class="tabf"><td><tt>ŚCIEŻKA</tt></td><td><tt>/appsvc/fmregister3.asp</tt></td></tr>
-</table>
-
-<p></p>
-
-<table class="tab" border="0" cellspacing="1" cellpadding="2" width="100%">
-<tr class="tabh"><td width="20%"><b>Wysyłamy pole</b></td><td width="80%"><b>Znaczenie</b></td></tr>
-<tr class="tabf"><td><tt>fmnumber</tt></td><td>usuwany numer</td></tr>
-<tr class="tabf"><td><tt>fmpwd</tt></td><td>hasło</td></tr>
-<tr class="tabf"><td><tt>delete</tt></td><td>wartość &bdquo;<tt>1</tt>&rdquo;</td></tr>
-<tr class="tabf"><td><tt>pwd</tt></td><td>losowa liczba</td></tr>
-<tr class="tabf"><td><tt>email</tt></td><td>wartość &bdquo;<tt>deletedaccount@gadu-gadu.pl</tt>&rdquo;</td></tr>
-<tr class="tabf"><td><tt>tokenid</tt></td><td>identyfikator tokenu</td></tr>
-<tr class="tabf"><td><tt>tokenval</tt></td><td>wartość tokenu</td></tr>
-<tr class="tabf"><td><tt>code</tt></td><td>hash liczony z pól <tt>pwd</tt> i <tt>email</tt></td></tr>
-</table>
-
 <p>
-Przykład:
-</p>
-
-<div class="http">
-<pre>POST /appsvc/fmregister2.asp HTTP/1.0
-Host: register.gadu-gadu.pl
-Content-Type: application/x-www-form-urlencoded
-User-Agent: Mozilla/4.0 (compatible; MSIE 5.0; Windows 98)
-Content-Length: 137
-Pragma: no-cache
-		
-fmnumber=4969256&amp;fmpwd=haslo&amp;delete=1&amp;email=deletedaccount@gadu-gadu.pl&amp;pwd=%2D38
-8046464&amp;tokenid=06C05A44&amp;tokenval=e94d56&amp;code=1483497094</pre>
-</div>
-
-<p>
-Jeśli wszystko przebiegło poprawnie, serwer odpowie:
-</p>
-
-<div class="http">
-<pre>reg_success:<b>UIN</b></pre>
-</div>
-
-<p>
-Gdzie <tt><b>UIN</b></tt> to numer, który skasowaliśmy.
+Nowe Gadu-Gadu zaprasza użytkownika na stronę https://deleteaccount.messenger.gadu-gadu.pl
+na której użytkownik może usunąć swoje konto.
 </p>
 
 <hr />
@@ -1632,7 +1884,7 @@ Gdzie <tt><b>UIN</b></tt> to numer, który skasowaliśmy.
 <table class="tab" border="0" cellspacing="1" cellpadding="2" width="100%">
 <tr class="tabh"><td width="20%"><b>Pole nagłówka</b></td><td width="80%"><b>Wartość</b></td></tr>
 <tr class="tabf"><td><tt>HOST</tt></td><td><tt>register.gadu-gadu.pl</tt></td></tr>
-<tr class="tabf"><td><tt>ŚCIEŻKA</tt></td><td><tt>/appsvc/fmregister3.asp</tt></td></tr>
+<tr class="tabf"><td><tt>ŚCIEŻKA</tt></td><td><tt>/fmregister.php</tt></td></tr>
 </table>
 
 <p></p>
@@ -1663,8 +1915,8 @@ Jeśli wszystko przebiegło poprawnie, serwer odpowie:
 
 <table class="tab" border="0" cellspacing="1" cellpadding="2" width="100%">
 <tr class="tabh"><td width="20%"><b>Pole nagłówka</b></td><td width="80%"><b>Wartość</b></td></tr>
-<tr class="tabf"><td><tt>HOST</tt></td><td><tt>retr.gadu-gadu.pl</tt></td></tr>
-<tr class="tabf"><td><tt>ŚCIEŻKA</tt></td><td><tt>/appsvc/fmsendpwd3.asp</tt></td></tr>
+<tr class="tabf"><td><tt>HOST</tt></td><td><tt>register.gadu-gadu.pl</tt></td></tr>
+<tr class="tabf"><td><tt>ŚCIEŻKA</tt></td><td><tt>/fmsendpwd.php</tt></td></tr>
 </table>
 
 <p></p>
@@ -1688,10 +1940,10 @@ Jeśli się udało, serwer odpowie:
 <hr />
 
 <a name="ch3"></a>
-<h2>3. Połączenia bezpośrednie</h2>
+<h2>3. Połączenia między klientami</h2>
 
 <a name="ch3.1"></a>
-<h3>3.1. Nawiązanie połączenia</h3>
+<h3>3.1. Identyfikator połączenia</h3>
 
 <p>
 Połączenia bezpośrednie pozwalają przesyłać pliki lub prowadzić rozmowy
@@ -1718,8 +1970,8 @@ Pole <tt>type</tt> oznacza rodzaj transmisji:
 </p>
 
 <div class="c">
-<pre>#define GG_DCC7_TYPE_VOICE 0x00000001	<i>/* Rozmowa głosowa (już nieużywane) */</i>
-#define GG_DCC7_TYPE_FILE 0x00000004	<i>/* Przesyłanie plików */</i>
+<pre>#define GG_DCC7_TYPE_VOICE 0x00000001	<i>/* rozmowa głosowa (już nieużywane) */</i>
+#define GG_DCC7_TYPE_FILE 0x00000004	<i>/* przesyłanie plików */</i>
 </pre>
 </div>
 
@@ -1731,7 +1983,7 @@ Na co serwer odpowie:
 <pre>#define GG_DCC7_ID_REPLY 0x0023
 
 struct gg_dcc7_id_reply {
-	int type;	<i>/* Rodzaj transmisji */</i>
+	int type;	<i>/* rodzaj transmisji */</i>
 	long long id;	<i>/* przyznany identyfikator */</i>
 };</pre>
 </div>
@@ -1741,12 +1993,9 @@ struct gg_dcc7_id_reply {
 <a name="ch3.2"></a>
 <h3>3.2. Przesyłanie plików</h3>
 
-<div class="check">W rodzaju transmisji (type) GG_DCC7_TYPE_FILE</div>
-
-<h4>3.2.1 GG_DCC7_TYPE_FILE - Jak powiadamiać, jak akceptować oraz jak odrzucać</h4>
-
 <p>
-Aby powiadomić o chęci przesłania pliku, należy wysłać następujący pakiet.
+Aby powiadomić odbiorcę o chęci przesłania pliku, należy wysłać do serwera
+następujący pakiet:
 </p>
 
 <div class="c">
@@ -1764,18 +2013,17 @@ struct gg_dcc7_new {
 </div>
 
 <p>
-Strona wywoływana po otrzymaniu pakietu GG_DCC7_NEW, może zaakceptować pobieranie pliku,
-wysyła pakiet:
+Odbiorca po otrzymaniu tego samego pakietu <tt>GG_DCC7_NEW</tt>, może
+zaakceptować plik wysyłając pakiet:
 </p>
 
 <div class="c">
 <pre>#define GG_DCC7_ACCEPT 0x0021
 
 struct gg_dcc7_accept {
-	int uin;	<i>/* numer przyjmującego połączenie */</i>
-	long long id;	<i>/* identyfikator połączenia */</i>
-	int offset;	<i>/* offset przy wznawianiu transmisji */</i>
-	int dunno1;	<i>/* 0x00000000 (na 99% kontynuacja offsetu) */</i>
+	int uin;		<i>/* numer przyjmującego połączenie */</i>
+	long long id;		<i>/* identyfikator połączenia */</i>
+	long long offset;	<i>/* offset przy wznawianiu transmisji */</i>
 };</pre>
 </div>
 
@@ -1786,16 +2034,16 @@ dane dopisać na końcu pliku.
 </p>
 
 <p>
-Jeśli strona wywołana chce odrzucić plik wysyła pakiet:
+Jeśli odbiorca chce odrzucić plik, wysyła pakiet:
 </p>
 
 <div class="c">
 <pre>#define GG_DCC7_REJECT 0x0022
 
 struct gg_dcc7_reject {
-	int uin;	<i>/* Numer odrzucającego połączenie */</i>
-	long long id;	<i>/* Identyfikator połączenia */</i>
-	int reason;	<i>/* Powód rozłączenia */</i>
+	int uin;	<i>/* numer odrzucającego połączenie */</i>
+	long long id;	<i>/* identyfikator połączenia */</i>
+	int reason;	<i>/* powód rozłączenia */</i>
 };</pre>
 </div>
 
@@ -1804,19 +2052,24 @@ Dla pola <tt>reason</tt> znane są wartości:
 </p>
 
 <div class="c">
-<pre>#define GG_DCC7_REJECT_BUSY	0x00000001	<i>/* Połączenie bezpośrednie już trwa, nie umiem obsłużyć więcej */</i>
-#define GG_DCC7_REJECT_USER	0x00000002	<i>/* Użytkownik odrzucił połączenie */</i>
-#define GG_DCC7_REJECT_VERSION	0x00000006	<i>/* Druga strona ma wersję klienta nieobsługującą połączeń bezpośrednich tego typu */</i>
+<pre>#define GG_DCC7_REJECT_BUSY	0x00000001	<i>/* połączenie bezpośrednie już trwa, nie umiem
+						   obsłużyć więcej */</i>
+#define GG_DCC7_REJECT_USER	0x00000002	<i>/* użytkownik odrzucił połączenie */</i>
+#define GG_DCC7_REJECT_HIDDEN	0x00000003	<i>/* użytkownik ojest ukryty i nie możesz  
+						   mu wysłać pliku*/</i>
+#define GG_DCC7_REJECT_VERSION	0x00000006	<i>/* druga strona ma wersję klienta nieobsługującą
+						   połączeń bezpośrednich tego typu */</i>
 </pre>
 </div>
 
 <p>
-Przed akceptacją pliku przez stronę wywoływaną, użytkownik może przerwać
-żądanie wysyłając pakiet:
+Przed akceptacją pliku przez odbiorcę, nadawca może przerwać żądanie
+wysyłając pakiet:
 </p>
 
 <div class="c">
 <pre>#define GG_DCC7_ABORT 0x0025
+
 struct gg_dcc7_abort {
 	long long id;		<i>/* identyfikator połączenia */</i>
 	int uin_from;		<i>/* numer nadawcy */</i>
@@ -1825,141 +2078,83 @@ struct gg_dcc7_abort {
 </div>
 
 <p>
-Strona wywoływana w takim przypadku powinna otrzymać pakiet:
+Odbiorca w takim przypadku otrzyma pakiet:
 </p>
 
 <div class="c">
 <pre>#define GG_DCC7_ABORTED 0x0025
+
 struct gg_dcc7_aborted {
 	long long id;		<i>/* identyfikator połączenia */</i>
 };</pre>
 </div>
 
+<hr />
+
+<a name="ch3.3"></a>
+<h3>3.3. Połączenie bezpośrednie</h3>
 
 <p>
-Po zaakceptowaniu pliku, obie strony zaczynają nasłuchiwać na losowo wybranym porcie i
-wysyłają pakiet GG_DCC7_INFO z informacjami potrzebnymi do połączenia.
+Po zaakceptowaniu pliku, obie strony zaczynają nasłuchiwać na losowo wybranym
+porcie z zakresu 4096..32767 i wysyłają pakiet <tt>GG_DCC7_INFO</tt>
+z informacjami potrzebnymi do połączenia.
 </p>
-
-<h4>3.2.2 relay.gadu-gadu.pl - 91.197.13.102 albo tajemniczy host w podsieci 91.197.12.0/22</h4>
-
-<p>
-Oba hosty łączą się również z relay.gadu-gadu.pl:80 aby uzyskać listę serwerów które mogą pośredniczyć
-w wymianie plików.
-</p>
-
-<div class="c">
-<pre>#define GG_DCC7_RELAY_REQUEST 0x0a
-struct gg_dcc7_relay_req {
-	int magic;	<i>/* 0x0a */</i>
-	int len;	<i>/* długość całego pakietu */</i>
-	long long id;	<i>/* identyfikator połączenia */</i>
-	short dunno1;	<i>/* 0x01 0x00 */</i>
-	short dunno2;	<i>/* 0x02 0x00 */</i>
-};</pre>
-</div>
-
-<div class="check">
-Czy wysyła zapytania DNS o relay.gadu-gadu.pl U mnie łączy się z 91.197.13.102, zapytań nie widziałem (cache?)
-</div>
-
-<div class="check">
-Tak naprawdę z relay.gadu-gadu.pl łączą się dwa razy.
-Za pierwszym razem łączą się wysyłając w dunno1: 08 00.
-Odpowiada też dwoma rekordami, ale w port jest 00 00
-</div>
-
-<p>
-Przykładowe pytanie o serwery dla połączenia 0x160600000bd4
-</p>
-
-<div class="example">
-<pre>
-0000  0a 00 00 00 14 00 00 00 d4 0b 00 00 06 16 00 00
-0010  01 00 02 00
-</pre>
-</div>
-
-<p>
-Serwer odpowiada:
-</p>
-
-<div class="c">
-<pre>#define GG_DCC7_RELAY_REPLY 0x0b
-struct gg_dcc7_relay_reply {
-	int magic;	<i>/* 0x0b */</i>
-	int len;	<i>/* długość całego pakietu */</i>
-	int rcount;	<i>/* prawdopodobnie ilość pośredniczących serwerów */</i>
-	struct {
-		int ip;		<i>/* adres ip serwera */</i>
-		short port;	<i>/* port serwera */</i>
-		char family;	<i>/* rodzina adresów (na końcu?!) AF_INET=2 */</i>
-	} proxies[rcount];
-};</pre>
-
-</div>
-
-<p>Przykładowa odpowiedź serwera zawierająca 2 rekordy:</p>
-<ol>
-  <li>91.197.13.104:80</li>
-  <li>91.197.13.104:443</li>
-</ol>
-
-<div class="example">
-<pre>
-0000  0b 00 00 00 1a 00 00 00 02 00 00 00 5b c5 0d 68
-0010  50 00 02 5b c5 0d 68 bb 01 02
-</pre>
-</div>
-
-<p></p>
-
-<h4>3.2.3 GG_DCC7_INFO - Jak się odnaleźć w mroku</h4>
 
 <div class="c">
 <pre>#define GG_DCC7_INFO 0x001f
 
 struct gg_dcc7_info {
-	int uin;	<i>/* numer nadawcy */</i>
-	int type;	<i>/* sposób połączenia */</i>
-	long long id;	<i>/* identyfikator połączenia */</i>
-	char info[64];	<i>/* informacje o połączeniu */</i>
+	int uin;		<i>/* numer nadawcy */</i>
+	int type;		<i>/* sposób połączenia */</i>
+	long long id;		<i>/* identyfikator połączenia */</i>
+	char info[32];		<i>/* informacje o połączeniu */</i>
+	char cookie[32];	<i>/* losowa informacja */</i>
 };</pre>
 </div>
 
-<div class="check">Rodzielić info na info1, info2</div>
-
 <p>
-W polu <tt>type</tt> sposób połączenia:
+Pole <tt>type</tt> określa sposób połączenia:
 </p>
 
 <div class="c">
-<pre>#define GG_DCC7_TYPE_P2P 0x00000001	<i>/* Połączenie bezpośrednie */</i>
-#define GG_DCC7_TYPE_SERVER 0x00000002	<i>/* Połączenie przez serwer */</i>
+<pre>#define GG_DCC7_TYPE_P2P    0x00000001	<i>/* połączenie bezpośrednie */</i>
+#define GG_DCC7_TYPE_SERVER 0x00000002	<i>/* połączenie przez serwer */</i>
 </pre>
 </div>
 
-<p>Dla połączeń bezpośrednich:</p>
-<ul>
- <li>pierwsze 32bajty pola <tt>info</tt> to <i>IP &lt;SPACJA&gt; PORT</i></li>
- <li>drugie 32bajty pola <tt>info</tt> to ip oraz port w innej postaci, niestety nie mamy informacji o algorytmie :)</li>
-</ul>
+<p>
+Pole <tt>info</tt> zawiera tekstową reprezentację adresu IP, spację i numer
+portu. Pole <tt>cookie</tt> jest tekstową reprezentacją liczby wyznaczanej
+w następujący sposób:
+</p>
+
+<div class="c">
+<pre>// Gadu-Gadu 8.x i późniejsze
+int cookie = <b>adres</b> + <b>port</b> * rand();
+
+// Gadu-Gadu 7.x
+int cookie = 0x7FFF * rand() + rand();
+</pre>
+</div>
 
 <p>
-Przykładowa zawartość pola <tt>info</tt> dla 10.0.0.2:22563
+Adres do obliczeń jest zapisany w sieciowej kolejności bajtów (np. wynik
+funkcji <tt>inet_addr()</tt>), port w lokalnej.
+</p>
+
+<p>
+Przykładowa zawartość pól <tt>info</tt> i <tt>cookie</tt>:
 </p>
 
 <div class="example">
-<pre>
-0000   31 30 2e 30 2e 30 2e 32 20 32 32 35 36 33 00 00  10.0.0.2 22563..
+<pre>0000   31 30 2e 30 2e 30 2e 32 20 32 32 35 36 33 00 00  10.0.0.2 22563..
 0010   00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
 0020   31 37 36 34 36 38 34 38 34 00 00 00 00 00 00 00  176468484.......
-0030   00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
-</pre>
+0030   00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................</pre>
 </div>
 
 <p>
-Po udanym połączeniu na podany adres w GG_DCC7_INFO wysyłamy pakiet powitalny:
+Po udanym połączeniu na podany adres, wysyłamy pakiet powitalny:
 </p>
 
 <div class="c">
@@ -1969,42 +2164,110 @@ Po udanym połączeniu na podany adres w GG_DCC7_INFO wysyłamy pakiet powitalny
 </div>
 
 <p>
-Druga strona powinna odpowiedzieć tym samym. Teraz już możemy albo wysyłać albo odbierać plik.
-</p>
-<div class="check">
-Z powodu tego że obie strony łączą się w tym samym momencie możliwy jest wyścig.
-Z tego co zauważyłem gdy jednak ze stron zorientuje się że na innym połączeniu dostaliśmy już ten id,
-to połączenie jest zrywane - ale czy taki sposób rozwiązywania nie powoduje możliwych wyścigów?
-</div>
-
-<p>Dla połączeń przez serwer:<br/>
-- pierwsze 32bajty pola <tt>info</tt> to GG<i>id</i>CH<i>numerek</i><br/><br/>
-Gdzie: <br/>
-<tt>id</tt> to identyfikator połączenia zapisany w cyferkach ASCII<br/>
-<tt>numerek</tt> TBD
+Druga strona powinna odpowiedzieć tym samym. Teraz już możemy albo wysyłać
+albo odbierać plik.
 </p>
 
-<div class="warn">
-<pre>
-GG7.7 wysyła: GG<i>id</i><b>SH</b><i>numerek</i>
-Protokół jest inny, i raczej nie będzie działać.
-</pre>
+<hr />
+
+<a name="ch3.4"></a>
+<h3>3.4. Połączenie przez serwer</h3>
+
+<p>
+Obie strony połączenia łączą się również z <tt>relay.gadu-gadu.pl:80</tt> aby
+uzyskać listę serwerów które mogą pośredniczyć w wymianie plików. Struktura
+żądania:
+</p>
+
+<div class="c">
+<pre>#define GG_DCC7_RELAY_REQUEST 0x0a
+
+struct gg_dcc7_relay_req {
+	int type;	<i>/* 0x0a */</i>
+	int len;	<i>/* długość całego pakietu */</i>
+	long long id;	<i>/* identyfikator połączenia */</i>
+	short req_type;	<i>/* typ żądania (patrz niżej) */</i>
+	char family	<i>/* 0x02, prawdopodobnie rodzina adresów (AF_INET=2) */</i>
+	char unknown;   <i>/* 0x00 */</i>
+};</pre>
 </div>
 
 <p>
-Przykładowa zawartość pola <tt>info</tt> dla połączenia 0x00000a0600000b27<br/>
-<br/>
-$ echo 'ibase=16; 00000A0600000B27' | bc <br/>
-11020886084391
+Gdzie <tt>req_type</tt> może przyjąć wartości:
+</p>
+
+<div class="c">
+<pre>#define GG_DCC7_RELAY_TYPE_PROXY    0x01 <i>/* adresy proxy, na które sie łączyć */</i>
+#define GG_DCC7_RELAY_TYPE_SERVER   0x08 <i>/* adres serwera, na który spytać o proxy */</i></pre>
+</div>
+
+<p>
+Serwer odpowiada:
+</p>
+
+<div class="c">
+<pre>#define GG_DCC7_RELAY_REPLY 0x0b
+
+struct gg_dcc7_relay_reply {
+	int type;	<i>/* 0x0b */</i>
+	int len;	<i>/* długość całego pakietu */</i>
+	int count;	<i>/* prawdopodobnie ilość pośredniczących serwerów */</i>
+	struct {
+		int ip;		<i>/* adres ip serwera */</i>
+		short port;	<i>/* port serwera */</i>
+		char family;	<i>/* prawdopodobnie rodzina adresów (AF_INET=2) */</i>
+	} proxies[];
+};</pre>
+</div>
+
+<p>
+Pobieranie IP serwera(ów) pośredniczących w Gadu-Gadu 10.x następuje przed
+i po wysłaniu <tt>GG_DCC7_INFO</tt> wg schematu:
+</p>
+
+<ul>
+<li>wysłanie <tt>GG_DCC7_RELAY_REQUEST</tt> z <tt>req_type</tt> równym <tt>GG_DCC7_RELAY_TYPE_SERVER</tt> na <tt>relay.gadu-gadu.pl:80</tt></li>
+<li>opcjonalnie: wysłanie <tt>GG_DCC7_RELAY_REQUEST</tt> z <tt>req_type</tt> równym <tt>GG_DCC7_RELAY_TYPE_SERVER</tt> na <tt>relay.gadu-gadu.pl:443</tt></li>
+<li>wysłanie <tt>GG_DCC_INFO</tt> z typem <tt>GG_DCC7_TYPE_P2P</tt> (patrz dalej)</li>
+<li>wysłanie <tt>GG_DCC7_RELAY_REQUEST</tt> z <tt>req_type</tt> równym <tt>GG_DCC7_RELAY_TYPE_PROXY</tt> na adres serwera otrzymany w pierwszym <tt>GG_DCC7_RELAY_REQUEST</tt></li>
+<li>opcjonalnie: jw tylko na port 443</li>
+</ul>
+
+<p>
+Może się zdarzyć, że żaden z serwerów nie odpowie na pierwsze żądanie, wtedy
+jako adres drugiego żądania bierzemy znowu <tt>relay.gadu-gadu.pl</tt>.
+</p>
+
+<p>
+Po uzyskaniu adresu serwera pośredniczącego należy wysłać pakiet
+<tt>GG_DCC7_INFO</tt> (<a href="#ch3.3">opisany wcześniej</a>) z polem
+<tt>type</tt> równym <tt>GG_DCC7_TYPE_SERVER</tt> i polem <tt>info</tt>
+w postaci:
+</p>
+
+<div class="http">
+<pre>GG<b>id</b>CH<b>rand</b></pre>
+</div>
+
+<p>
+Gdzie <b><tt>id</tt></b> to tekstowa reprezentacja identyfikatora połączenia,
+a <b><tt>rand</tt></b> to losowa wartość z zakresu 0..9999. Gadu-Gadu 7.x
+zamiast <tt>CH</tt> mogło wysłać również <tt>SH</tt>.
+</p>
+
+<p>
+Pole <tt>cookie</tt> pozostaje puste.
+</p>
+
+<p>
+Przykładowa zawartość pól <tt>info</tt> i <tt>cookie</tt>:
 </p>
 
 <div class="example">
-<pre>
-0000   47 47 31 31 30 32 30 38 38 36 30 38 34 33 39 31  GG11020886084391
+<pre>0000   47 47 31 31 30 32 30 38 38 36 30 38 34 33 39 31  GG11020886084391
 0010   43 48 36 39 36 32 00 00 00 00 00 00 00 00 00 00  CH6962..........
 0020   00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
-0030   00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
-</pre>
+0030   00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................</pre>
 </div>
 
 <p>
@@ -2013,91 +2276,22 @@ Po połączeniu do serwera pośredniczącego wysyłamy pakiet powitalny:
 
 <div class="c">
 <pre>struct gg_dcc7_welcome_server {
-	int dunno1;	<i>/* 0xc0debabe */</i>
+	int welcome;	<i>/* 0xc0debabe */</i>
 	long long id;	<i>/* identyfikator połączenia */</i>
 };</pre>
 </div>
 
 <p>
-Serwer powinien odpowiedzieć tym samym. Teraz już możemy albo wysyłać albo odbierać plik.
+Serwer powinien odpowiedzieć tym samym. Teraz już możemy albo wysyłać albo
+odbierać plik.
 </p>
 
 <hr />
 
-<a name="ch3.3"></a>
-<h3>3.3. Rozmowy głosowe</h3>
+<a name="ch3.4"></a>
+<h3>3.4. Rozmowy głosowe</h3>
 
-<div class="check">
-ZTCP to leci po SIP
-</div>
-
-<div class="check">
-<p>
-Aby powiadomić o chęci rozmowy głosowej należy wysłać pakiet:
-</p>
-
-<div class="c">
-<pre>#define GG_DCC_REQUEST_VOICE 0x0002
-
-struct gg_dcc_request {
-	int type;	<i>/* GG_DCC_REQUEST_VOICE */</i>
-};</pre>
-</div>
-
-<p>
-Strona wywołana może potwierdzić chęć przeprowadzenia rozmowy za pomocą
-pakietu:
-</p>
-
-<div class="c">
-<pre>#define GG_DCC_VOICE_ACK 0x01
-
-struct gg_dcc_voice_ack {
-	char type;	<i>/* GG_DCC_VOICE_ACK */</i>
-};</pre>
-</div>
-
-<p>
-Jeśli strona wywołana chce odrzucić rozmowę głosową, zrywa połączenie.
-Mimo tego, strona wywołująca nie powinna ignorować wartości potwierdzenia.
-</p>
-
-<p>
-Następnie przesyłane są próbki dźwiękowe kodowane microsoftowym wariantem
-GSM. Pod systemem Windows wystarczy użyć standardowego kodeka, pod innymi
-można skorzystać z biblioteki
-<a href="http://kbs.cs.tu-berlin.de/~jutta/toast.html">libgsm</a> z opcją
-WAV49. Pakiet danych wygląda następująco:
-</p>
-
-<div class="c">
-<pre>#define GG_DCC_VOICE_DATA 0x03
-
-struct gg_dcc_voice_data {
-	char type;	<i>/* GG_DCC_VOICE_DATA */</i>
-	int length;	<i>/* długość pakietu */</i>
-	char data[];	<i>/* dane */</i>
-};</pre>
-</div>
-
-<p>
-W celu zakończenia rozmowy głosowej, zamiast powyższej ramki wysyła się:
-</p>
-
-<div class="c">
-<pre>#define GG_DCC_VOICE_TERMINATE 0x04
-
-struct gg_dcc_voice_terminate {
-	char type;	<i>/* GG_DCC_VOICE_TERMINATE */</i>
-};</pre>
-</div>
-
-<p>
-Do wersji 5.0.5 w jednym pakiecie było umieszczone 6 ramek GSM (<i>6 * 32,5 =
-195 bajtów</i>), a począwszy od tej wersji przesyła się po 10 ramek GSM,
-poprzedzając je bajtem zerowym (<i>1 + 10 * 32,5 = 326 bajtów</i>).
-</p>
-</div>
+<p>Połączenia głosowe są realizowane za pomocą protokołu SIP.</p>
 
 <hr />
 
@@ -2148,17 +2342,20 @@ napisz na listę dyskusyjną
 	<li><b>Jakub Zawadzki</b> (darkjames%darkjames.ath.cx): nowości w
 	7.x i 8.x.</li>
 	<li><b>Krystian Kołodziej</b> (krystiankolodziej%gmail.com): znaczenie
-	GG_DISCONNECT_ACK.</li>
+	GG_DISCONNECT_ACK, nowy pakiet GG_LOGIN80_FAILED</li>
 	<li><b>Adrian Warecki</b> (bok%kokosoftware.pl): Przykładowe pakiety GG_XML_ACTION</li>
+	<li><b>Piotr Latosiński</b> (piotr.latosinski%gmail.com): Opis pakietów GG_USER_DATA i GG_RECV_MSG_ACK</li>
+	<li><b>Tomek Nagisa</b> (kaworu%k2t.eu): Opis pakietów &quot;pisaka&quot;, GG_TYPING_NOTIFY oraz multilogowania.</li>
+	<li><b>Maciej Muszkowski</b> (maciek.muszkowski%gmail.com): Poprawiony opis połączeń bezpośrednich/relay w GG 8.x/10.x</li>
 </ul>
 
 <hr />
 
-<font color="silver">
+<p class="footer">
 $Id$
-</font>
+</p>
 
-</td></tr></table>
+</div>
 </center>
 
 </body>
