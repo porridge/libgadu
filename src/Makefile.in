@@ -38,8 +38,10 @@ subdir = src
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/acx_pthread.m4 \
-	$(top_srcdir)/m4/openssl.m4 $(top_srcdir)/m4/stdint.m4 \
-	$(top_srcdir)/configure.ac
+	$(top_srcdir)/m4/libtool.m4 $(top_srcdir)/m4/ltoptions.m4 \
+	$(top_srcdir)/m4/ltsugar.m4 $(top_srcdir)/m4/ltversion.m4 \
+	$(top_srcdir)/m4/lt~obsolete.m4 $(top_srcdir)/m4/openssl.m4 \
+	$(top_srcdir)/m4/stdint.m4 $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(install_sh) -d
@@ -72,12 +74,17 @@ am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libgadu_la_LIBADD =
 am_libgadu_la_OBJECTS = libgadu_la-common.lo libgadu_la-dcc.lo \
-	libgadu_la-dcc7.lo libgadu_la-events.lo libgadu_la-http.lo \
+	libgadu_la-dcc7.lo libgadu_la-debug.lo libgadu_la-encoding.lo \
+	libgadu_la-events.lo libgadu_la-handlers.lo libgadu_la-http.lo \
+	libgadu_la-libgadu.lo libgadu_la-message.lo \
 	libgadu_la-obsolete.lo libgadu_la-pubdir.lo \
-	libgadu_la-pubdir50.lo libgadu_la-libgadu.lo \
-	libgadu_la-sha1.lo libgadu_la-resolver.lo
+	libgadu_la-pubdir50.lo libgadu_la-resolver.lo \
+	libgadu_la-sha1.lo
 libgadu_la_OBJECTS = $(am_libgadu_la_OBJECTS)
-libgadu_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
+AM_V_lt = $(am__v_lt_$(V))
+am__v_lt_ = $(am__v_lt_$(AM_DEFAULT_VERBOSITY))
+am__v_lt_0 = --silent
+libgadu_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(libgadu_la_CFLAGS) \
 	$(CFLAGS) $(libgadu_la_LDFLAGS) $(LDFLAGS) -o $@
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir) -I$(top_builddir)/include
@@ -86,13 +93,26 @@ am__depfiles_maybe = depfiles
 am__mv = mv -f
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
-LTCOMPILE = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
-	--mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
-	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
+LTCOMPILE = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) \
+	$(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
+	$(AM_CFLAGS) $(CFLAGS)
+AM_V_CC = $(am__v_CC_$(V))
+am__v_CC_ = $(am__v_CC_$(AM_DEFAULT_VERBOSITY))
+am__v_CC_0 = @echo "  CC    " $@;
+AM_V_at = $(am__v_at_$(V))
+am__v_at_ = $(am__v_at_$(AM_DEFAULT_VERBOSITY))
+am__v_at_0 = @
 CCLD = $(CC)
-LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
-	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
-	$(LDFLAGS) -o $@
+LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(AM_LDFLAGS) $(LDFLAGS) -o $@
+AM_V_CCLD = $(am__v_CCLD_$(V))
+am__v_CCLD_ = $(am__v_CCLD_$(AM_DEFAULT_VERBOSITY))
+am__v_CCLD_0 = @echo "  CCLD  " $@;
+AM_V_GEN = $(am__v_GEN_$(V))
+am__v_GEN_ = $(am__v_GEN_$(AM_DEFAULT_VERBOSITY))
+am__v_GEN_0 = @echo "  GEN   " $@;
 SOURCES = $(libgadu_la_SOURCES)
 DIST_SOURCES = $(libgadu_la_SOURCES)
 ETAGS = etags
@@ -100,6 +120,7 @@ CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = @ACLOCAL@
 AMTAR = @AMTAR@
+AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
 AR = @AR@
 AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
@@ -223,9 +244,9 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 lib_LTLIBRARIES = libgadu.la
-libgadu_la_SOURCES = common.c dcc.c dcc7.c events.c http.c obsolete.c pubdir.c pubdir50.c libgadu.c sha1.c resolver.c
+libgadu_la_SOURCES = common.c dcc.c dcc7.c debug.c encoding.c events.c handlers.c http.c libgadu.c message.c obsolete.c pubdir.c pubdir50.c resolver.c sha1.c
 libgadu_la_CFLAGS = -I$(top_srcdir) -I$(top_srcdir)/include -DGG_IGNORE_DEPRECATED
-libgadu_la_LDFLAGS = -version-number 3:10 -export-symbols libgadu.sym
+libgadu_la_LDFLAGS = -version-number 3:12 -export-symbols libgadu.sym
 EXTRA_DIST = libgadu.sym
 all: all-am
 
@@ -293,7 +314,7 @@ clean-libLTLIBRARIES:
 	  rm -f "$${dir}/so_locations"; \
 	done
 libgadu.la: $(libgadu_la_OBJECTS) $(libgadu_la_DEPENDENCIES) 
-	$(libgadu_la_LINK) -rpath $(libdir) $(libgadu_la_OBJECTS) $(libgadu_la_LIBADD) $(LIBS)
+	$(AM_V_CCLD)$(libgadu_la_LINK) -rpath $(libdir) $(libgadu_la_OBJECTS) $(libgadu_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -304,9 +325,13 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgadu_la-common.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgadu_la-dcc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgadu_la-dcc7.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgadu_la-debug.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgadu_la-encoding.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgadu_la-events.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgadu_la-handlers.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgadu_la-http.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgadu_la-libgadu.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgadu_la-message.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgadu_la-obsolete.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgadu_la-pubdir.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgadu_la-pubdir50.Plo@am__quote@
@@ -314,102 +339,148 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgadu_la-sha1.Plo@am__quote@
 
 .c.o:
-@am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(COMPILE) -c $<
 
 .c.obj:
-@am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `$(CYGPATH_W) '$<'`
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `$(CYGPATH_W) '$<'`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(COMPILE) -c `$(CYGPATH_W) '$<'`
 
 .c.lo:
-@am__fastdepCC_TRUE@	$(LTCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Plo
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LTCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Plo
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LTCOMPILE) -c -o $@ $<
 
 libgadu_la-common.lo: common.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgadu_la_CFLAGS) $(CFLAGS) -MT libgadu_la-common.lo -MD -MP -MF $(DEPDIR)/libgadu_la-common.Tpo -c -o libgadu_la-common.lo `test -f 'common.c' || echo '$(srcdir)/'`common.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libgadu_la-common.Tpo $(DEPDIR)/libgadu_la-common.Plo
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgadu_la_CFLAGS) $(CFLAGS) -MT libgadu_la-common.lo -MD -MP -MF $(DEPDIR)/libgadu_la-common.Tpo -c -o libgadu_la-common.lo `test -f 'common.c' || echo '$(srcdir)/'`common.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgadu_la-common.Tpo $(DEPDIR)/libgadu_la-common.Plo
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='common.c' object='libgadu_la-common.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgadu_la_CFLAGS) $(CFLAGS) -c -o libgadu_la-common.lo `test -f 'common.c' || echo '$(srcdir)/'`common.c
+@am__fastdepCC_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgadu_la_CFLAGS) $(CFLAGS) -c -o libgadu_la-common.lo `test -f 'common.c' || echo '$(srcdir)/'`common.c
 
 libgadu_la-dcc.lo: dcc.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgadu_la_CFLAGS) $(CFLAGS) -MT libgadu_la-dcc.lo -MD -MP -MF $(DEPDIR)/libgadu_la-dcc.Tpo -c -o libgadu_la-dcc.lo `test -f 'dcc.c' || echo '$(srcdir)/'`dcc.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libgadu_la-dcc.Tpo $(DEPDIR)/libgadu_la-dcc.Plo
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgadu_la_CFLAGS) $(CFLAGS) -MT libgadu_la-dcc.lo -MD -MP -MF $(DEPDIR)/libgadu_la-dcc.Tpo -c -o libgadu_la-dcc.lo `test -f 'dcc.c' || echo '$(srcdir)/'`dcc.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgadu_la-dcc.Tpo $(DEPDIR)/libgadu_la-dcc.Plo
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='dcc.c' object='libgadu_la-dcc.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgadu_la_CFLAGS) $(CFLAGS) -c -o libgadu_la-dcc.lo `test -f 'dcc.c' || echo '$(srcdir)/'`dcc.c
+@am__fastdepCC_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgadu_la_CFLAGS) $(CFLAGS) -c -o libgadu_la-dcc.lo `test -f 'dcc.c' || echo '$(srcdir)/'`dcc.c
 
 libgadu_la-dcc7.lo: dcc7.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgadu_la_CFLAGS) $(CFLAGS) -MT libgadu_la-dcc7.lo -MD -MP -MF $(DEPDIR)/libgadu_la-dcc7.Tpo -c -o libgadu_la-dcc7.lo `test -f 'dcc7.c' || echo '$(srcdir)/'`dcc7.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libgadu_la-dcc7.Tpo $(DEPDIR)/libgadu_la-dcc7.Plo
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgadu_la_CFLAGS) $(CFLAGS) -MT libgadu_la-dcc7.lo -MD -MP -MF $(DEPDIR)/libgadu_la-dcc7.Tpo -c -o libgadu_la-dcc7.lo `test -f 'dcc7.c' || echo '$(srcdir)/'`dcc7.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgadu_la-dcc7.Tpo $(DEPDIR)/libgadu_la-dcc7.Plo
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='dcc7.c' object='libgadu_la-dcc7.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgadu_la_CFLAGS) $(CFLAGS) -c -o libgadu_la-dcc7.lo `test -f 'dcc7.c' || echo '$(srcdir)/'`dcc7.c
+@am__fastdepCC_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgadu_la_CFLAGS) $(CFLAGS) -c -o libgadu_la-dcc7.lo `test -f 'dcc7.c' || echo '$(srcdir)/'`dcc7.c
+
+libgadu_la-debug.lo: debug.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgadu_la_CFLAGS) $(CFLAGS) -MT libgadu_la-debug.lo -MD -MP -MF $(DEPDIR)/libgadu_la-debug.Tpo -c -o libgadu_la-debug.lo `test -f 'debug.c' || echo '$(srcdir)/'`debug.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgadu_la-debug.Tpo $(DEPDIR)/libgadu_la-debug.Plo
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='debug.c' object='libgadu_la-debug.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgadu_la_CFLAGS) $(CFLAGS) -c -o libgadu_la-debug.lo `test -f 'debug.c' || echo '$(srcdir)/'`debug.c
+
+libgadu_la-encoding.lo: encoding.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgadu_la_CFLAGS) $(CFLAGS) -MT libgadu_la-encoding.lo -MD -MP -MF $(DEPDIR)/libgadu_la-encoding.Tpo -c -o libgadu_la-encoding.lo `test -f 'encoding.c' || echo '$(srcdir)/'`encoding.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgadu_la-encoding.Tpo $(DEPDIR)/libgadu_la-encoding.Plo
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='encoding.c' object='libgadu_la-encoding.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgadu_la_CFLAGS) $(CFLAGS) -c -o libgadu_la-encoding.lo `test -f 'encoding.c' || echo '$(srcdir)/'`encoding.c
 
 libgadu_la-events.lo: events.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgadu_la_CFLAGS) $(CFLAGS) -MT libgadu_la-events.lo -MD -MP -MF $(DEPDIR)/libgadu_la-events.Tpo -c -o libgadu_la-events.lo `test -f 'events.c' || echo '$(srcdir)/'`events.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libgadu_la-events.Tpo $(DEPDIR)/libgadu_la-events.Plo
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgadu_la_CFLAGS) $(CFLAGS) -MT libgadu_la-events.lo -MD -MP -MF $(DEPDIR)/libgadu_la-events.Tpo -c -o libgadu_la-events.lo `test -f 'events.c' || echo '$(srcdir)/'`events.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgadu_la-events.Tpo $(DEPDIR)/libgadu_la-events.Plo
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='events.c' object='libgadu_la-events.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgadu_la_CFLAGS) $(CFLAGS) -c -o libgadu_la-events.lo `test -f 'events.c' || echo '$(srcdir)/'`events.c
+@am__fastdepCC_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgadu_la_CFLAGS) $(CFLAGS) -c -o libgadu_la-events.lo `test -f 'events.c' || echo '$(srcdir)/'`events.c
+
+libgadu_la-handlers.lo: handlers.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgadu_la_CFLAGS) $(CFLAGS) -MT libgadu_la-handlers.lo -MD -MP -MF $(DEPDIR)/libgadu_la-handlers.Tpo -c -o libgadu_la-handlers.lo `test -f 'handlers.c' || echo '$(srcdir)/'`handlers.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgadu_la-handlers.Tpo $(DEPDIR)/libgadu_la-handlers.Plo
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='handlers.c' object='libgadu_la-handlers.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgadu_la_CFLAGS) $(CFLAGS) -c -o libgadu_la-handlers.lo `test -f 'handlers.c' || echo '$(srcdir)/'`handlers.c
 
 libgadu_la-http.lo: http.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgadu_la_CFLAGS) $(CFLAGS) -MT libgadu_la-http.lo -MD -MP -MF $(DEPDIR)/libgadu_la-http.Tpo -c -o libgadu_la-http.lo `test -f 'http.c' || echo '$(srcdir)/'`http.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libgadu_la-http.Tpo $(DEPDIR)/libgadu_la-http.Plo
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgadu_la_CFLAGS) $(CFLAGS) -MT libgadu_la-http.lo -MD -MP -MF $(DEPDIR)/libgadu_la-http.Tpo -c -o libgadu_la-http.lo `test -f 'http.c' || echo '$(srcdir)/'`http.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgadu_la-http.Tpo $(DEPDIR)/libgadu_la-http.Plo
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='http.c' object='libgadu_la-http.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgadu_la_CFLAGS) $(CFLAGS) -c -o libgadu_la-http.lo `test -f 'http.c' || echo '$(srcdir)/'`http.c
-
-libgadu_la-obsolete.lo: obsolete.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgadu_la_CFLAGS) $(CFLAGS) -MT libgadu_la-obsolete.lo -MD -MP -MF $(DEPDIR)/libgadu_la-obsolete.Tpo -c -o libgadu_la-obsolete.lo `test -f 'obsolete.c' || echo '$(srcdir)/'`obsolete.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libgadu_la-obsolete.Tpo $(DEPDIR)/libgadu_la-obsolete.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='obsolete.c' object='libgadu_la-obsolete.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgadu_la_CFLAGS) $(CFLAGS) -c -o libgadu_la-obsolete.lo `test -f 'obsolete.c' || echo '$(srcdir)/'`obsolete.c
-
-libgadu_la-pubdir.lo: pubdir.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgadu_la_CFLAGS) $(CFLAGS) -MT libgadu_la-pubdir.lo -MD -MP -MF $(DEPDIR)/libgadu_la-pubdir.Tpo -c -o libgadu_la-pubdir.lo `test -f 'pubdir.c' || echo '$(srcdir)/'`pubdir.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libgadu_la-pubdir.Tpo $(DEPDIR)/libgadu_la-pubdir.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='pubdir.c' object='libgadu_la-pubdir.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgadu_la_CFLAGS) $(CFLAGS) -c -o libgadu_la-pubdir.lo `test -f 'pubdir.c' || echo '$(srcdir)/'`pubdir.c
-
-libgadu_la-pubdir50.lo: pubdir50.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgadu_la_CFLAGS) $(CFLAGS) -MT libgadu_la-pubdir50.lo -MD -MP -MF $(DEPDIR)/libgadu_la-pubdir50.Tpo -c -o libgadu_la-pubdir50.lo `test -f 'pubdir50.c' || echo '$(srcdir)/'`pubdir50.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libgadu_la-pubdir50.Tpo $(DEPDIR)/libgadu_la-pubdir50.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='pubdir50.c' object='libgadu_la-pubdir50.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgadu_la_CFLAGS) $(CFLAGS) -c -o libgadu_la-pubdir50.lo `test -f 'pubdir50.c' || echo '$(srcdir)/'`pubdir50.c
+@am__fastdepCC_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgadu_la_CFLAGS) $(CFLAGS) -c -o libgadu_la-http.lo `test -f 'http.c' || echo '$(srcdir)/'`http.c
 
 libgadu_la-libgadu.lo: libgadu.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgadu_la_CFLAGS) $(CFLAGS) -MT libgadu_la-libgadu.lo -MD -MP -MF $(DEPDIR)/libgadu_la-libgadu.Tpo -c -o libgadu_la-libgadu.lo `test -f 'libgadu.c' || echo '$(srcdir)/'`libgadu.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libgadu_la-libgadu.Tpo $(DEPDIR)/libgadu_la-libgadu.Plo
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgadu_la_CFLAGS) $(CFLAGS) -MT libgadu_la-libgadu.lo -MD -MP -MF $(DEPDIR)/libgadu_la-libgadu.Tpo -c -o libgadu_la-libgadu.lo `test -f 'libgadu.c' || echo '$(srcdir)/'`libgadu.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgadu_la-libgadu.Tpo $(DEPDIR)/libgadu_la-libgadu.Plo
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='libgadu.c' object='libgadu_la-libgadu.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgadu_la_CFLAGS) $(CFLAGS) -c -o libgadu_la-libgadu.lo `test -f 'libgadu.c' || echo '$(srcdir)/'`libgadu.c
+@am__fastdepCC_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgadu_la_CFLAGS) $(CFLAGS) -c -o libgadu_la-libgadu.lo `test -f 'libgadu.c' || echo '$(srcdir)/'`libgadu.c
 
-libgadu_la-sha1.lo: sha1.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgadu_la_CFLAGS) $(CFLAGS) -MT libgadu_la-sha1.lo -MD -MP -MF $(DEPDIR)/libgadu_la-sha1.Tpo -c -o libgadu_la-sha1.lo `test -f 'sha1.c' || echo '$(srcdir)/'`sha1.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libgadu_la-sha1.Tpo $(DEPDIR)/libgadu_la-sha1.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='sha1.c' object='libgadu_la-sha1.lo' libtool=yes @AMDEPBACKSLASH@
+libgadu_la-message.lo: message.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgadu_la_CFLAGS) $(CFLAGS) -MT libgadu_la-message.lo -MD -MP -MF $(DEPDIR)/libgadu_la-message.Tpo -c -o libgadu_la-message.lo `test -f 'message.c' || echo '$(srcdir)/'`message.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgadu_la-message.Tpo $(DEPDIR)/libgadu_la-message.Plo
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='message.c' object='libgadu_la-message.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgadu_la_CFLAGS) $(CFLAGS) -c -o libgadu_la-sha1.lo `test -f 'sha1.c' || echo '$(srcdir)/'`sha1.c
+@am__fastdepCC_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgadu_la_CFLAGS) $(CFLAGS) -c -o libgadu_la-message.lo `test -f 'message.c' || echo '$(srcdir)/'`message.c
+
+libgadu_la-obsolete.lo: obsolete.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgadu_la_CFLAGS) $(CFLAGS) -MT libgadu_la-obsolete.lo -MD -MP -MF $(DEPDIR)/libgadu_la-obsolete.Tpo -c -o libgadu_la-obsolete.lo `test -f 'obsolete.c' || echo '$(srcdir)/'`obsolete.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgadu_la-obsolete.Tpo $(DEPDIR)/libgadu_la-obsolete.Plo
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='obsolete.c' object='libgadu_la-obsolete.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgadu_la_CFLAGS) $(CFLAGS) -c -o libgadu_la-obsolete.lo `test -f 'obsolete.c' || echo '$(srcdir)/'`obsolete.c
+
+libgadu_la-pubdir.lo: pubdir.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgadu_la_CFLAGS) $(CFLAGS) -MT libgadu_la-pubdir.lo -MD -MP -MF $(DEPDIR)/libgadu_la-pubdir.Tpo -c -o libgadu_la-pubdir.lo `test -f 'pubdir.c' || echo '$(srcdir)/'`pubdir.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgadu_la-pubdir.Tpo $(DEPDIR)/libgadu_la-pubdir.Plo
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='pubdir.c' object='libgadu_la-pubdir.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgadu_la_CFLAGS) $(CFLAGS) -c -o libgadu_la-pubdir.lo `test -f 'pubdir.c' || echo '$(srcdir)/'`pubdir.c
+
+libgadu_la-pubdir50.lo: pubdir50.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgadu_la_CFLAGS) $(CFLAGS) -MT libgadu_la-pubdir50.lo -MD -MP -MF $(DEPDIR)/libgadu_la-pubdir50.Tpo -c -o libgadu_la-pubdir50.lo `test -f 'pubdir50.c' || echo '$(srcdir)/'`pubdir50.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgadu_la-pubdir50.Tpo $(DEPDIR)/libgadu_la-pubdir50.Plo
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='pubdir50.c' object='libgadu_la-pubdir50.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgadu_la_CFLAGS) $(CFLAGS) -c -o libgadu_la-pubdir50.lo `test -f 'pubdir50.c' || echo '$(srcdir)/'`pubdir50.c
 
 libgadu_la-resolver.lo: resolver.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgadu_la_CFLAGS) $(CFLAGS) -MT libgadu_la-resolver.lo -MD -MP -MF $(DEPDIR)/libgadu_la-resolver.Tpo -c -o libgadu_la-resolver.lo `test -f 'resolver.c' || echo '$(srcdir)/'`resolver.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libgadu_la-resolver.Tpo $(DEPDIR)/libgadu_la-resolver.Plo
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgadu_la_CFLAGS) $(CFLAGS) -MT libgadu_la-resolver.lo -MD -MP -MF $(DEPDIR)/libgadu_la-resolver.Tpo -c -o libgadu_la-resolver.lo `test -f 'resolver.c' || echo '$(srcdir)/'`resolver.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgadu_la-resolver.Tpo $(DEPDIR)/libgadu_la-resolver.Plo
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='resolver.c' object='libgadu_la-resolver.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgadu_la_CFLAGS) $(CFLAGS) -c -o libgadu_la-resolver.lo `test -f 'resolver.c' || echo '$(srcdir)/'`resolver.c
+@am__fastdepCC_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgadu_la_CFLAGS) $(CFLAGS) -c -o libgadu_la-resolver.lo `test -f 'resolver.c' || echo '$(srcdir)/'`resolver.c
+
+libgadu_la-sha1.lo: sha1.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgadu_la_CFLAGS) $(CFLAGS) -MT libgadu_la-sha1.lo -MD -MP -MF $(DEPDIR)/libgadu_la-sha1.Tpo -c -o libgadu_la-sha1.lo `test -f 'sha1.c' || echo '$(srcdir)/'`sha1.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgadu_la-sha1.Tpo $(DEPDIR)/libgadu_la-sha1.Plo
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='sha1.c' object='libgadu_la-sha1.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgadu_la_CFLAGS) $(CFLAGS) -c -o libgadu_la-sha1.lo `test -f 'sha1.c' || echo '$(srcdir)/'`sha1.c
 
 mostlyclean-libtool:
 	-rm -f *.lo

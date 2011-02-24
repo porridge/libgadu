@@ -748,9 +748,9 @@ SUBDIRS_DOXYGEN
 DOXYGEN
 PERL
 OPTIONAL_TESTS
-PKGCONFIG
 OPENSSL_INCLUDES
 OPENSSL_LIBS
+PKGCONFIG
 PTHREAD_CFLAGS
 PTHREAD_LIBS
 PTHREAD_CC
@@ -793,6 +793,8 @@ CPPFLAGS
 LDFLAGS
 CFLAGS
 CC
+AM_BACKSLASH
+AM_DEFAULT_VERBOSITY
 host_os
 host_vendor
 host_cpu
@@ -865,6 +867,7 @@ SHELL'
 ac_subst_files=''
 ac_user_opts='
 enable_option_checking
+enable_silent_rules
 enable_dependency_tracking
 enable_shared
 enable_static
@@ -876,6 +879,7 @@ with_c99_vsnprintf
 with_bind
 enable_debug
 with_pthread
+with_gnutls
 with_openssl
 enable_tests
 '
@@ -1505,6 +1509,8 @@ Optional Features:
   --disable-option-checking  ignore unrecognized --enable/--with options
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
+  --enable-silent-rules          less verbose build output (undo: `make V=1')
+  --disable-silent-rules         verbose build output (undo: `make V=0')
   --disable-dependency-tracking  speeds up one-time build
   --enable-dependency-tracking   do not reject slow dependency extractors
   --enable-shared[=PKGS]  build shared libraries [default=yes]
@@ -1523,7 +1529,8 @@ Optional Packages:
   --with-gnu-ld           assume the C compiler uses GNU ld [default=no]
   --with-c99-vsnprintf    target system has C99-compatible vsnprintf()
   --without-bind          do not use libbind even if found
-  --without-pthread       do not use pthread resolver even if possible
+  --without-pthread       do not use pthread resolver even if found
+  --without-gnutls        do not use GnuTLS even if found
   --without-openssl       do not use OpenSSL even if found
 
 Some influential environment variables:
@@ -2688,7 +2695,7 @@ fi
 
 # Define the identity of the package.
  PACKAGE=libgadu
- VERSION=1.9.0
+ VERSION=1.10.0
 
 
 cat >>confdefs.h <<_ACEOF
@@ -2802,6 +2809,19 @@ case $host_os in *\ *) host_os=`echo "$host_os" | sed 's/ /-/g'`;; esac
 
 
 ac_config_headers="$ac_config_headers config.h include/libgadu.h"
+
+
+# Check whether --enable-silent-rules was given.
+if test "${enable_silent_rules+set}" = set; then :
+  enableval=$enable_silent_rules;
+fi
+
+case $enable_silent_rules in
+yes) AM_DEFAULT_VERBOSITY=0;;
+no)  AM_DEFAULT_VERBOSITY=1;;
+*)   AM_DEFAULT_VERBOSITY=0;;
+esac
+AM_BACKSLASH='\'
 
 
 ac_ext=c
@@ -4623,13 +4643,13 @@ if test "${lt_cv_nm_interface+set}" = set; then :
 else
   lt_cv_nm_interface="BSD nm"
   echo "int some_variable = 0;" > conftest.$ac_ext
-  (eval echo "\"\$as_me:4626: $ac_compile\"" >&5)
+  (eval echo "\"\$as_me:4646: $ac_compile\"" >&5)
   (eval "$ac_compile" 2>conftest.err)
   cat conftest.err >&5
-  (eval echo "\"\$as_me:4629: $NM \\\"conftest.$ac_objext\\\"\"" >&5)
+  (eval echo "\"\$as_me:4649: $NM \\\"conftest.$ac_objext\\\"\"" >&5)
   (eval "$NM \"conftest.$ac_objext\"" 2>conftest.err > conftest.out)
   cat conftest.err >&5
-  (eval echo "\"\$as_me:4632: output\"" >&5)
+  (eval echo "\"\$as_me:4652: output\"" >&5)
   cat conftest.out >&5
   if $GREP 'External.*some_variable' conftest.out > /dev/null; then
     lt_cv_nm_interface="MS dumpbin"
@@ -5823,7 +5843,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 5826 "configure"' > conftest.$ac_ext
+  echo '#line 5846 "configure"' > conftest.$ac_ext
   if { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_compile\""; } >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -7187,6 +7207,10 @@ _lt_linker_boilerplate=`cat conftest.err`
 $RM -r conftest*
 
 
+## CAVEAT EMPTOR:
+## There is no encapsulation within the following macros, do not change
+## the running order or otherwise move them around unless you know exactly
+## what you are doing...
 if test -n "$compiler"; then
 
 lt_prog_compiler_no_builtin_flag=
@@ -7212,11 +7236,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:7215: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:7239: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:7219: \$? = $ac_status" >&5
+   echo "$as_me:7243: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -7551,11 +7575,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:7554: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:7578: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:7558: \$? = $ac_status" >&5
+   echo "$as_me:7582: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -7656,11 +7680,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:7659: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:7683: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:7663: \$? = $ac_status" >&5
+   echo "$as_me:7687: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -7711,11 +7735,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:7714: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:7738: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:7718: \$? = $ac_status" >&5
+   echo "$as_me:7742: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -10095,7 +10119,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 10098 "configure"
+#line 10122 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -10191,7 +10215,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 10194 "configure"
+#line 10218 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -10748,6 +10772,9 @@ fi
 if test "x$with_c99_vsnprintf" = "x"; then
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for C99-compatible vsnprintf()" >&5
 $as_echo_n "checking for C99-compatible vsnprintf()... " >&6; }
+	if test "x$cross_compiling" = "xyes"; then
+		as_fn_error "cannot determine vsnprintf() behaviour when cross-compiling. You need to provide --with-c99-vsnprintf or --without-c99-vsnprintf option instead. It is safe to assume that the former is valid on most modern operating systems." "$LINENO" 5
+	fi
 	if test "$cross_compiling" = yes; then :
   { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
 $as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
@@ -10811,6 +10838,45 @@ $as_echo "yes" >&6; }
 $as_echo "#define GG_CONFIG_HAVE_LONG_LONG /**/" >>confdefs.h
 
 
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+
+for ac_func in strtoull
+do :
+  ac_fn_c_check_func "$LINENO" "strtoull" "ac_cv_func_strtoull"
+if test "x$ac_cv_func_strtoull" = x""yes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_STRTOULL 1
+_ACEOF
+
+$as_echo "#define HAVE_STRTOULL /**/" >>confdefs.h
+
+fi
+done
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if <$STDINT_H> has uint64_t" >&5
+$as_echo_n "checking if <$STDINT_H> has uint64_t... " >&6; }
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <$STDINT_H>
+int
+main ()
+{
+uint64_t foo
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+
+$as_echo "#define HAVE_UINT64_T /**/" >>confdefs.h
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 
@@ -11545,6 +11611,82 @@ fi
 
 
 
+# Check whether --with-gnutls was given.
+if test "${with_gnutls+set}" = set; then :
+  withval=$with_gnutls;
+fi
+
+
+have_gnutls=""
+
+if test "x$with_gnutls" != "xno"; then
+	# Extract the first word of "pkg-config", so it can be a program name with args.
+set dummy pkg-config; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if test "${ac_cv_prog_PKGCONFIG+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$PKGCONFIG"; then
+  ac_cv_prog_PKGCONFIG="$PKGCONFIG" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
+    ac_cv_prog_PKGCONFIG="pkg-config"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  test -z "$ac_cv_prog_PKGCONFIG" && ac_cv_prog_PKGCONFIG="no"
+fi
+fi
+PKGCONFIG=$ac_cv_prog_PKGCONFIG
+if test -n "$PKGCONFIG"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PKGCONFIG" >&5
+$as_echo "$PKGCONFIG" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+	if test "x$PKGCONFIG" != "xno"; then
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for GnuTLS" >&5
+$as_echo_n "checking for GnuTLS... " >&6; }
+		GNUTLS_LIBS=$($PKGCONFIG --libs gnutls)
+		GNUTLS_CFLAGS=$($PKGCONFIG --cflags gnutls)
+		if test "x$GNUTLS_LIBS" != "x" -o "x$GNUTLS_CFLAGS" != "x"; then
+
+$as_echo "#define HAVE_GNUTLS 1" >>confdefs.h
+
+			{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+$as_echo "#define GG_CONFIG_HAVE_GNUTLS /**/" >>confdefs.h
+
+			REQUIRES="$REQUIRES gnutls"
+			CFLAGS="$CFLAGS $GNUTLS_CFLAGS"
+			INCLUDES="$INCLUDES $GNUTLS_CFLAGS"
+			LIBS="$LIBS $GNUTLS_LIBS"
+			have_gnutls="yes"
+		else
+			{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+		fi
+	fi
+fi
+
+
+if test "x$have_gnutls" != "xyes"; then
+
 
 
 
@@ -11704,6 +11846,7 @@ $as_echo "not found" >&6; }
     fi
   fi
 
+fi
 
 if test "x$have_openssl" = "xyes"; then
 	LIBS="$LIBS $OPENSSL_LIBS"

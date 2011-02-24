@@ -42,8 +42,10 @@ subdir = examples
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/acx_pthread.m4 \
-	$(top_srcdir)/m4/openssl.m4 $(top_srcdir)/m4/stdint.m4 \
-	$(top_srcdir)/configure.ac
+	$(top_srcdir)/m4/libtool.m4 $(top_srcdir)/m4/ltoptions.m4 \
+	$(top_srcdir)/m4/ltsugar.m4 $(top_srcdir)/m4/ltversion.m4 \
+	$(top_srcdir)/m4/lt~obsolete.m4 $(top_srcdir)/m4/openssl.m4 \
+	$(top_srcdir)/m4/stdint.m4 $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(install_sh) -d
@@ -56,20 +58,24 @@ conn_async_SOURCES = conn-async.c
 conn_async_OBJECTS = conn-async.$(OBJEXT)
 conn_async_LDADD = $(LDADD)
 conn_async_DEPENDENCIES = ../src/libgadu.la
+AM_V_lt = $(am__v_lt_$(V))
+am__v_lt_ = $(am__v_lt_$(AM_DEFAULT_VERBOSITY))
+am__v_lt_0 = --silent
 httphash_SOURCES = httphash.c
 httphash_OBJECTS = httphash-httphash.$(OBJEXT)
 httphash_LDADD = $(LDADD)
 httphash_DEPENDENCIES = ../src/libgadu.la
-httphash_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
-	--mode=link $(CCLD) $(httphash_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
-	$(LDFLAGS) -o $@
+httphash_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(httphash_CFLAGS) \
+	$(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 am_register_async_OBJECTS = register_async-register.$(OBJEXT)
 register_async_OBJECTS = $(am_register_async_OBJECTS)
 register_async_LDADD = $(LDADD)
 register_async_DEPENDENCIES = ../src/libgadu.la
-register_async_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(register_async_CFLAGS) \
-	$(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
+register_async_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
+	$(register_async_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o \
+	$@
 am_register_sync_OBJECTS = register.$(OBJEXT)
 register_sync_OBJECTS = $(am_register_sync_OBJECTS)
 register_sync_LDADD = $(LDADD)
@@ -78,7 +84,7 @@ am_remind_async_OBJECTS = remind_async-remind.$(OBJEXT)
 remind_async_OBJECTS = $(am_remind_async_OBJECTS)
 remind_async_LDADD = $(LDADD)
 remind_async_DEPENDENCIES = ../src/libgadu.la
-remind_async_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
+remind_async_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(remind_async_CFLAGS) \
 	$(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 am_remind_sync_OBJECTS = remind.$(OBJEXT)
@@ -97,7 +103,7 @@ am_token_async_OBJECTS = token_async-token.$(OBJEXT)
 token_async_OBJECTS = $(am_token_async_OBJECTS)
 token_async_LDADD = $(LDADD)
 token_async_DEPENDENCIES = ../src/libgadu.la
-token_async_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
+token_async_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(token_async_CFLAGS) \
 	$(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 am_token_sync_OBJECTS = token.$(OBJEXT)
@@ -110,13 +116,26 @@ am__depfiles_maybe = depfiles
 am__mv = mv -f
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
-LTCOMPILE = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
-	--mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
-	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
+LTCOMPILE = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) \
+	$(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
+	$(AM_CFLAGS) $(CFLAGS)
+AM_V_CC = $(am__v_CC_$(V))
+am__v_CC_ = $(am__v_CC_$(AM_DEFAULT_VERBOSITY))
+am__v_CC_0 = @echo "  CC    " $@;
+AM_V_at = $(am__v_at_$(V))
+am__v_at_ = $(am__v_at_$(AM_DEFAULT_VERBOSITY))
+am__v_at_0 = @
 CCLD = $(CC)
-LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
-	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
-	$(LDFLAGS) -o $@
+LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(AM_LDFLAGS) $(LDFLAGS) -o $@
+AM_V_CCLD = $(am__v_CCLD_$(V))
+am__v_CCLD_ = $(am__v_CCLD_$(AM_DEFAULT_VERBOSITY))
+am__v_CCLD_0 = @echo "  CCLD  " $@;
+AM_V_GEN = $(am__v_GEN_$(V))
+am__v_GEN_ = $(am__v_GEN_$(AM_DEFAULT_VERBOSITY))
+am__v_GEN_0 = @echo "  GEN   " $@;
 SOURCES = conn-async.c httphash.c $(register_async_SOURCES) \
 	$(register_sync_SOURCES) $(remind_async_SOURCES) \
 	$(remind_sync_SOURCES) send.c status.c $(token_async_SOURCES) \
@@ -130,6 +149,7 @@ CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = @ACLOCAL@
 AMTAR = @AMTAR@
+AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
 AR = @AR@
 AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
@@ -308,34 +328,34 @@ clean-noinstPROGRAMS:
 	rm -f $$list
 conn-async$(EXEEXT): $(conn_async_OBJECTS) $(conn_async_DEPENDENCIES) 
 	@rm -f conn-async$(EXEEXT)
-	$(LINK) $(conn_async_OBJECTS) $(conn_async_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(conn_async_OBJECTS) $(conn_async_LDADD) $(LIBS)
 httphash$(EXEEXT): $(httphash_OBJECTS) $(httphash_DEPENDENCIES) 
 	@rm -f httphash$(EXEEXT)
-	$(httphash_LINK) $(httphash_OBJECTS) $(httphash_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(httphash_LINK) $(httphash_OBJECTS) $(httphash_LDADD) $(LIBS)
 register-async$(EXEEXT): $(register_async_OBJECTS) $(register_async_DEPENDENCIES) 
 	@rm -f register-async$(EXEEXT)
-	$(register_async_LINK) $(register_async_OBJECTS) $(register_async_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(register_async_LINK) $(register_async_OBJECTS) $(register_async_LDADD) $(LIBS)
 register-sync$(EXEEXT): $(register_sync_OBJECTS) $(register_sync_DEPENDENCIES) 
 	@rm -f register-sync$(EXEEXT)
-	$(LINK) $(register_sync_OBJECTS) $(register_sync_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(register_sync_OBJECTS) $(register_sync_LDADD) $(LIBS)
 remind-async$(EXEEXT): $(remind_async_OBJECTS) $(remind_async_DEPENDENCIES) 
 	@rm -f remind-async$(EXEEXT)
-	$(remind_async_LINK) $(remind_async_OBJECTS) $(remind_async_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(remind_async_LINK) $(remind_async_OBJECTS) $(remind_async_LDADD) $(LIBS)
 remind-sync$(EXEEXT): $(remind_sync_OBJECTS) $(remind_sync_DEPENDENCIES) 
 	@rm -f remind-sync$(EXEEXT)
-	$(LINK) $(remind_sync_OBJECTS) $(remind_sync_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(remind_sync_OBJECTS) $(remind_sync_LDADD) $(LIBS)
 send$(EXEEXT): $(send_OBJECTS) $(send_DEPENDENCIES) 
 	@rm -f send$(EXEEXT)
-	$(LINK) $(send_OBJECTS) $(send_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(send_OBJECTS) $(send_LDADD) $(LIBS)
 status$(EXEEXT): $(status_OBJECTS) $(status_DEPENDENCIES) 
 	@rm -f status$(EXEEXT)
-	$(LINK) $(status_OBJECTS) $(status_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(status_OBJECTS) $(status_LDADD) $(LIBS)
 token-async$(EXEEXT): $(token_async_OBJECTS) $(token_async_DEPENDENCIES) 
 	@rm -f token-async$(EXEEXT)
-	$(token_async_LINK) $(token_async_OBJECTS) $(token_async_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(token_async_LINK) $(token_async_OBJECTS) $(token_async_LDADD) $(LIBS)
 token-sync$(EXEEXT): $(token_sync_OBJECTS) $(token_sync_DEPENDENCIES) 
 	@rm -f token-sync$(EXEEXT)
-	$(LINK) $(token_sync_OBJECTS) $(token_sync_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(token_sync_OBJECTS) $(token_sync_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -355,78 +375,89 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/token_async-token.Po@am__quote@
 
 .c.o:
-@am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(COMPILE) -c $<
 
 .c.obj:
-@am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `$(CYGPATH_W) '$<'`
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `$(CYGPATH_W) '$<'`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(COMPILE) -c `$(CYGPATH_W) '$<'`
 
 .c.lo:
-@am__fastdepCC_TRUE@	$(LTCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Plo
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LTCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Plo
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LTCOMPILE) -c -o $@ $<
 
 httphash-httphash.o: httphash.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(httphash_CFLAGS) $(CFLAGS) -MT httphash-httphash.o -MD -MP -MF $(DEPDIR)/httphash-httphash.Tpo -c -o httphash-httphash.o `test -f 'httphash.c' || echo '$(srcdir)/'`httphash.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/httphash-httphash.Tpo $(DEPDIR)/httphash-httphash.Po
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(httphash_CFLAGS) $(CFLAGS) -MT httphash-httphash.o -MD -MP -MF $(DEPDIR)/httphash-httphash.Tpo -c -o httphash-httphash.o `test -f 'httphash.c' || echo '$(srcdir)/'`httphash.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/httphash-httphash.Tpo $(DEPDIR)/httphash-httphash.Po
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='httphash.c' object='httphash-httphash.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(httphash_CFLAGS) $(CFLAGS) -c -o httphash-httphash.o `test -f 'httphash.c' || echo '$(srcdir)/'`httphash.c
 
 httphash-httphash.obj: httphash.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(httphash_CFLAGS) $(CFLAGS) -MT httphash-httphash.obj -MD -MP -MF $(DEPDIR)/httphash-httphash.Tpo -c -o httphash-httphash.obj `if test -f 'httphash.c'; then $(CYGPATH_W) 'httphash.c'; else $(CYGPATH_W) '$(srcdir)/httphash.c'; fi`
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/httphash-httphash.Tpo $(DEPDIR)/httphash-httphash.Po
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(httphash_CFLAGS) $(CFLAGS) -MT httphash-httphash.obj -MD -MP -MF $(DEPDIR)/httphash-httphash.Tpo -c -o httphash-httphash.obj `if test -f 'httphash.c'; then $(CYGPATH_W) 'httphash.c'; else $(CYGPATH_W) '$(srcdir)/httphash.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/httphash-httphash.Tpo $(DEPDIR)/httphash-httphash.Po
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='httphash.c' object='httphash-httphash.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(httphash_CFLAGS) $(CFLAGS) -c -o httphash-httphash.obj `if test -f 'httphash.c'; then $(CYGPATH_W) 'httphash.c'; else $(CYGPATH_W) '$(srcdir)/httphash.c'; fi`
 
 register_async-register.o: register.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(register_async_CFLAGS) $(CFLAGS) -MT register_async-register.o -MD -MP -MF $(DEPDIR)/register_async-register.Tpo -c -o register_async-register.o `test -f 'register.c' || echo '$(srcdir)/'`register.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/register_async-register.Tpo $(DEPDIR)/register_async-register.Po
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(register_async_CFLAGS) $(CFLAGS) -MT register_async-register.o -MD -MP -MF $(DEPDIR)/register_async-register.Tpo -c -o register_async-register.o `test -f 'register.c' || echo '$(srcdir)/'`register.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/register_async-register.Tpo $(DEPDIR)/register_async-register.Po
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='register.c' object='register_async-register.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(register_async_CFLAGS) $(CFLAGS) -c -o register_async-register.o `test -f 'register.c' || echo '$(srcdir)/'`register.c
 
 register_async-register.obj: register.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(register_async_CFLAGS) $(CFLAGS) -MT register_async-register.obj -MD -MP -MF $(DEPDIR)/register_async-register.Tpo -c -o register_async-register.obj `if test -f 'register.c'; then $(CYGPATH_W) 'register.c'; else $(CYGPATH_W) '$(srcdir)/register.c'; fi`
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/register_async-register.Tpo $(DEPDIR)/register_async-register.Po
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(register_async_CFLAGS) $(CFLAGS) -MT register_async-register.obj -MD -MP -MF $(DEPDIR)/register_async-register.Tpo -c -o register_async-register.obj `if test -f 'register.c'; then $(CYGPATH_W) 'register.c'; else $(CYGPATH_W) '$(srcdir)/register.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/register_async-register.Tpo $(DEPDIR)/register_async-register.Po
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='register.c' object='register_async-register.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(register_async_CFLAGS) $(CFLAGS) -c -o register_async-register.obj `if test -f 'register.c'; then $(CYGPATH_W) 'register.c'; else $(CYGPATH_W) '$(srcdir)/register.c'; fi`
 
 remind_async-remind.o: remind.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(remind_async_CFLAGS) $(CFLAGS) -MT remind_async-remind.o -MD -MP -MF $(DEPDIR)/remind_async-remind.Tpo -c -o remind_async-remind.o `test -f 'remind.c' || echo '$(srcdir)/'`remind.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/remind_async-remind.Tpo $(DEPDIR)/remind_async-remind.Po
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(remind_async_CFLAGS) $(CFLAGS) -MT remind_async-remind.o -MD -MP -MF $(DEPDIR)/remind_async-remind.Tpo -c -o remind_async-remind.o `test -f 'remind.c' || echo '$(srcdir)/'`remind.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/remind_async-remind.Tpo $(DEPDIR)/remind_async-remind.Po
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='remind.c' object='remind_async-remind.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(remind_async_CFLAGS) $(CFLAGS) -c -o remind_async-remind.o `test -f 'remind.c' || echo '$(srcdir)/'`remind.c
 
 remind_async-remind.obj: remind.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(remind_async_CFLAGS) $(CFLAGS) -MT remind_async-remind.obj -MD -MP -MF $(DEPDIR)/remind_async-remind.Tpo -c -o remind_async-remind.obj `if test -f 'remind.c'; then $(CYGPATH_W) 'remind.c'; else $(CYGPATH_W) '$(srcdir)/remind.c'; fi`
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/remind_async-remind.Tpo $(DEPDIR)/remind_async-remind.Po
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(remind_async_CFLAGS) $(CFLAGS) -MT remind_async-remind.obj -MD -MP -MF $(DEPDIR)/remind_async-remind.Tpo -c -o remind_async-remind.obj `if test -f 'remind.c'; then $(CYGPATH_W) 'remind.c'; else $(CYGPATH_W) '$(srcdir)/remind.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/remind_async-remind.Tpo $(DEPDIR)/remind_async-remind.Po
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='remind.c' object='remind_async-remind.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(remind_async_CFLAGS) $(CFLAGS) -c -o remind_async-remind.obj `if test -f 'remind.c'; then $(CYGPATH_W) 'remind.c'; else $(CYGPATH_W) '$(srcdir)/remind.c'; fi`
 
 token_async-token.o: token.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(token_async_CFLAGS) $(CFLAGS) -MT token_async-token.o -MD -MP -MF $(DEPDIR)/token_async-token.Tpo -c -o token_async-token.o `test -f 'token.c' || echo '$(srcdir)/'`token.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/token_async-token.Tpo $(DEPDIR)/token_async-token.Po
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(token_async_CFLAGS) $(CFLAGS) -MT token_async-token.o -MD -MP -MF $(DEPDIR)/token_async-token.Tpo -c -o token_async-token.o `test -f 'token.c' || echo '$(srcdir)/'`token.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/token_async-token.Tpo $(DEPDIR)/token_async-token.Po
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='token.c' object='token_async-token.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(token_async_CFLAGS) $(CFLAGS) -c -o token_async-token.o `test -f 'token.c' || echo '$(srcdir)/'`token.c
 
 token_async-token.obj: token.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(token_async_CFLAGS) $(CFLAGS) -MT token_async-token.obj -MD -MP -MF $(DEPDIR)/token_async-token.Tpo -c -o token_async-token.obj `if test -f 'token.c'; then $(CYGPATH_W) 'token.c'; else $(CYGPATH_W) '$(srcdir)/token.c'; fi`
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/token_async-token.Tpo $(DEPDIR)/token_async-token.Po
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(token_async_CFLAGS) $(CFLAGS) -MT token_async-token.obj -MD -MP -MF $(DEPDIR)/token_async-token.Tpo -c -o token_async-token.obj `if test -f 'token.c'; then $(CYGPATH_W) 'token.c'; else $(CYGPATH_W) '$(srcdir)/token.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/token_async-token.Tpo $(DEPDIR)/token_async-token.Po
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='token.c' object='token_async-token.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(token_async_CFLAGS) $(CFLAGS) -c -o token_async-token.obj `if test -f 'token.c'; then $(CYGPATH_W) 'token.c'; else $(CYGPATH_W) '$(srcdir)/token.c'; fi`
