@@ -10,6 +10,7 @@ Configuration options
   Here are the library build configuration options for your convenience:
 
 	./configure \
+		--disable-silent-rules \
 		--host=$(DEB_HOST_GNU_TYPE) \
 		--build=$(DEB_BUILD_GNU_TYPE) \
 		--prefix=/usr \
