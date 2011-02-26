@@ -1,3 +1,16 @@
+libgadu (1:1.10.0+r1057-1) unstable; urgency=low
+
+  * New upstream release
+    - includes working TLS support again
+  * Merged some additional changes (SVN r1057) destined for 1.10.1
+  * Explicitly build against gnutls.
+  * Disabled silent make rules.
+  * Bumped the API version in symlink targets.
+  * Bumped copyright year.
+  * Added new symbols to debian/libgadu3.symbols.
+
+ -- Marcin Owsiany <porridge@debian.org>  Sat, 26 Feb 2011 14:40:59 +0000
+
 libgadu (1:1.9.0-2) unstable; urgency=high
 
   * RC bugfix release targeted at squeeze and sid
