@@ -1,3 +1,29 @@
+libgadu (1:1.10.1-1) unstable; urgency=medium
+
+  * New upstream release
+    - includes a fix for an image transfer problem
+
+ -- Marcin Owsiany <porridge@debian.org>  Tue, 15 Mar 2011 08:38:25 +0000
+
+libgadu (1:1.10.0+r1059-1) unstable; urgency=medium
+
+  * Merged upstream fix for broken proxy connections.
+
+ -- Marcin Owsiany <porridge@debian.org>  Sat, 05 Mar 2011 20:57:38 +0000
+
+libgadu (1:1.10.0+r1057-1) unstable; urgency=low
+
+  * New upstream release
+    - includes working TLS support again
+  * Merged some additional changes (SVN r1057) destined for 1.10.1
+  * Explicitly build against gnutls.
+  * Disabled silent make rules.
+  * Bumped the API version in symlink targets.
+  * Bumped copyright year.
+  * Added new symbols to debian/libgadu3.symbols.
+
+ -- Marcin Owsiany <porridge@debian.org>  Sat, 26 Feb 2011 14:40:59 +0000
+
 libgadu (1:1.9.0-2) unstable; urgency=high
 
   * RC bugfix release targeted at squeeze and sid
