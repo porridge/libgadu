@@ -13,6 +13,7 @@ libgadu.so.3 libgadu3 #MINVER#
  gg_change_status@Base 1:1.8.0+r592
  gg_change_status_descr@Base 1:1.8.0+r592
  gg_change_status_descr_time@Base 1:1.8.0+r592
+ gg_change_status_flags@Base 1:1.10.0+r1057
  gg_chomp@Base 1:1.8.0+r592
  gg_connect@Base 1:1.8.0+r592
  gg_crc32@Base 1:1.8.0+r592
@@ -76,6 +77,7 @@ libgadu.so.3 libgadu3 #MINVER#
  gg_login_hash@Base 1:1.8.0+r592
  gg_login_hash_sha1@Base 1:1.8.0+r592
  gg_logoff@Base 1:1.8.0+r592
+ gg_multilogon_disconnect@Base 1:1.10.0+r1057
  gg_notify@Base 1:1.8.0+r592
  gg_notify_ex@Base 1:1.8.0+r592
  gg_ping@Base 1:1.8.0+r592
@@ -133,6 +135,7 @@ libgadu.so.3 libgadu3 #MINVER#
  gg_token@Base 1:1.8.0+r592
  gg_token_free@Base 1:1.8.0+r592
  gg_token_watch_fd@Base 1:1.8.0+r592
+ gg_typing_notification@Base 1:1.10.0+r1057
  gg_unregister2@Base 1:1.8.0+r592
  gg_unregister3@Base 1:1.8.0+r592
  gg_unregister@Base 1:1.8.0+r592
