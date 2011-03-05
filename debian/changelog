@@ -1,3 +1,9 @@
+libgadu (1:1.10.0+r1059-1) unstable; urgency=medium
+
+  * Merged upstream fix for broken proxy connections.
+
+ -- Marcin Owsiany <porridge@debian.org>  Sat, 05 Mar 2011 20:57:38 +0000
+
 libgadu (1:1.10.0+r1057-1) unstable; urgency=low
 
   * New upstream release
