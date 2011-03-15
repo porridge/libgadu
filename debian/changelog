@@ -1,3 +1,10 @@
+libgadu (1:1.10.1-1) unstable; urgency=medium
+
+  * New upstream release
+    - includes a fix for an image transfer problem
+
+ -- Marcin Owsiany <porridge@debian.org>  Tue, 15 Mar 2011 08:38:25 +0000
+
 libgadu (1:1.10.0+r1059-1) unstable; urgency=medium
 
   * Merged upstream fix for broken proxy connections.
