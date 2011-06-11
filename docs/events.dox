@@ -218,6 +218,27 @@ i co minutę wywoływać funkcję \c gg_ping().
 <td>\copydoc gg_event_t::GG_EVENT_DISCONNECT</td>
 </tr>
 <tr>
+<td>\c GG_EVENT_DISCONNECT_ACK</td>
+<td>-</td>
+<td>-</td>
+<td>\copydoc gg_event_t::GG_EVENT_DISCONNECT_ACK</td>
+</tr>
+<tr>
+<th colspan="4">Multilogowanie</th>
+</tr>
+<tr>
+<td>\c GG_EVENT_MULTILOGON_INFO</td>
+<td>\c event.multilogon_info</td>
+<td>\c gg_event_multilogon_info</td>
+<td>\copydoc gg_event_t::GG_EVENT_MULTILOGON_INFO</td>
+</tr>
+<tr>
+<td>\c GG_EVENT_MULTILOGON_MSG</td>
+<td>\c event.multilogon_msg</td>
+<td>\c gg_event_msg</td>
+<td>\copydoc gg_event_t::GG_EVENT_MULTILOGON_MSG</td>
+</tr>
+<tr>
 <th colspan="4">Wiadomości</th>
 </tr>
 <tr>
@@ -237,6 +258,12 @@ i co minutę wywoływać funkcję \c gg_ping().
 <td>\c event.ack</td>
 <td>\c gg_event_ack</td>
 <td>\copydoc gg_event_t::GG_EVENT_ACK</td>
+</tr>
+<tr>
+<td>\c GG_EVENT_TYPING_NOTIFICATION</td>
+<td>\c event.typing_notification</td>
+<td>\c gg_event_typing_notification</td>
+<td>\copydoc gg_event_t::GG_EVENT_TYPING_NOTIFICATION</td>
 </tr>
 <tr>
 <td>\c GG_EVENT_IMAGE_REQUEST</td>
@@ -290,6 +317,18 @@ i co minutę wywoływać funkcję \c gg_ping().
 <td>\copydoc gg_event_t::GG_EVENT_USERLIST</td>
 </tr>
 <tr>
+<td>\c GG_EVENT_USERLIST100_VERSION</td>
+<td>\c event.userlist100_version</td>
+<td>\c gg_event_userlist100_version</td>
+<td>\copydoc gg_event_t::GG_EVENT_USERLIST100_VERSION</td>
+</tr>
+<tr>
+<td>\c GG_EVENT_USERLIST100_REPLY</td>
+<td>\c event.userlist100_reply</td>
+<td>\c gg_event_userlist100_reply</td>
+<td>\copydoc gg_event_t::GG_EVENT_USERLIST100_REPLY</td>
+</tr>
+<tr>
 <th colspan="4">Katalog publiczny</th>
 </tr>
 <tr>
@@ -333,6 +372,24 @@ i co minutę wywoływać funkcję \c gg_ping().
 <td>\c event.dcc7_reject</td>
 <td>\c gg_event_dcc7_reject</td>
 <td>\copydoc gg_event_t::GG_EVENT_DCC7_REJECT</td>
+</tr>
+<tr>
+<td>\c GG_EVENT_DCC7_PENDING</td>
+<td>\c event.dcc7_pending</td>
+<td>\c gg_event_dcc7_pending</td>
+<td>\copydoc gg_event_t::GG_EVENT_DCC7_PENDING</td>
+</tr>
+<tr>
+<td>\c GG_EVENT_DCC7_CONNECTED</td>
+<td>\c event.dcc7_connected</td>
+<td>\c gg_event_dcc7_connected</td>
+<td>\copydoc gg_event_t::GG_EVENT_DCC7_CONNECTED</td>
+</tr>
+<tr>
+<td>\c GG_EVENT_DCC7_DONE</td>
+<td>\c event.dcc7_connected</td>
+<td>\c gg_event_dcc7_connected</td>
+<td>\copydoc gg_event_t::GG_EVENT_DCC7_DONE</td>
 </tr>
 <tr>
 <td>\c GG_EVENT_DCC7_ERROR</td>

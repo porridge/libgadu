@@ -1,6 +1,7 @@
 /* $Id: remind.c 299 2002-02-06 21:40:00Z wojtekka $ */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include "libgadu.h"
 
 #ifdef ASYNC
@@ -10,7 +11,7 @@
 #include <signal.h>
 #include <errno.h>
 
-void sigchld()
+static void sigchld(int sig)
 {
 	wait(NULL);
 	signal(SIGCHLD, sigchld);

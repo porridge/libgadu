@@ -12,6 +12,7 @@ gg_change_passwd4
 gg_change_status
 gg_change_status_descr
 gg_change_status_descr_time
+gg_change_status_flags
 gg_chomp
 gg_connect
 gg_crc32
@@ -69,12 +70,14 @@ gg_http_watch_fd
 gg_image_queue_remove
 gg_image_reply
 gg_image_request
+gg_libgadu_check_feature
 gg_libgadu_version
 gg_local_ip
 gg_login
 gg_login_hash
 gg_login_hash_sha1
 gg_logoff
+gg_multilogon_disconnect
 gg_notify
 gg_notify_ex
 gg_ping
@@ -132,6 +135,7 @@ gg_session_set_resolver
 gg_token
 gg_token_free
 gg_token_watch_fd
+gg_typing_notification
 gg_unregister
 gg_unregister2
 gg_unregister3
@@ -146,6 +150,7 @@ gg_userlist_remove
 gg_userlist_remove_free
 gg_userlist_remove_watch_fd
 gg_userlist_request
+gg_userlist100_request
 gg_vsaprintf
 gg_watch_fd
 gg_write

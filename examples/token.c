@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include "libgadu.h"
@@ -10,7 +11,7 @@
 #include <signal.h>
 #include <errno.h>
 
-void sigchld(int sig)
+static void sigchld(int sig)
 {
 	wait(NULL);
 	signal(SIGCHLD, sigchld);

@@ -4,10 +4,52 @@
 
 \details
 
-Niniejsza strona zawiera listę zmian mających wpływ na API lub ABI biblioteki.
-Poprawki dostarczające nową funkcjonalność w większości przypadków nie mają
-wpływ na interfejs binarny biblioteki. Nowe funkcje, stałe i pola struktur
-nie zmieniają dotychczasowego zachowania.
+Niniejsza strona zawiera listę zmian, zwłaszcza tych mających wpływ na API
+lub ABI biblioteki. Poprawki dostarczające nową funkcjonalność w większości
+przypadków nie mają wpływ na interfejs binarny biblioteki. Nowe funkcje,
+stałe i pola struktur nie zmieniają dotychczasowego zachowania.
+
+\section changelog-1_11_0 libgadu 1.11.0
+
+- Import i eksport listy kontaktów zgodnej z Gadu-Gadu 10. Dodaje zależność
+od zlib. \ref importexport "Szczegóły".
+
+- Uniezależnienie połączeń bezpośrednich Gadu-Gadu 7.x od zmiennych połączeń
+bezpośrednich Gadu-Gadu 6.x.
+
+- Pole \c tls struktury \c gg_login_params przyjmuje wartości z \c gg_ssl_t.
+
+- Nowa funkcja \c gg_libgadu_check_feature() pozwala sprawdzić, czy funkcje
+zależne od zewnętrznych bibliotek są dostępne.
+
+- Nowe powody nieudanego połączenia: \c GG_FAILURE_HUB i \c GG_FAILURE_PROXY.
+
+- Zmiana deskryptora w połączeniach bezpośrednich Gadu-Gadu 7.x, która wcześniej nie generowała żadnego zdarzenia, teraz będzie zwracać \c GG_EVENT_DCC7_PENDING.
+
+\section changelog-1_10_1 libgadu 1.10.1
+
+- Brak zmian API/ABI.
+
+\section changelog-1_10_0 libgadu 1.10.0
+
+- Przywrócenie obsługi SSL dzięki szyfrowanym połączeniom Gadu-Gadu 10.
+
+- Powiadomienie o pisaniu. \ref messages-typing "Szczegóły".
+
+- Obsługa dodatkowych informacji o kontaktach za pomocą \c GG_EVENT_USER_DATA.
+
+- Obsługa dodatkowych zdarzeń XML (pakiet \c GG_XML_ACTION) za pomocą
+\c GG_EVENT_XML_EVENT.
+
+- Obsługa multilogowania. \ref login-multi "Szczegóły".
+
+\section changelog-1_9_1 libgadu 1.9.1
+
+- Opis zdarzenia \c GG_EVENT_DCC7_DONE zawiera wskaźnik do struktury połączenia, którego dotyczy.
+
+- Możliwość zmian flag statusu (blokowanie odnośników od nieznajomych itd.) za
+pomocą pola \c status_flags struktury \c gg_login_params lub funkcji
+\c gg_change_status_flags().
 
 \section changelog-1_9_0 libgadu 1.9.0
 
@@ -18,6 +60,8 @@ nie zmieniają dotychczasowego zachowania.
 - Razem z nowym protokołem przyszły nowe statusy: \c GG_STATUS_FFC, \c GG_STATUS_FFC_DESCR, \c GG_STATUS_DND i \c GG_STATUS_DND_DESCR. Uwaga! Jeśli pole \c protocol_features struktury \c gg_login_params zawiera \c GG_FEATURE_IMAGE_DESCR, statusy z opisami są przekazywane w inny sposób. \ref status "Szczegóły."
 
 - Aplikacja może sama wybrać sposób rozwiązywania nazw serwerów &mdash; przy użyciu procesu, wątku lub we własny sposób. Można to zrobić za pomocą pola \c resolver_type struktury \c gg_login_params dla procesów i wątków, lub globalnie za pomocą funkcji \ref gg_global_set_resolver czy \ref gg_global_set_custom_resolver. \ref build-resolver "Szczegóły."
+
+- Opis zdarzenia \c GG_EVENT_DCC7_PENDING zawiera wskaźnik do struktury połączenia, którego dotyczy.
 
 \section changelog-1_8_0 libgadu 1.8.0
 
