@@ -71,6 +71,7 @@ libgadu.so.3 libgadu3 #MINVER#
  gg_image_queue_remove@Base 1:1.8.0+r592
  gg_image_reply@Base 1:1.8.0+r592
  gg_image_request@Base 1:1.8.0+r592
+ gg_libgadu_check_feature@Base 1:1.11.0
  gg_libgadu_version@Base 1:1.8.0+r592
  gg_local_ip@Base 1:1.8.0+r592
  gg_login@Base 1:1.8.0+r592
@@ -140,6 +141,7 @@ libgadu.so.3 libgadu3 #MINVER#
  gg_unregister3@Base 1:1.8.0+r592
  gg_unregister@Base 1:1.8.0+r592
  gg_urlencode@Base 1:1.8.0+r592
+ gg_userlist100_request@Base 1:1.11.0
  gg_userlist_get@Base 1:1.8.0+r592
  gg_userlist_get_free@Base 1:1.8.0+r592
  gg_userlist_get_watch_fd@Base 1:1.8.0+r592
