@@ -2,7 +2,7 @@ Source: libgadu
 Section: libs
 Priority: optional
 Maintainer: Marcin Owsiany <porridge@debian.org>
-Build-Depends: debhelper (>= 7.0.50~), dh-autoreconf, autoconf, automake1.11, libtool, libgnutls-dev, zlib1g-dev, doxygen
+Build-Depends: debhelper (>= 7.0.50~), dh-autoreconf, autoconf, automake1.11, libtool, pkg-config, libgnutls-dev, zlib1g-dev, doxygen
 Build-Conflicts: autoconf2.13, automake1.4
 Standards-Version: 3.9.2
 Homepage: http://toxygen.net/libgadu/
