@@ -1,3 +1,8 @@
-Automate API/ABI version setting on build time.
-Re-enable build-time tests.
 Feed script/script.c cleanup upstream.
+
+Re-enable build-time tests.
+
+libgadu-doc: embedded-javascript-library usr/share/doc/libgadu-doc/api/jquery.js
+- perhaps should be symlinked by doxygen?
+
+Automate API/ABI version setting on build time.
