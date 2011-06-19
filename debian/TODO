@@ -1,5 +1,3 @@
-Feed script/script.c cleanup upstream.
-
 Re-enable build-time tests.
 Set LIBC_FATAL_STDERR_=1 in rules to catch glibc-generated stack traces.
 
