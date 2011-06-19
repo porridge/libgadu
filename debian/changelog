@@ -1,3 +1,27 @@
+libgadu (1:1.11.0-1) unstable; urgency=low
+
+  * New upstream release. Closes: #630655
+    - Picked changes from 1.10 branch packages.
+    - Added a build-dep on zlib1g-dev and pkg-config.
+    - Bumped the API version in symlink targets.
+  * Moved the git-buildpackage config file to debian/.
+  * Modernized and cleaned up the build process: Migrated to dh v7, source
+    version 3 and buildtime generation of autotools files with dh-autoreconf.
+    - changed from dh_movefiles to implicit dh_install
+    - install changelog in all binary packages instead of symlinking it. It's
+      simpler and the file is tiny.
+    - install NEWS and README in the -doc package instead of symlinking them,
+      to prevent broken symlinks in case of standalone installation
+  * Added vcs-* headers.
+  * Temporarily disabled build-time tests. They sometimes break and hang
+    indefinitely. See the "neverending test" thread on libgadu-devel.
+  * Corrected flag in example make invocation.
+  * Added new symbols.
+  * Added a cleanup test/automatic/script/script.c in clean target.
+  * Bumped Standards-Version to 3.9.2, no changes needed.
+
+ -- Marcin Owsiany <porridge@debian.org>  Sun, 19 Jun 2011 10:28:45 +0100
+
 libgadu (1:1.10.1-1) unstable; urgency=medium
 
   * New upstream release
