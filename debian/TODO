@@ -1,4 +1,4 @@
 libgadu-doc: embedded-javascript-library usr/share/doc/libgadu-doc/api/jquery.js
-- perhaps should be symlinked by doxygen?
+- perhaps should be symlinked by doxygen? Filed Bug#630982.
 
 Automate API/ABI version setting on build time.
