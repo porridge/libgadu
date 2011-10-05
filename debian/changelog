@@ -1,7 +1,16 @@
+libgadu (1:1.11.0+r1184-1) unstable; urgency=low
+
+  * Merge upstream revision r1184 from the 1.11 branch:
+    - contains a couple of patches that had been previously in the automatic
+      debian patch, which thanks to this merge is now absent. Closes: #643188
+    - also contains a fix for GnuTLS-related memory leaks.
+
+ -- Marcin Owsiany <porridge@debian.org>  Wed, 05 Oct 2011 20:37:07 +0100
+
 libgadu (1:1.11.0-2) unstable; urgency=low
 
   * Cherry-picked a fix for the pkgconfig file, to not require linking to
-  * gnutls. Closes: #632584
+    gnutls. Closes: #632584
 
  -- Marcin Owsiany <porridge@debian.org>  Wed, 06 Jul 2011 21:02:45 +0100
 
