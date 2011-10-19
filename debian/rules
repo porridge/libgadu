@@ -46,14 +46,13 @@ override_dh_auto_build:
 override_dh_auto_test:
 	: tests disabled temporarily, as they can hang the build
 
-ifneq (,$(findstring libgadu-doc, $(shell dh_listpackages)))
 override_dh_installdocs:
 	dh_installdocs
+ifneq (,$(findstring libgadu-doc, $(shell dh_listpackages)))
 	# nicer name for api docs directory
 	mv debian/libgadu-doc/usr/share/doc/libgadu-doc/html \
 	   debian/libgadu-doc/usr/share/doc/libgadu-doc/api
 endif
-
 
 override_dh_compress:
 	dh_compress -X.js
