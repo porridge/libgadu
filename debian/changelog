@@ -1,3 +1,10 @@
+libgadu (1:1.11.0+r1184-2) unstable; urgency=low
+
+  * Refactor override_dh_installdocs to work on arch-only builds.
+    (Closes: #645750)
+
+ -- Marcin Owsiany <porridge@debian.org>  Wed, 19 Oct 2011 21:16:13 +0100
+
 libgadu (1:1.11.0+r1184-1) unstable; urgency=low
 
   * Merge upstream revision r1184 from the 1.11 branch:
