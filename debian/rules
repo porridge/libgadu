@@ -47,14 +47,13 @@ override_dh_auto_build:
 	# work-around #591387
 	rm -f docs/html/installdox
 
-ifneq (,$(findstring libgadu-doc, $(shell dh_listpackages)))
 override_dh_installdocs:
 	dh_installdocs
+ifneq (,$(findstring libgadu-doc, $(shell dh_listpackages)))
 	# nicer name for api docs directory
 	mv debian/libgadu-doc/usr/share/doc/libgadu-doc/html \
 	   debian/libgadu-doc/usr/share/doc/libgadu-doc/api
 endif
-
 
 override_dh_compress:
 	dh_compress -X.js
