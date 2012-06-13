@@ -24,25 +24,31 @@
  *
  * \brief Funkcje wykorzystywane przez różne moduły biblioteki
  */
-#include <sys/types.h>
-#include <sys/ioctl.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
+
+#include "network.h"
+#include "strman.h"
 #ifdef sun
 #  include <sys/filio.h>
 #endif
 
 #include <errno.h>
-#include <fcntl.h>
-#include <netdb.h>
 #include <stdarg.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 
+#include "config.h"
 #include "libgadu.h"
+
+#ifndef GG_CONFIG_HAVE_VA_COPY
+#  ifdef GG_CONFIG_HAVE___VA_COPY
+#    define va_copy(dest, src) __va_copy((dest), (src))
+#  else
+/* Taka wersja va_copy() działa poprawnie tylko na platformach, które
+ * va_copy() de facto wcale nie potrzebują, np. MSVC. Definicja tylko dla
+ * przejrzystości kodu. */
+#    define va_copy(dest, src) (dest) = (src)
+#  endif
+#endif
 
 /**
  * \internal Odpowiednik funkcji \c vsprintf alokujący miejsce na wynik.
@@ -59,59 +65,54 @@
  */
 char *gg_vsaprintf(const char *format, va_list ap)
 {
-	int size = 0;
+	int size;
 	char *buf = NULL;
-
-#ifdef GG_CONFIG_HAVE_VA_COPY
 	va_list aq;
 
-	va_copy(aq, ap);
-#else
-#  ifdef GG_CONFIG_HAVE___VA_COPY
-	va_list aq;
-
-	__va_copy(aq, ap);
-#  endif
-#endif
-
-#ifndef GG_CONFIG_HAVE_C99_VSNPRINTF
+#if !defined(GG_CONFIG_HAVE_C99_VSNPRINTF) && !defined(HAVE__VSCPRINTF)
 	{
-		int res;
+		int res = 0;
 		char *tmp;
 
 		size = 128;
 		do {
-			size *= 2;
+			if (res > size) {
+				/* Jednak zachowanie zgodne z C99. */
+				size = res + 1;
+			} else {
+				size *= 2;
+			}
+
 			if (!(tmp = realloc(buf, size))) {
 				free(buf);
 				return NULL;
 			}
+
 			buf = tmp;
-			res = vsnprintf(buf, size, format, ap);
-		} while (res == size - 1 || res == -1);
+			va_copy(aq, ap);
+			res = vsnprintf(buf, size, format, aq);
+			va_end(aq);
+		} while (res >= size || res < 0);
 	}
 #else
+	va_copy(aq, ap);
+
+#  ifdef HAVE__VSCPRINTF
+	size = _vscprintf(format, aq) + 1;
+#  else
 	{
 		char tmp[2];
 
 		/* libce Solarisa przy buforze NULL zawsze zwracają -1, więc
 		 * musimy podać coś istniejącego jako cel printf()owania. */
-		size = vsnprintf(tmp, sizeof(tmp), format, ap);
-		if (!(buf = malloc(size + 1)))
-			return NULL;
+		size = vsnprintf(tmp, sizeof(tmp), format, aq) + 1;
 	}
-#endif
-
-#ifdef GG_CONFIG_HAVE_VA_COPY
-	vsnprintf(buf, size + 1, format, aq);
-	va_end(aq);
-#else
-#  ifdef GG_CONFIG_HAVE___VA_COPY
-	vsnprintf(buf, size + 1, format, aq);
-	va_end(aq);
-#  else
-	vsnprintf(buf, size + 1, format, ap);
 #  endif
+	va_end(aq);
+	if (!(buf = malloc(size)))
+		return NULL;
+
+	vsnprintf(buf, size, format, ap);
 #endif
 
 	return buf;
@@ -150,6 +151,8 @@ char *gg_saprintf(const char *format, ...)
  * \param ptr Wskaźnik do zmiennej, która przechowuje aktualne położenie
  *            w analizowanym buforze
  *
+ * \note Funkcja nie jest już używana. Pozostała dla zachowania ABI.
+ *
  * \return Wskaźnik do kolejnej linii tekstu lub NULL, jeśli to już koniec
  *         bufora.
  */
@@ -184,11 +187,15 @@ char *gg_get_line(char **ptr)
  * Funkcja czyta tekst znak po znaku, więc nie jest efektywna, ale dzięki
  * brakowi buforowania, nie koliduje z innymi funkcjami odczytu.
  *
+ * \note W przypadku zakończenia połączenia przez drugą stronę, ostatnia
+ * linia nie jest zwracana.
+ *
  * \param sock Deskryptor gniazda
  * \param buf Wskaźnik do bufora
  * \param length Długość bufora
  *
- * \return Zwraca \c buf jeśli się powiodło, lub \c NULL w przypadku błędu.
+ * \return Zwraca wskaźnik na koniec odebranej linii jeśli się powiodło,
+ * lub \c NULL w przypadku błędu.
  */
 char *gg_read_line(int sock, char *buf, int length)
 {
@@ -199,7 +206,7 @@ char *gg_read_line(int sock, char *buf, int length)
 
 	for (; length > 1; buf++, length--) {
 		do {
-			if ((ret = read(sock, buf, 1)) == -1 && errno != EINTR && errno != EAGAIN) {
+			if ((ret = recv(sock, buf, 1, 0)) == -1 && errno != EINTR && errno != EAGAIN) {
 				gg_debug(GG_DEBUG_MISC, "// gg_read_line() error on read (errno=%d, %s)\n", errno, strerror(errno));
 				*buf = 0;
 				return NULL;
@@ -233,7 +240,7 @@ char *gg_read_line(int sock, char *buf, int length)
  */
 int gg_connect(void *addr, int port, int async)
 {
-	int sock, one = 1, errno2;
+	int sock, errno2;
 	struct sockaddr_in sin;
 	struct in_addr *a = addr;
 	struct sockaddr_in myaddr;
@@ -260,11 +267,13 @@ int gg_connect(void *addr, int port, int async)
 
 	if (async) {
 #ifdef FIONBIO
+		int one = 1;
+
 		if (ioctl(sock, FIONBIO, &one) == -1) {
 #else
 		if (fcntl(sock, F_SETFL, O_NONBLOCK) == -1) {
 #endif
-			gg_debug(GG_DEBUG_MISC, "// gg_connect() ioctl() failed (errno=%d, %s)\n", errno, strerror(errno));
+			gg_debug(GG_DEBUG_MISC, "// gg_connect() can't set nonblocking (errno=%d, %s)\n", errno, strerror(errno));
 			errno2 = errno;
 			close(sock);
 			errno = errno2;
@@ -387,7 +396,8 @@ int gg_http_hash(const char *format, ...)
 	va_start(ap, format);
 
 	for (j = 0; j < strlen(format); j++) {
-		char *arg, buf[16];
+		const char *arg;
+		char buf[16];
 
 		if (format[j] == 'u') {
 			snprintf(buf, sizeof(buf), "%d", va_arg(ap, uin_t));
@@ -489,7 +499,7 @@ char *gg_base64_decode(const char *buf)
 {
 	char *res, *save, *foo, val;
 	const char *end;
-	unsigned int index = 0;
+	unsigned int idx = 0;
 
 	if (!buf)
 		return NULL;
@@ -506,11 +516,11 @@ char *gg_base64_decode(const char *buf)
 			buf++;
 			continue;
 		}
-		if (!(foo = strchr(gg_base64_charset, *buf)))
+		if (!(foo = memchr(gg_base64_charset, *buf, sizeof(gg_base64_charset))))
 			foo = gg_base64_charset;
 		val = (int)(foo - gg_base64_charset);
 		buf++;
-		switch (index) {
+		switch (idx) {
 			case 0:
 				*res |= val << 2;
 				break;
@@ -526,8 +536,8 @@ char *gg_base64_decode(const char *buf)
 				*res++ |= val;
 				break;
 		}
-		index++;
-		index %= 4;
+		idx++;
+		idx %= 4;
 	}
 	*res = 0;
 

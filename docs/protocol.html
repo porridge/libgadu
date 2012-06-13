@@ -27,7 +27,12 @@ pre { margin: 0px; }
 
 <center>
 <h1>Protokół Gadu-Gadu</h1>
-<h3>&copy; Copyright 2001-2010 <a href="#ch4">Autorzy</a></h3>
+<h3>&copy; Copyright 2001-2011 <a href="#ch4">Autorzy</a></h3>
+<script>
+var language = window.navigator.userLanguage || window.navigator.language;
+if (language.indexOf("pl") != 0)
+	document.writeln('<div><em>Note:</em> You can try an automatic <a href="http://translate.google.com/translate?sl=pl&tl=en&js=n&prev=_t&hl=en&ie=UTF-8&layout=2&eotf=1&u='+escape(location.href)+'">translation by Google</a></div>');
+</script>
 </center>
 
 <hr />
@@ -1914,6 +1919,18 @@ Jeśli został podany nieprawidłowy token, serwer odpowie:
 <pre>bad_tokenval</pre>
 </div>
 
+<p>
+W przypadku zbyt długiego hasła, serwer odpowie:
+</p>
+
+<div class="http">
+<pre>error3 </pre>
+</div>
+
+<p>
+Jeśli podano niepoprawny adres e-mail, odpowiedź serwera jest pusta.
+</p>
+
 <hr />
 
 <a name="ch2.4"></a>
@@ -1954,6 +1971,22 @@ Jeśli wszystko przebiegło poprawnie, serwer odpowie:
 
 <div class="http">
 <pre>reg_success:<b>UIN</b></pre>
+</div>
+
+<p>
+W przypadku nieprawidłowego starego hasła, serwer odpowie:
+</p>
+
+<div class="http">
+<pre>not authenticated</pre>
+</div>
+
+<p>
+W przypadku zbyt długiego nowego hasła, serwer odpowie:
+</p>
+
+<div class="http">
+<pre>error1</pre>
 </div>
 
 <hr />

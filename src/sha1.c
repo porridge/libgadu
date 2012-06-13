@@ -26,17 +26,27 @@
  * \brief Funkcje wyznaczania skrótu SHA1
  */
 
+#include <errno.h>
 #include <string.h>
-#include <sys/types.h>
-#include <unistd.h>
 
 #include "libgadu.h"
+#include "fileio.h"
+#include "config.h"
 
 /** \cond ignore */
 
 #ifdef GG_CONFIG_HAVE_OPENSSL
 
 #include <openssl/sha.h>
+
+#elif defined(HAVE_LIBGCRYPT)
+
+#include <gcrypt.h>
+
+#define SHA_CTX gcry_md_hd_t
+#define SHA1_Init(ctx) gcry_md_open(ctx, GCRY_MD_SHA1, 0)
+#define SHA1_Update(ctx, ptr, len) gcry_md_write(*ctx, ptr, len)
+#define SHA1_Final(digest, ctx) do { memcpy(digest, gcry_md_read(*ctx, GCRY_MD_SHA1), 20); gcry_md_close(*ctx); } while (0)
 
 #else
 
@@ -59,8 +69,6 @@ A million repetitions of "a"
 
 /* #define LITTLE_ENDIAN * This should be #define'd if true. */
 /* #define SHA1HANDSOFF * Copies data before messing with it. */
-
-#include <string.h>
 
 typedef struct {
     uint32_t state[5];
@@ -192,9 +200,9 @@ unsigned char finalcount[8];
         finalcount[i] = (unsigned char)((context->count[(i >= 4 ? 0 : 1)]
          >> ((3-(i & 3)) * 8) ) & 255);  /* Endian independent */
     }
-    SHA1_Update(context, (unsigned char *)"\200", 1);
+    SHA1_Update(context, (const unsigned char *)"\200", 1);
     while ((context->count[0] & 504) != 448) {
-        SHA1_Update(context, (unsigned char *)"\0", 1);
+        SHA1_Update(context, (const unsigned char *)"\0", 1);
     }
     SHA1_Update(context, finalcount, 8);  /* Should cause a SHA1_Transform() */
     for (i = 0; i < 20; i++) {
@@ -219,11 +227,11 @@ unsigned char finalcount[8];
 /** \cond internal */
 
 /**
- * \internal Liczy skrĂłt SHA1 z ziarna i hasĹa.
+ * \internal Liczy skrót SHA1 z ziarna i hasła.
  *
- * \param password HasĹo
+ * \param password Hasło
  * \param seed Ziarno
- * \param result Bufor na wynik funkcji skrĂłtu (20 bajtĂłw)
+ * \param result Bufor na wynik funkcji skrótu (20 bajtów)
  */
 void gg_login_hash_sha1(const char *password, uint32_t seed, uint8_t *result)
 {
@@ -238,10 +246,10 @@ void gg_login_hash_sha1(const char *password, uint32_t seed, uint8_t *result)
 }
 
 /**
- * \internal Liczy skrĂłt SHA1 z pliku.
+ * \internal Liczy skrót SHA1 z pliku.
  *
  * \param fd Deskryptor pliku
- * \param result WskaĹşnik na skrĂłt
+ * \param result Bufor na wynik funkcji skrótu (20 bajtów)
  *
  * \return 0 lub -1
  */
@@ -264,35 +272,60 @@ int gg_file_hash_sha1(int fd, uint8_t *result)
 	SHA1_Init(&ctx);
 
 	if (len <= 10485760) {
-		while ((res = read(fd, buf, sizeof(buf))) > 0)
-			SHA1_Update(&ctx, buf, res);
-	} else {
-		int i;
+		off_t current_pos = 0;
 
-		for (i = 0; i < 9; i++) {
-			int j;
-
-			if (lseek(fd, (len - 1048576) / 9 * i, SEEK_SET) == (off_t) - 1)
-				return -1;
-
-			for (j = 0; j < 1048576 / sizeof(buf); j++) {
-				if ((res = read(fd, buf, sizeof(buf))) != sizeof(buf)) {
+		while ((res = read(fd, buf, sizeof(buf))) > 0 || (res == -1 && errno == EINTR)) {
+			if (res != -1) {
+				SHA1_Update(&ctx, buf, res);
+				current_pos += res;
+			} else {
+				/* Dokumentacja read(2) mówi, że nie wiadomo, co się dzieje z pozycją po błędzie. */
+				if (lseek(fd, current_pos, SEEK_SET) == (off_t) -1) {
 					res = -1;
 					break;
 				}
-
-				SHA1_Update(&ctx, buf, res);
 			}
+		}
+	} else {
+		unsigned int i;
+
+		for (i = 0; i < 9; i++) {
+			unsigned int left = 1048576;
+			off_t current_pos = (len - 1048576) / 9 * i;
+
+			if (lseek(fd, current_pos, SEEK_SET) == (off_t) - 1) {
+				res = -1;
+				break;
+			}
+
+#define MIN(a, b) (((a) < (b)) ? (a) : (b))
+			while ((res = read(fd, buf, MIN(sizeof(buf), left))) > 0 || (res == -1 && errno == EINTR)) {
+				if (res != -1) {
+					SHA1_Update(&ctx, buf, res);
+
+					current_pos += res;
+					left -= res;
+					if (left == 0)
+						break;
+				} else {
+					/* Dokumentacja read(2) mówi, że nie wiadomo, co się dzieje z pozycją po błędzie. */
+					if (lseek(fd, current_pos, SEEK_SET) == (off_t) -1) {
+						res = -1;
+						break;
+					}
+				}
+			}
+#undef MIN
 
 			if (res == -1)
 				break;
 		}
 	}
 
+	SHA1_Final(result, &ctx);
+
 	if (res == -1)
 		return -1;
-
-	SHA1_Final(result, &ctx);
 
 	if (lseek(fd, pos, SEEK_SET) == (off_t) -1)
 		return -1;

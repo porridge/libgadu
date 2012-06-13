@@ -1,10 +1,11 @@
-TESTS = convert message2 message1 $(OPTIONAL_TESTS_GLIBC) $(OPTIONAL_TESTS_PERL)
-check_PROGRAMS = convert message2 message1 $(OPTIONAL_TESTS_GLIBC) $(OPTIONAL_TESTS_PERL)
-EXTRA_PROGRAMS = convert message2 message1 connect packet resolver protocol
+TESTS = convert endian1 message2 message1 hash $(OPTIONAL_TESTS_GLIBC) $(OPTIONAL_TESTS_GLIBC_GNUTLS) $(OPTIONAL_TESTS_PERL)
+check_PROGRAMS = convert endian1 message2 message1 hash $(OPTIONAL_TESTS_GLIBC) $(OPTIONAL_TESTS_GLIBC_GNUTLS) $(OPTIONAL_TESTS_PERL)
+EXTRA_PROGRAMS = convert endian1 message2 message1 hash connect packet resolver protocol
 
-CFLAGS = -Wall -ggdb -DGG_IGNORE_DEPRECATED
+CFLAGS += -DGG_IGNORE_DEPRECATED
 
-protocol_SOURCES = protocol.c script/script.c
+protocol_SOURCES = protocol.c
+nodist_protocol_SOURCES = script/script.c
 protocol_CFLAGS = -Iscript
 protocol_LDADD = $(top_builddir)/src/libgadu.la
 
@@ -16,7 +17,11 @@ message2_SOURCES = message2.c $(top_builddir)/src/message.c
 message2_LDADD = @LIBXML2_LIBS@
 message2_CFLAGS = @LIBXML2_CFLAGS@
 
-connect_LDADD = $(top_builddir)/src/libgadu.la
+hash_SOURCES = hash.c $(top_builddir)/src/sha1.c $(top_builddir)/src/endian.c
+
+endian1_SOURCES = endian1.c $(top_builddir)/src/endian.c
+
+connect_LDADD = $(top_builddir)/src/libgadu.la -lgcrypt -lgnutls
 
 packet_LDADD = $(top_builddir)/src/libgadu.la
 
@@ -30,7 +35,7 @@ script/script.c:       $(wildcard script/*.scr) script/compile
 	$(PERL) script/compile script/*.scr > script/script.c
 
 clean-local:
-	rm -f *.html *.log *-valgrind
+	rm -f *.html *.log *-valgrind script/script.c
 
 check-local:	$(check_PROGRAMS)
 	for i in $(check_PROGRAMS); do ln -sf ../valgrind $${i}-valgrind; done

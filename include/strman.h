@@ -1,8 +1,7 @@
 /* $Id$ */
 
 /*
- *  (C) Copyright 2001-2002 Wojtek Kaniewski <wojtekka@irc.pl>
- *                          Robert J. Woźny <speedy@ziew.org>
+ *  (C) Copyright 2011 Bartosz Brachaczek <b.brachaczek@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU Lesser General Public License Version
@@ -20,16 +19,25 @@
  */
 
 /**
- * \file compat.h
+ * \file strman.h
  *
- * \brief Makra zapewniające kompatybilność API na różnych systemach
+ * \brief Makra zapewniające kompatybilność API do obsługi operacji na stringach na różnych systemach
  */
 
-#ifndef __COMPAT_H
-#define __COMPAT_H
+#ifndef LIBGADU_STRMAN_H
+#define LIBGADU_STRMAN_H
 
-#ifdef sun
-#  define INADDR_NONE   ((in_addr_t) 0xffffffff)
+#include <stdio.h>
+#include <stdarg.h>
+#include <string.h>
+#ifndef _MSC_VER
+#  include <strings.h>
+#else
+#  define snprintf(str, size, format, ...) _snprintf_s(str, size, _TRUNCATE, format, __VA_ARGS__)
+#  define vsnprintf(str, size, format, ap) vsnprintf_s(str, size, _TRUNCATE, format, ap)
+#  define strdup _strdup
+#  define strcasecmp _stricmp
+#  define strncasecmp _strnicmp
 #endif
 
-#endif
+#endif /* LIBGADU_STRMAN_H */

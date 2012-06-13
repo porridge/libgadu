@@ -20,7 +20,6 @@
 #define LIBGADU_MESSAGE_H
 
 #include <sys/types.h>
-#include <inttypes.h>
 #include "libgadu.h"
 
 #if 0
@@ -50,7 +49,7 @@ int gg_message_init(gg_message_t *gm, int msgclass, int seq, uin_t *recipients, 
 
 #endif
 
-size_t gg_message_html_to_text(char *dst, const char *html);
-size_t gg_message_text_to_html(char *dst, const char *utf_msg, const char *format, size_t format_len);
+size_t gg_message_html_to_text(char *dst, unsigned char *format, size_t *format_len, const char *html, gg_encoding_t encoding);
+size_t gg_message_text_to_html(char *dst, const char *src, gg_encoding_t encoding, const unsigned char *format, size_t format_len);
 
 #endif /* LIBGADU_MESSAGE_H */

@@ -1,11 +1,12 @@
 dnl $Id$
 
 AC_INIT(src/libgadu.c)
-AM_INIT_AUTOMAKE(libgadu, 1.11.0)
+AM_INIT_AUTOMAKE(libgadu, 1.12.0-pre)
 
 AC_PREREQ(2.50)
 AC_CANONICAL_HOST
 AC_CONFIG_HEADERS(config.h include/libgadu.h)
+AC_CONFIG_MACRO_DIR([m4])
 
 m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
 
@@ -17,8 +18,13 @@ AC_C_CONST
 AC_PROG_LIBTOOL
 AC_SUBST(LIBTOOL_DEPS)
 
-AC_SUBST(REQUIRES)
 AC_SUBST(INCLUDES)
+dnl Zależności dla pkgconfig
+AC_SUBST(REQUIRES_PRIVATE)
+AC_SUBST(LIBS_PRIVATE)
+
+export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig"
+PKG_PROG_PKG_CONFIG
 
 if test "$GCC"; then
 	CFLAGS="$CFLAGS -Wall -Wmissing-prototypes"
@@ -52,8 +58,7 @@ if test "x$STDINT_H" = "xsys/types.h"; then
 	AC_DEFINE([GG_CONFIG_HAVE_SYS_TYPES_H], [], [Defined if uintX_t types are defined in <sys/types.h>.])
 fi
 
-AC_DEFINE([GG_LIBGADU_VERSION], [], [Library version])
-AC_DEFINE_UNQUOTED(GG_LIBGADU_VERSION, "${VERSION}")
+AC_DEFINE_UNQUOTED([GG_LIBGADU_VERSION], ["${VERSION}"], [Library version])
 
 dnl
 dnl  Sprawdźmy, jaką wersję vsnprintf() dostajemy. Dodatkowa opcja jest
@@ -89,6 +94,14 @@ if test "x$with_c99_vsnprintf" = "x"; then
 fi
 
 dnl
+dnl  Sprawdzamy dostępność specyficznego dla Win32 _vscprintf(), które
+dnl  pozwala oszczędzić użycie alokatora na MSVC, które nie posiada
+dnl  vsnprintf() zgodnego z C99.
+dnl
+
+AC_CHECK_FUNCS([_vscprintf])
+
+dnl
 dnl  Sprawdzamy, czy jest system obsługuje 64-bitowe zmienne potrzebne dla
 dnl  połączeń bezpośrednich.
 dnl
@@ -104,7 +117,8 @@ AC_TRY_COMPILE([],
 	AC_DEFINE([GG_CONFIG_HAVE_LONG_LONG], [], [Defined if this machine supports long long.])
 ])
 
-AC_CHECK_FUNCS([strtoull], [AC_DEFINE([HAVE_STRTOULL], [], [Defined if this machine has strtoull().])])
+AC_CHECK_FUNCS([strtoull])
+AC_CHECK_FUNCS([_strtoui64])
 
 AC_MSG_CHECKING([if <$STDINT_H> has uint64_t])
 AC_TRY_COMPILE([#include <$STDINT_H>], [uint64_t foo],
@@ -116,8 +130,8 @@ dnl
 dnl  SunOS
 dnl
 
-AC_CHECK_LIB(nsl, t_accept, LIBS="$LIBS -lnsl")
-AC_CHECK_LIB(socket, socket, LIBS="$LIBS -lsocket")
+AC_CHECK_LIB(nsl, t_accept, LIBS_PRIVATE="$LIBS_PRIVATE -lnsl")
+AC_CHECK_LIB(socket, socket, LIBS_PRIVATE="$LIBS_PRIVATE -lsocket")
 
 dnl
 dnl  BeOS
@@ -127,7 +141,7 @@ AC_ARG_WITH(bind,
 	[  --without-bind          do not use libbind even if found])
 
 if test "x$with_bind" != "xno"; then
-	AC_CHECK_LIB(bind, __inet_addr, LIBS="$LIBS -lbind")
+	AC_CHECK_LIB(bind, __inet_addr, LIBS_PRIVATE="$LIBS_PRIVATE -lbind")
 fi
 
 dnl
@@ -154,6 +168,10 @@ AC_TRY_LINK([#include <stdarg.h>], [va_list a, b; __va_copy(a, b);],
 	AC_MSG_RESULT([no])
 ])
 
+AC_CHECK_FUNCS([_exit])
+
+AC_CHECK_FUNCS([fork], [AC_DEFINE([GG_CONFIG_HAVE_FORK], [], [Defined if this machine has fork().])])
+
 AC_ARG_ENABLE(debug, 
 	[  --disable-debug         compile without debugging support])
 
@@ -174,11 +192,12 @@ if test "x$with_pthread" != "xno"; then
 		dnl workaround dla pkgconfiga
 		if test "x$PTHREAD_CFLAGS" = "x-pthread"; then
 			PTHREAD_LIBS="$PTHREAD_LIBS -pthread"
+		else
+			INCLUDES="$INCLUDES $PTHREAD_CFLAGS"
 		fi
 
-		LIBS="$PTHREAD_LIBS $LIBS"
+		LIBS_PRIVATE="$PTHREAD_LIBS $LIBS_PRIVATE"
 		CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
-		INCLUDES="$INCLUDES $PTHREAD_CFLAGS"
 		CC="$PTHREAD_CC"
 		have_pthread=yes
 
@@ -202,7 +221,7 @@ AC_CHECK_LIB(z, inflateEnd, [have_zlib=yes], [have_zlib=no])
 AC_CHECK_HEADER(zlib.h, [have_zlib_h=yes], [have_zlib_h=no])
 
 if test "x$have_zlib" = "xyes" -a "x$have_zlib_h" = "xyes"; then
-	LIBS="$LIBS -lz"
+	LIBS_PRIVATE="$LIBS_PRIVATE -lz"
 	AC_DEFINE(HAVE_ZLIB, 1, [define if you have zlib])
 	AC_DEFINE([GG_CONFIG_HAVE_ZLIB], [], [Defined if libgadu was compiled and linked with zlib support.])
 fi
@@ -217,24 +236,30 @@ AC_ARG_WITH(gnutls,
 have_gnutls=""
 
 if test "x$with_gnutls" != "xno"; then
-	AC_CHECK_PROG([PKGCONFIG], [pkg-config], [pkg-config], [no])
-	if test "x$PKGCONFIG" != "xno"; then
-		AC_MSG_CHECKING([for GnuTLS])
-		GNUTLS_LIBS=$($PKGCONFIG --libs gnutls)
-		GNUTLS_CFLAGS=$($PKGCONFIG --cflags gnutls)
-		if test "x$GNUTLS_LIBS" != "x" -o "x$GNUTLS_CFLAGS" != "x"; then
-			AC_DEFINE(HAVE_GNUTLS, 1, [define if you have GnuTLS])
-			AC_MSG_RESULT([yes])
-			AC_DEFINE([GG_CONFIG_HAVE_GNUTLS], [], [Defined if libgadu was compiled and linked with GnuTLS support.])
-			REQUIRES="$REQUIRES gnutls"
-			CFLAGS="$CFLAGS $GNUTLS_CFLAGS"
-			INCLUDES="$INCLUDES $GNUTLS_CFLAGS"
-			LIBS="$LIBS $GNUTLS_LIBS"
-			have_gnutls="yes"
-		else
-			AC_MSG_RESULT([no])
-		fi
-	fi
+	PKG_CHECK_MODULES([GNUTLS], [gnutls], [
+		AC_DEFINE([HAVE_GNUTLS], [], [Defined if GnuTLS is available.])
+		AC_DEFINE([GG_CONFIG_HAVE_GNUTLS], [], [Defined if libgadu was compiled and linked with GnuTLS support.])
+		REQUIRES_PRIVATE="$REQUIRES_PRIVATE gnutls"
+		CFLAGS="$CFLAGS $GNUTLS_CFLAGS"
+		# Note: not adding to LIBS_PRIVATE, because
+		# "REQUIRES_PRIVATE" takes care of that for pkg-config.
+		LIBS="$LIBS $GNUTLS_LIBS"
+		have_gnutls="yes"
+	], [:])
+fi
+
+dnl
+dnl  Sprawdzamy libgcrypt
+dnl
+AC_ARG_WITH(libgcrypt,
+  [  --without-libgcrypt     do not use libgcrypt even if found])
+
+if test "x$with_libgcrypt" != "xno"; then
+	AM_PATH_LIBGCRYPT([], [
+		AC_DEFINE([HAVE_LIBGCRYPT], [], [Defined if libgcrypt is available.])
+		CFLAGS="$CFLAGS $LIBGCRYPT_CFLAGS"
+		LIBS_PRIVATE="$LIBS_PRIVATE $LIBGCRYPT_LIBS"
+	])
 fi
 
 dnl
@@ -246,12 +271,18 @@ if test "x$have_gnutls" != "xyes"; then
 fi
 
 if test "x$have_openssl" = "xyes"; then
+	# Note: not adding to LIBS_PRIVATE, because "REQUIRES_PRIVATE" takes care
+	# of that for pkg-config.
 	LIBS="$LIBS $OPENSSL_LIBS"
 	CFLAGS="$CFLAGS $OPENSSL_INCLUDES"
 	INCLUDES="$INCLUDES $OPENSSL_INCLUDES"
-	REQUIRES="$REQUIRES openssl"
+	REQUIRES_PRIVATE="$REQUIRES_PRIVATE openssl"
 	AC_DEFINE([GG_CONFIG_HAVE_OPENSSL], [], [Defined if libgadu was compiled and linked with OpenSSL support.])
 fi
+
+# We need separate lists of libs handled with and without pkgconfig help, for the pkgconfig file.
+# We concatenate them here so that libtool can pick the pkgconfig-less libs too.
+LIBS="$LIBS $LIBS_PRIVATE"
 
 dnl
 dnl  Testy
@@ -259,11 +290,13 @@ dnl
 
 AC_SUBST([SUBDIRS_TEST])
 AC_SUBST([OPTIONAL_TESTS_GLIBC])
+AC_SUBST([OPTIONAL_TESTS_GLIBC_GNUTLS])
 AC_SUBST([OPTIONAL_TESTS_PERL])
 AC_SUBST([OPTIONAL_TESTS_VOICE7])
 AC_SUBST([OPTIONAL_TESTS_SEARCH])
 SUBDIRS_TEST=""
 OPTIONAL_TESTS_GLIBC=""
+OPTIONAL_TESTS_GLIBC_GNUTLS=""
 OPTIONAL_TESTS_PERL=""
 OPTIONAL_TESTS_VOICE7=""
 OPTIONAL_TESTS_SEARCH=""
@@ -278,7 +311,17 @@ if test "x$enable_tests" != "xno"; then
 	dnl  Sprawdź, czy można korzystać z __funkcji w libc.
 	dnl 
 
-	AC_CHECK_LIB(c, __connect, [OPTIONAL_TESTS_GLIBC="connect resolver packet"])
+	have_glibc=""
+
+	AC_CHECK_LIB(c, __connect, [have_glibc="yes"])
+	
+	if test "x$have_glibc" = "xyes"; then
+		OPTIONAL_TESTS_GLIBC="resolver packet"
+		
+		if test "x$have_gnutls" = "xyes"; then
+			OPTIONAL_TESTS_GLIBC_GNUTLS="connect"
+		fi
+	fi
 
 	dnl
 	dnl  libgsm i libspeex dla voice7
@@ -322,18 +365,11 @@ if test "x$enable_tests" != "xno"; then
 	dnl
 	dnl  Sprawdź, czy mamy libxml2 do testów automatycznych
 	dnl
-
-	export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig"
-
-	PKG_PROG_PKG_CONFIG
-
-	if test "x$PKG_CONFIG" != "x"; then
-		AC_SUBST([LIBXML2_CFLAGS])
-		AC_SUBST([LIBXML2_LIBS])
-		PKG_CHECK_MODULES([LIBXML2], [libxml-2.0], [
-			AC_DEFINE([HAVE_LIBXML2], [], [Defined if libxml2 is available.])
-		], [:])
-	fi
+	AC_SUBST([LIBXML2_CFLAGS])
+	AC_SUBST([LIBXML2_LIBS])
+	PKG_CHECK_MODULES([LIBXML2], [libxml-2.0], [
+		AC_DEFINE([HAVE_LIBXML2], [], [Defined if libxml2 is available.])
+	], [:])
 fi
 
 dnl
@@ -348,6 +384,19 @@ if test "x$DOXYGEN" = "xdoxygen"; then
 else
 	SUBDIRS_DOXYGEN=""
 fi
+
+dnl
+dnl  Egzotyczne systemy operacyjne
+dnl
+case "$host" in
+	*-*-mingw* | *-*-cygwin*)
+		MINGW_LDFLAGS="-no-undefined -lws2_32"
+		;;
+	*)
+		MINGW_LDFLAGS=""
+		;;
+esac
+AC_SUBST([MINGW_LDFLAGS])
 
 AC_CONFIG_FILES([Makefile src/Makefile include/Makefile pkgconfig/Makefile pkgconfig/libgadu.pc docs/Makefile docs/Doxyfile examples/Makefile test/Makefile test/automatic/Makefile test/automatic/script/Makefile test/manual/Makefile test/manual/lib/Makefile])
 
