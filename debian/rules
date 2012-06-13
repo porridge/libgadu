@@ -19,6 +19,10 @@ endif
 # * specify an explicit automake version
 export AUTOMAKE=automake-1.11
 
+# Force the glibc-generated stack dump to stderr instead of /dev/tty for the
+# test suite.
+export LIBC_FATAL_STDERR_=1
+
 %:
 	dh $@ --with autoreconf --parallel
 
