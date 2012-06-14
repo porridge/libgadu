@@ -126,8 +126,10 @@ libgadu.so.3 libgadu3 #MINVER#
  gg_search_watch_fd@Base 1:1.8.0+r592
  gg_send_message@Base 1:1.8.0+r592
  gg_send_message_confer@Base 1:1.8.0+r592
+ gg_send_message_confer_html@Base 1:1.12.0~pre+r1278
  gg_send_message_confer_richtext@Base 1:1.8.0+r592
  gg_send_message_ctcp@Base 1:1.8.0+r592
+ gg_send_message_html@Base 1:1.12.0~pre+r1278
  gg_send_message_richtext@Base 1:1.8.0+r592
  gg_send_packet@Base 1:1.8.0+r592
  gg_session_get_resolver@Base 1:1.9.0~rc1+r837
