@@ -3,20 +3,16 @@
 # Copyright 2002-2011 Marcin Owsiany <porridge@debian.org>
 
 # As recommended by "current Debian best practice" prescribed by autotools-dev, we:
-
-# * set configure flags appropriately to help cross-compiling:
-# These are set automatically by dpkg-buildpackage, but we cannot depend on
-# them being available, because caller might not be using dpkg-buildpackage
-DEB_HOST_GNU_TYPE   ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
-DEB_BUILD_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
-
+# 1) set configure flags appropriately to help cross-compiling:
+# (note: without the following line dh gets into infinite fork loop if file is missing)
+/usr/share/dpkg/architecture.mk: ;
+-include /usr/share/dpkg/architecture.mk
 ifeq ($(DEB_BUILD_GNU_TYPE), $(DEB_HOST_GNU_TYPE))
   confflags += --build $(DEB_HOST_GNU_TYPE)
 else
   confflags += --build $(DEB_BUILD_GNU_TYPE) --host $(DEB_HOST_GNU_TYPE)
 endif
-
-# * specify an explicit automake version
+# 2) specify an explicit automake version
 export AUTOMAKE=automake-1.11
 
 # Force the glibc-generated stack dump to stderr instead of /dev/tty for the
