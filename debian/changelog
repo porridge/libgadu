@@ -1,3 +1,26 @@
+libgadu (1:1.12.0~pre+r1278-1) experimental; urgency=low
+
+  * New upstream snapshot (Closes: #630655)
+  * Added a build-dep on zlib1g-dev.
+  * Bumped the API version in symlink targets.
+  * Updated branch names to the versioned ones.
+  * Moved the git-buildpackage config file to debian/.
+  * Modernized and cleaned up the build process.
+  * Export a variable in debian/rules to improve test error reporting.
+  * Corrected flag in example make invocation.
+  * Added new symbols.
+  * Added a todo note about query.js.
+  * Bumped Standards-Version to 3.9.2.
+  * Added pkg-config to build-deps.
+  * Amended a TODO item with bug number.
+  * Refactor override_dh_installdocs to work on arch-only builds.
+  * Added new symbols.
+  * Bumped Standards-Version: to 3.9.3 (no changes needed).
+  * Switch to dh 9 and multi-arch.
+  * Use dpkg-dev 1.16.1 architecture vars makefile snippet.
+
+ -- Marcin Owsiany <porridge@debian.org>  Fri, 15 Jun 2012 09:24:17 +0100
+
 libgadu (1:1.10.1-1) unstable; urgency=medium
 
   * New upstream release
