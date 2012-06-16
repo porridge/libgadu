@@ -20,7 +20,8 @@ Configuration options
 		--with-pthread \
 		--without-bind \
 		--without-openssl \
-		--with-gnutls
+		--with-gnutls \
+		--with-libgcrypt
 
 
 Changelog

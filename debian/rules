@@ -34,7 +34,8 @@ override_dh_auto_configure:
 		--with-pthread \
 		--without-bind \
 		--without-openssl \
-		--with-gnutls
+		--with-gnutls \
+		--with-gcrypt
 # Reasons for disabling features are in README.Debian
 # Remember to update README.Debian as well...
 
