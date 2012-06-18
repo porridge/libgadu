@@ -1,3 +1,13 @@
+libgadu (1:1.12.0~pre+r1295-1) experimental; urgency=low
+
+  * New upstream snapshot.
+  * Corrected gcrypt configure option.
+  * Strip some flags passed automatically by dh_auto_configure.
+  * Enable -Werror for build.
+  * Temporarily bump debhelper verbosity.
+
+ -- Marcin Owsiany <porridge@debian.org>  Mon, 18 Jun 2012 22:30:42 +0100
+
 libgadu (1:1.12.0~pre+r1289-1) experimental; urgency=low
 
   * New upstream snapshot.
