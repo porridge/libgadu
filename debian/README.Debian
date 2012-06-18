@@ -7,16 +7,11 @@ Configuration options
   libgadu is built with GnuTLS rather than OpenSSL, as this makes linking other
   pure-GPL programs against libgadu feasible
   
-  Here are the library build configuration options for your convenience:
+  Here are the library build configuration options for your convenience (in
+  addition to the ones passed by dh_auto_configure):
 
 	./configure \
 		--disable-silent-rules \
-		--host=$(DEB_HOST_GNU_TYPE) \
-		--build=$(DEB_BUILD_GNU_TYPE) \
-		--prefix=/usr \
-		--sysconfdir=/etc \
-		--mandir=\$${prefix}/share/man \
-		--infodir=\$${prefix}/share/info \
 		--with-pthread \
 		--without-bind \
 		--without-openssl \
@@ -33,5 +28,5 @@ Changelog
   interface at http://toxygen.net/websvn/listing.php?repname=libgadu&path=/&sc=0
 
 
- -- Marcin Owsiany <porridge@debian.org>, Mon, 05 Oct 2009 08:38:16 +0100
+ -- Marcin Owsiany <porridge@debian.org>,  Mon, 18 Jun 2012 16:45:27 +0100
 
