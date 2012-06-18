@@ -12,6 +12,9 @@ export AUTOMAKE=automake-1.11
 # test suite:
 export LIBC_FATAL_STDERR_=1
 
+# Temporary measure for experimental upload to see what exactly is going on.
+export DH_VERBOSE = 1
+
 %:
 	dh $@ --with autoreconf --parallel
 
