@@ -1,3 +1,11 @@
+libgadu (1:1.11.2-1) unstable; urgency=medium
+
+  * New upstream release
+    - contains a fix for threading issues in some clients
+  * Pass dpkg-buildflags output to configure.
+
+ -- Marcin Owsiany <porridge@debian.org>  Tue, 19 Jun 2012 10:16:35 +0100
+
 libgadu (1:1.11.1-1) unstable; urgency=low
 
   * New upstream release.
