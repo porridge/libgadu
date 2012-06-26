@@ -1,3 +1,10 @@
+libgadu (1:1.12.0~pre+r1302-1) experimental; urgency=low
+
+  * New upstream snapshot.
+    - this hopefully fixes the flakiness that caused freebsd-amd64 FTBFS
+
+ -- Marcin Owsiany <porridge@debian.org>  Tue, 26 Jun 2012 22:46:45 +0100
+
 libgadu (1:1.12.0~pre+r1301-1) experimental; urgency=low
 
   * New upstream snapshot.
