@@ -1,3 +1,11 @@
+libgadu (1:1.12.0~pre+r1314-1) experimental; urgency=low
+
+  * New upstream snapshot
+  * Dependency adjustments after recent upstream changes.
+  * Add a lintian override for the jquery file installed by doxygen.
+
+ -- Marcin Owsiany <porridge@debian.org>  Fri, 17 Aug 2012 19:45:55 +0200
+
 libgadu (1:1.12.0~pre+r1304-1) experimental; urgency=low
 
   * New upstream snapshot
