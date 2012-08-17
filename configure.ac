@@ -1,7 +1,8 @@
 dnl $Id$
 
-AC_INIT(src/libgadu.c)
-AM_INIT_AUTOMAKE(libgadu, 1.12.0-pre)
+AC_INIT([libgadu], [1.12.0-pre])
+AC_CONFIG_SRCDIR([src/libgadu.c])
+AM_INIT_AUTOMAKE
 
 AC_PREREQ(2.50)
 AC_CANONICAL_HOST
@@ -236,7 +237,7 @@ AC_ARG_WITH(gnutls,
 have_gnutls=""
 
 if test "x$with_gnutls" != "xno"; then
-	PKG_CHECK_MODULES([GNUTLS], [gnutls], [
+	PKG_CHECK_MODULES([GNUTLS], [gnutls >= 2.10.0], [
 		AC_DEFINE([HAVE_GNUTLS], [], [Defined if GnuTLS is available.])
 		AC_DEFINE([GG_CONFIG_HAVE_GNUTLS], [], [Defined if libgadu was compiled and linked with GnuTLS support.])
 		REQUIRES_PRIVATE="$REQUIRES_PRIVATE gnutls"
@@ -260,30 +261,9 @@ if test "x$have_openssl" = "xyes"; then
 	# Note: not adding to LIBS_PRIVATE, because "REQUIRES_PRIVATE" takes care
 	# of that for pkg-config.
 	LIBS="$LIBS $OPENSSL_LIBS"
-	CFLAGS="$CFLAGS $OPENSSL_INCLUDES"
-	INCLUDES="$INCLUDES $OPENSSL_INCLUDES"
+	CFLAGS="$CFLAGS $OPENSSL_CFLAGS"
 	REQUIRES_PRIVATE="$REQUIRES_PRIVATE openssl"
 	AC_DEFINE([GG_CONFIG_HAVE_OPENSSL], [], [Defined if libgadu was compiled and linked with OpenSSL support.])
-fi
-
-dnl
-dnl  Sprawdzamy libgcrypt, jeśli nie ma OpenSSL
-dnl
-
-have_libgcrypt=""
-
-if test "x$have_openssl" != "xyes"; then
-	AC_ARG_WITH(libgcrypt,
-	  [  --without-libgcrypt     do not use libgcrypt even if found])
-
-	if test "x$with_libgcrypt" != "xno"; then
-		AM_PATH_LIBGCRYPT([], [
-			AC_DEFINE([HAVE_LIBGCRYPT], [], [Defined if libgcrypt is available.])
-			CFLAGS="$CFLAGS $LIBGCRYPT_CFLAGS"
-			LIBS_PRIVATE="$LIBS_PRIVATE $LIBGCRYPT_LIBS"
-			have_libgcrypt="yes"
-		])
-	fi
 fi
 
 # We need separate lists of libs handled with and without pkgconfig help, for the pkgconfig file.
@@ -326,37 +306,30 @@ if test "x$enable_tests" != "xno"; then
 		
 		dnl For tests always try to use GnuTLS if available
 		if test "x$have_gnutls" != "xyes"; then
-			PKG_CHECK_MODULES([GNUTLS], [gnutls], [
+			PKG_CHECK_MODULES([GNUTLS], [gnutls >= 2.10.0], [
 				AC_DEFINE([HAVE_GNUTLS], [], [Defined if GnuTLS is available.])
 				have_gnutls="yes"
 			], [:])
 		fi
 
-		dnl For tests always try to use libgcrypt if available
-		if test "x$have_libgcrypt" != "xyes"; then
-			AM_PATH_LIBGCRYPT([], [
-				have_libgcrypt="yes"
-			])
-		fi
-
-		if test "x$have_gnutls" = "xyes" -a "x$have_libgcrypt" = "xyes"; then
+		if test "x$have_gnutls" = "xyes"; then
 			OPTIONAL_TESTS_GLIBC_GNUTLS="connect"
 		fi
 	fi
 
 	dnl
-	dnl  libgsm i libspeex dla voice7
+	dnl  libgsm i libspeex dla voice7 (obecnie wyłączone)
 	dnl
 
-	tmp=x
-	AC_CHECK_LIB(speex, speex_encoder_init, [tmp="x$tmp"])
-	AC_CHECK_HEADERS(speex/speex.h, [tmp="x$tmp"])
-	AC_CHECK_LIB(gsm, gsm_create, [tmp="x$tmp"])
-	AC_CHECK_HEADERS(gsm/gsm.h, [tmp="x$tmp"])
-
-	if test "x$tmp" = "xxxxxx"; then
-		OPTIONAL_TESTS_VOICE7="voice7"
-	fi
+dnl	tmp=x
+dnl	AC_CHECK_LIB(speex, speex_encoder_init, [tmp="x$tmp"])
+dnl	AC_CHECK_HEADERS(speex/speex.h, [tmp="x$tmp"])
+dnl	AC_CHECK_LIB(gsm, gsm_create, [tmp="x$tmp"])
+dnl	AC_CHECK_HEADERS(gsm/gsm.h, [tmp="x$tmp"])
+dnl
+dnl	if test "x$tmp" = "xxxxxx"; then
+dnl		OPTIONAL_TESTS_VOICE7="voice7"
+dnl	fi
 
 	dnl
 	dnl  curl, expat i OpenSSL dla search
@@ -408,6 +381,8 @@ AC_CHECK_PROG([DOXYGEN], [doxygen], [doxygen], [:])
 AC_SUBST([SUBDIRS_DOXYGEN])
 if test "x$DOXYGEN" = "xdoxygen"; then
 	SUBDIRS_DOXYGEN="docs"
+	AC_SUBST([DOXYFILE_HTML_DIR])
+	DOXYFILE_HTML_DIR="html"
 else
 	SUBDIRS_DOXYGEN=""
 fi

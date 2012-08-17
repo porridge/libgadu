@@ -30,6 +30,7 @@
 #include <string.h>
 
 #include "libgadu.h"
+#include "internal.h"
 #include "fileio.h"
 #include "config.h"
 
@@ -39,14 +40,15 @@
 
 #include <openssl/sha.h>
 
-#elif defined(HAVE_LIBGCRYPT)
+#elif defined(GG_CONFIG_HAVE_GNUTLS)
 
-#include <gcrypt.h>
+#include <gnutls/gnutls.h>
+#include <gnutls/crypto.h>
 
-#define SHA_CTX gcry_md_hd_t
-#define SHA1_Init(ctx) do { gcry_check_version(NULL); gcry_md_open(ctx, GCRY_MD_SHA1, 0); } while (0)
-#define SHA1_Update(ctx, ptr, len) gcry_md_write(*ctx, ptr, len)
-#define SHA1_Final(digest, ctx) do { memcpy(digest, gcry_md_read(*ctx, GCRY_MD_SHA1), 20); gcry_md_close(*ctx); } while (0)
+#define SHA_CTX gnutls_hash_hd_t
+#define SHA1_Init(ctx) (gnutls_hash_init((ctx), GNUTLS_DIG_SHA1) == 0 ? 1 : 0)
+#define SHA1_Update(ctx, ptr, len) (gnutls_hash(*(ctx), (ptr), (len)) == 0 ? 1 : 0)
+#define SHA1_Final(digest, ctx) (gnutls_hash_deinit(*(ctx), (digest)), 1)
 
 #else
 
@@ -77,9 +79,9 @@ typedef struct {
 } SHA_CTX;
 
 static void SHA1_Transform(uint32_t state[5], const unsigned char buffer[64]);
-static void SHA1_Init(SHA_CTX* context);
-static void SHA1_Update(SHA_CTX* context, const unsigned char* data, unsigned int len);
-static void SHA1_Final(unsigned char digest[20], SHA_CTX* context);
+static int SHA1_Init(SHA_CTX* context);
+static int SHA1_Update(SHA_CTX* context, const unsigned char* data, unsigned int len);
+static int SHA1_Final(unsigned char digest[20], SHA_CTX* context);
 
 #define rol(value, bits) (((value) << (bits)) | ((value) >> (32 - (bits))))
 
@@ -155,7 +157,7 @@ static unsigned char workspace[64];
 
 /* SHA1_Init - Initialize new context */
 
-static void SHA1_Init(SHA_CTX* context)
+static int SHA1_Init(SHA_CTX* context)
 {
     /* SHA1 initialization constants */
     context->state[0] = 0x67452301;
@@ -164,12 +166,14 @@ static void SHA1_Init(SHA_CTX* context)
     context->state[3] = 0x10325476;
     context->state[4] = 0xC3D2E1F0;
     context->count[0] = context->count[1] = 0;
+
+    return 1;
 }
 
 
 /* Run your data through this. */
 
-static void SHA1_Update(SHA_CTX* context, const unsigned char* data, unsigned int len)
+static int SHA1_Update(SHA_CTX* context, const unsigned char* data, unsigned int len)
 {
 unsigned int i, j;
 
@@ -186,12 +190,14 @@ unsigned int i, j;
     }
     else i = 0;
     memcpy(&context->buffer[j], &data[i], len - i);
+
+    return 1;
 }
 
 
 /* Add padding and return the message digest. */
 
-static void SHA1_Final(unsigned char digest[20], SHA_CTX* context)
+static int SHA1_Final(unsigned char digest[20], SHA_CTX* context)
 {
 uint32_t i, j;
 unsigned char finalcount[8];
@@ -218,6 +224,8 @@ unsigned char finalcount[8];
 #ifdef SHA1HANDSOFF  /* make SHA1_Transform overwrite it's own static vars */
     SHA1_Transform(context->state, context->buffer);
 #endif
+
+    return 1;
 }
 
 #endif /* GG_CONFIG_HAVE_OPENSSL */
@@ -232,17 +240,32 @@ unsigned char finalcount[8];
  * \param password Hasło
  * \param seed Ziarno
  * \param result Bufor na wynik funkcji skrótu (20 bajtów)
+ * 
+ * \return 0 lub -1
  */
-void gg_login_hash_sha1(const char *password, uint32_t seed, uint8_t *result)
+int gg_login_hash_sha1_2(const char *password, uint32_t seed, uint8_t *result)
 {
 	SHA_CTX ctx;
-	
-	SHA1_Init(&ctx);
-	SHA1_Update(&ctx, (const unsigned char*) password, strlen(password));
+
+	if (!SHA1_Init(&ctx))
+		return -1;
+
+	if (!SHA1_Update(&ctx, (const unsigned char*) password, strlen(password)))
+		goto fail;
+
 	seed = gg_fix32(seed);
-	SHA1_Update(&ctx, (uint8_t*) &seed, 4);
+	if (!SHA1_Update(&ctx, (uint8_t*) &seed, 4))
+		goto fail;
 	
+	if (!SHA1_Final(result, &ctx))
+		return -1;
+
+	return 0;
+
+fail:
+	/* Zwolnij zasoby. Tylko GnuTLS przyjęłoby NULL zamiast result, więc przekaż result. */
 	SHA1_Final(result, &ctx);
+	return -1;
 }
 
 /**
@@ -278,7 +301,10 @@ static int gg_file_hash_sha1_part(int fd, SHA_CTX *ctx, off_t pos, size_t len)
 			break;
 
 		if (res != -1) {
-			SHA1_Update(ctx, buf, res);
+			if (!SHA1_Update(ctx, buf, res)) {
+				res = -1;
+				break;
+			}
 
 			pos += res;
 			len -= res;
@@ -315,7 +341,8 @@ int gg_file_hash_sha1(int fd, uint8_t *result)
 	if (lseek(fd, 0, SEEK_SET) == (off_t) -1)
 		return -1;
 
-	SHA1_Init(&ctx);
+	if (!SHA1_Init(&ctx))
+		return -1;
 
 	if (len <= part_len * 10) {
 		res = gg_file_hash_sha1_part(fd, &ctx, 0, len);
@@ -332,7 +359,8 @@ int gg_file_hash_sha1(int fd, uint8_t *result)
 		}
 	}
 
-	SHA1_Final(result, &ctx);
+	if (!SHA1_Final(result, &ctx))
+		return -1;
 
 	if (res == -1)
 		return -1;
