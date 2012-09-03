@@ -1,3 +1,11 @@
+libgadu (1:1.12.0~pre+r1323-1) experimental; urgency=low
+
+  * New upstream snappshot
+    - further improvements to the test suite, should fix or at least shed some
+      light on the hurd and kfreebsd FTBFSes
+
+ -- Marcin Owsiany <porridge@debian.org>  Mon, 03 Sep 2012 15:50:41 +0100
+
 libgadu (1:1.12.0~pre+r1314-1) experimental; urgency=low
 
   * New upstream snapshot
