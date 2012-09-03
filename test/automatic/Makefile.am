@@ -1,8 +1,9 @@
-TESTS = convert endian1 message2 message1 hash $(OPTIONAL_TESTS_GLIBC) $(OPTIONAL_TESTS_GLIBC_GNUTLS) $(OPTIONAL_TESTS_PERL)
-check_PROGRAMS = convert endian1 message2 message1 hash $(OPTIONAL_TESTS_GLIBC) $(OPTIONAL_TESTS_GLIBC_GNUTLS) $(OPTIONAL_TESTS_PERL)
+TESTS = convert endian1 message2 message1 hash $(OPTIONAL_TESTS_AUTOMATIC_GLIBC) $(OPTIONAL_TESTS_AUTOMATIC_GLIBC_GNUTLS) $(OPTIONAL_TESTS_PERL)
+check_PROGRAMS = convert endian1 message2 message1 hash $(OPTIONAL_TESTS_AUTOMATIC_GLIBC) $(OPTIONAL_TESTS_AUTOMATIC_GLIBC_GNUTLS) $(OPTIONAL_TESTS_PERL)
 EXTRA_PROGRAMS = convert endian1 message2 message1 hash connect packet resolver protocol
 
 CFLAGS += -DGG_IGNORE_DEPRECATED
+AM_LDFLAGS = -no-install
 
 protocol_SOURCES = protocol.c
 nodist_protocol_SOURCES = script/script.c
@@ -35,7 +36,7 @@ script/script.c:       $(wildcard script/*.scr) script/compile
 	$(PERL) script/compile script/*.scr > script/script.c
 
 clean-local:
-	rm -f *.html *.log *-valgrind script/script.c
+	rm -f *-valgrind.log *-valgrind script/script.c
 
 check-local:	$(check_PROGRAMS)
 	for i in $(check_PROGRAMS); do ln -sf ../valgrind $${i}-valgrind; done
