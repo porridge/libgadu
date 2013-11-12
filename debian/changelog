@@ -1,3 +1,9 @@
+libgadu (1:1.11.2-2) unstable; urgency=medium
+
+  * Use automake 1.14, fixing FTBFS. Closes: #718060
+
+ -- Marcin Owsiany <porridge@debian.org>  Tue, 12 Nov 2013 13:31:58 +0100
+
 libgadu (1:1.11.2-1) unstable; urgency=medium
 
   * New upstream release
