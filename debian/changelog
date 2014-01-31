@@ -1,3 +1,11 @@
+libgadu (1:1.11.3-1) unstable; urgency=high
+
+  * New upstream release
+    - contains a fix for CVE-2013-6487: a possible buffer overflow when
+    parsing HTTP response
+
+ -- Marcin Owsiany <porridge@debian.org>  Fri, 31 Jan 2014 14:05:14 +0100
+
 libgadu (1:1.11.2-2) unstable; urgency=medium
 
   * Use automake 1.14, fixing FTBFS. Closes: #718060
