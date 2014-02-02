@@ -1,3 +1,9 @@
+libgadu (1:1.11.2-1+deb7u1) wheezy-security; urgency=high
+
+  * Added a patch to fix CVE-2013-6487: buffer overflow
+
+ -- Marcin Owsiany <porridge@debian.org>  Sat, 01 Feb 2014 11:22:56 +0100
+
 libgadu (1:1.11.2-1) unstable; urgency=medium
 
   * New upstream release
