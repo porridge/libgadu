@@ -6,9 +6,9 @@ Build-Depends:
 # debianization tools
  debhelper (>= 9~), dpkg-dev (>= 1.16.1~), dh-autoreconf,
 # build tools
- autoconf, automake1.11, libtool, pkg-config,
+ autoconf, automake, libtool, pkg-config, protobuf-c-compiler,
 # runtime dependencies
- libgnutls-dev (>= 2.10.0), zlib1g-dev,
+ libgnutls28-dev, zlib1g-dev, ca-certificates,
 # build-time tests
  libxml2-dev,
 # documentation building
