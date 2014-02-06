@@ -5,8 +5,9 @@ libgadu (1:1.12.0~rc2-1) experimental; urgency=high
     HTTP response
   * Add a dependency on protobuf-c-compiler and ca-certificates
   * Bump automake dependency to 1.14 and gnutls to 28-dev
+  * Add 8 new symbols to the symbols file
 
- -- Marcin Owsiany <porridge@debian.org>  Thu, 06 Feb 2014 21:38:49 +0100
+ -- Marcin Owsiany <porridge@debian.org>  Thu, 06 Feb 2014 21:46:59 +0100
 
 libgadu (1:1.12.0~pre+r1323-1) experimental; urgency=low
 
