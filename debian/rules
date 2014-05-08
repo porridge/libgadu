@@ -43,7 +43,9 @@ override_dh_auto_test:
 	# warning-free.
 	# Also, since we still want to be able to test library functions that
 	# are deprecated, make deprecation warnings non-fatal.
-	dh_auto_test -- CFLAGS="$$(DEB_CFLAGS_MAINT_APPEND='-Werror -Wno-error=deprecated-declarations' dpkg-buildflags --get CFLAGS)"
+	# Also, set verbose to make automake tests dump errors to output:
+	# https://lists.debian.org/debian-devel/2014/04/msg00324.html
+	VERBOSE=1 dh_auto_test -- CFLAGS="$$(DEB_CFLAGS_MAINT_APPEND='-Werror -Wno-error=deprecated-declarations' dpkg-buildflags --get CFLAGS)"
 
 override_dh_installdocs:
 	dh_installdocs
