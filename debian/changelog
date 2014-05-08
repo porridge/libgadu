@@ -1,3 +1,12 @@
+libgadu (1:1.12.0~rc3-1) unstable; urgency=high
+
+  * New upstream release candidate.
+    - contains a fix for server-triggered memory corruption that may have
+    security implications
+  * Fixed the watch file to correctly mangle -rc versions
+
+ -- Marcin Owsiany <porridge@debian.org>  Thu, 08 May 2014 13:46:53 +0200
+
 libgadu (1:1.12.0~rc2-2) unstable; urgency=low
 
   * Upload to sid
