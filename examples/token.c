@@ -1,3 +1,21 @@
+/*
+ *  (C) Copyright 2001-2006 Wojtek Kaniewski <wojtekka@irc.pl>
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU Lesser General Public License Version
+ *  2.1 as published by the Free Software Foundation.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307,
+ *  USA.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -25,6 +43,16 @@ static void sigchld(int sig)
 
 #endif
 
+static inline int
+gg_mkstemp(char *path)
+{
+#if defined(_BSD_SOURCE) || defined(_SVID_SOURCE) || (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE >= 500)
+	return (mkstemp(path) != -1);
+#else
+	return (strcmp(mktemp(path), "") != 0);
+#endif
+}
+
 int main(void)
 {
 	struct gg_http *h;
@@ -33,7 +61,7 @@ int main(void)
 	FILE *f;
 
 	gg_debug_level = 255;
-	
+
 #ifndef ASYNC
 
 	if (!(h = gg_token(0))) {
@@ -50,20 +78,20 @@ int main(void)
 	if (!(h = gg_token(1)))
 		return 1;
 
-        while (1) {
-                fd_set rd, wr, ex;
+	while (1) {
+		fd_set rd, wr, ex;
 
-                FD_ZERO(&rd);
-                FD_ZERO(&wr);
-                FD_ZERO(&ex);
+		FD_ZERO(&rd);
+		FD_ZERO(&wr);
+		FD_ZERO(&ex);
 
-                if ((h->check & GG_CHECK_READ))
-                        FD_SET(h->fd, &rd);
-                if ((h->check & GG_CHECK_WRITE))
-                        FD_SET(h->fd, &wr);
-                FD_SET(h->fd, &ex);
+		if ((h->check & GG_CHECK_READ))
+			FD_SET(h->fd, &rd);
+		if ((h->check & GG_CHECK_WRITE))
+			FD_SET(h->fd, &wr);
+		FD_SET(h->fd, &ex);
 
-                if (select(h->fd + 1, &rd, &wr, &ex, NULL) == -1 || FD_ISSET(h->fd, &ex)) {
+		if (select(h->fd + 1, &rd, &wr, &ex, NULL) == -1 || FD_ISSET(h->fd, &ex)) {
 			if (errno == EINTR)
 				continue;
 			gg_token_free(h);
@@ -71,7 +99,7 @@ int main(void)
 			return 1;
 		}
 
-                if (FD_ISSET(h->fd, &rd) || FD_ISSET(h->fd, &wr)) {
+		if (FD_ISSET(h->fd, &rd) || FD_ISSET(h->fd, &wr)) {
 			if (gg_token_watch_fd(h) == -1) {
 				gg_token_free(h);
 				fprintf(stderr, "Błąd połączenia.\n");
@@ -86,17 +114,13 @@ int main(void)
 				break;
 
 		}
-        }
+	}
 
 #endif
 
 	t = h->data;
 
-#if defined(_BSD_SOURCE) || defined(_SVID_SOURCE) || _XOPEN_SOURCE >= 500
-	if (mkstemp(path) == -1) {
-#else
-	if (strcmp(mktemp(path), "") == 0) {
-#endif
+	if (!gg_mkstemp(path)) {
 		printf("Błąd tworzenia pliku tymczasowego.\n");
 		gg_token_free(h);
 		return 1;
@@ -126,4 +150,3 @@ int main(void)
 
 	return 0;
 }
-

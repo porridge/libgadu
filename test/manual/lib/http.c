@@ -20,6 +20,8 @@
 #include <string.h>
 #include <curl/curl.h>
 
+#include "http.h"
+
 static size_t handle_data(void *ptr, size_t size, size_t nmemb, void *stream)
 {
 	char *new_text, **text_ptr;
@@ -29,7 +31,9 @@ static size_t handle_data(void *ptr, size_t size, size_t nmemb, void *stream)
 
 	bytes = size * nmemb;
 
-//	printf("Read %d\n", bytes);
+#if 0
+	printf("Read %d\n", bytes);
+#endif
 
 	if (*text_ptr == NULL) {
 		text_len = 0;
@@ -48,7 +52,7 @@ static size_t handle_data(void *ptr, size_t size, size_t nmemb, void *stream)
 	memcpy(new_text + text_len, ptr, bytes);
 	new_text[text_len + bytes] = 0;
 	*text_ptr = new_text;
-	
+
 	return bytes;
 }
 
@@ -57,6 +61,7 @@ char *gg_http_fetch(const char *method, const char *url, const char *auth_header
 	CURL *c;
 	struct curl_slist *hdr = NULL;
 	char *text = NULL;
+	char **write_data_to = &text;
 
 	c = curl_easy_init();
 
@@ -67,7 +72,7 @@ char *gg_http_fetch(const char *method, const char *url, const char *auth_header
 		hdr = curl_slist_append(hdr, auth_header);
 
 	curl_easy_setopt(c, CURLOPT_WRITEFUNCTION, handle_data);
-	curl_easy_setopt(c, CURLOPT_WRITEDATA, &text);
+	curl_easy_setopt(c, CURLOPT_WRITEDATA, write_data_to);
 	curl_easy_setopt(c, CURLOPT_USERAGENT, "Gadu-Gadu Client, build 8,0,0,4881");
 	curl_easy_setopt(c, CURLOPT_URL, url);
 	curl_easy_setopt(c, CURLOPT_HTTPHEADER, hdr);
@@ -83,7 +88,9 @@ char *gg_http_fetch(const char *method, const char *url, const char *auth_header
 	curl_easy_setopt(c, CURLOPT_SSL_VERIFYHOST, 0);
 	curl_easy_setopt(c, CURLOPT_MAXREDIRS, 3);
 
-//	curl_easy_setopt(c, CURLOPT_VERBOSE, 1);
+#if 0
+	curl_easy_setopt(c, CURLOPT_VERBOSE, 1);
+#endif
 
 	curl_easy_perform(c);
 
@@ -95,7 +102,7 @@ char *gg_http_fetch(const char *method, const char *url, const char *auth_header
 	return text;
 }
 
-void http_init() {
+void http_init(void)
+{
 	curl_global_init(CURL_GLOBAL_SSL);
 }
-

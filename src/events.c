@@ -156,7 +156,7 @@ void gg_event_free(struct gg_event *e)
 
 			break;
 		}
-	
+
 		case GG_EVENT_MULTILOGON_INFO:
 		{
 			int i;
@@ -259,7 +259,9 @@ int gg_session_init_ssl(struct gg_session *gs)
 #ifdef HAVE_GNUTLS_CERTIFICATE_SET_X509_SYSTEM_TRUST
 		gnutls_certificate_set_x509_system_trust(tmp->xcred);
 #else
-		gnutls_certificate_set_x509_trust_file(tmp->xcred, GG_CONFIG_GNUTLS_SYSTEM_TRUST_STORE, GNUTLS_X509_FMT_PEM);
+		gnutls_certificate_set_x509_trust_file(tmp->xcred,
+			GG_CONFIG_GNUTLS_SYSTEM_TRUST_STORE,
+			GNUTLS_X509_FMT_PEM);
 #endif
 #endif
 	} else {
@@ -269,7 +271,7 @@ int gg_session_init_ssl(struct gg_session *gs)
 	gnutls_init(&tmp->session, GNUTLS_CLIENT);
 	gnutls_set_default_priority(tmp->session);
 	gnutls_credentials_set(tmp->session, GNUTLS_CRD_CERTIFICATE, tmp->xcred);
-	gnutls_transport_set_ptr(tmp->session, (gnutls_transport_ptr_t) (long) gs->fd);
+	gnutls_transport_set_ptr(tmp->session, (gnutls_transport_ptr_t) (intptr_t) gs->fd);
 #endif
 
 #ifdef GG_CONFIG_HAVE_OPENSSL
@@ -336,19 +338,22 @@ static int gg_send_queued_data(struct gg_session *sess)
 
 	if (sess->send_buf == NULL || sess->send_left == 0)
 		return 0;
-		
+
 	gg_debug_session(sess, GG_DEBUG_MISC, "// gg_watch_fd() sending %d bytes of queued data\n", sess->send_left);
 
 	res = send(sess->fd, sess->send_buf, sess->send_left, 0);
 
 	if (res == -1) {
 		if (errno == EAGAIN || errno == EINTR) {
-			gg_debug_session(sess, GG_DEBUG_MISC, "// gg_watch_fd() non-critical send error (errno=%d, %s)\n", errno, strerror(errno));
+			gg_debug_session(sess, GG_DEBUG_MISC, "// gg_watch_fd()"
+				" non-critical send error (errno=%d, %s)\n",
+				errno, strerror(errno));
 
 			return 0;
 		}
 
-		gg_debug_session(sess, GG_DEBUG_MISC, "// gg_watch_fd() send() failed (errno=%d, %s)\n", errno, strerror(errno));
+		gg_debug_session(sess, GG_DEBUG_MISC, "// gg_watch_fd() send() "
+			"failed (errno=%d, %s)\n", errno, strerror(errno));
 
 		return -1;
 	}
@@ -359,7 +364,9 @@ static int gg_send_queued_data(struct gg_session *sess)
 		sess->send_buf = NULL;
 		sess->send_left = 0;
 	} else if (res > 0) {
-		gg_debug_session(sess, GG_DEBUG_MISC, "// gg_watch_fd() sent %d bytes of queued data, %d bytes left\n", res, sess->send_left - res);
+		gg_debug_session(sess, GG_DEBUG_MISC, "// gg_watch_fd() sent %d"
+			" bytes of queued data, %d bytes left\n",
+			res, sess->send_left - res);
 
 		memmove(sess->send_buf, sess->send_buf + res, sess->send_left - res);
 		sess->send_left -= res;
@@ -409,7 +416,9 @@ typedef enum
 	GG_ACTION_FAIL
 } gg_action_t;
 
-typedef gg_action_t (*gg_state_handler_t)(struct gg_session *gs, struct gg_event *ge, enum gg_state_t next_state, enum gg_state_t alt_state, enum gg_state_t alt2_state);
+typedef gg_action_t (*gg_state_handler_t)(struct gg_session *gs,
+	struct gg_event *ge, enum gg_state_t next_state,
+	enum gg_state_t alt_state, enum gg_state_t alt2_state);
 
 typedef struct
 {
@@ -496,7 +505,9 @@ static int gg_handle_resolve_custom(struct gg_session *sess, enum gg_state_t nex
 	return 1;
 }
 
-static gg_action_t gg_handle_resolve_sync(struct gg_session *sess, struct gg_event *e, enum gg_state_t next_state, enum gg_state_t alt_state, enum gg_state_t alt2_state)
+static gg_action_t gg_handle_resolve_sync(struct gg_session *sess,
+	struct gg_event *e, enum gg_state_t next_state,
+	enum gg_state_t alt_state, enum gg_state_t alt2_state)
 {
 	struct in_addr addr;
 	int res;
@@ -508,13 +519,14 @@ static gg_action_t gg_handle_resolve_sync(struct gg_session *sess, struct gg_eve
 		return GG_ACTION_FAIL;
 
 	addr.s_addr = inet_addr(sess->resolver_host);
-	
+
 	if (addr.s_addr == INADDR_NONE) {
 		struct in_addr *addr_list = NULL;
 		unsigned int addr_count;
 
 		if (gg_gethostbyname_real(sess->resolver_host, &addr_list, &addr_count, 0) == -1) {
-			gg_debug_session(sess, GG_DEBUG_MISC, "// gg_watch_fd() host %s not found\n", sess->resolver_host);
+			gg_debug_session(sess, GG_DEBUG_MISC, "// gg_watch_fd()"
+				" host %s not found\n", sess->resolver_host);
 			e->event.failure = GG_FAILURE_RESOLVING;
 			free(addr_list);
 			return GG_ACTION_FAIL;
@@ -541,7 +553,9 @@ static gg_action_t gg_handle_resolve_sync(struct gg_session *sess, struct gg_eve
 	return GG_ACTION_NEXT;
 }
 
-static gg_action_t gg_handle_resolve_async(struct gg_session *sess, struct gg_event *e, enum gg_state_t next_state, enum gg_state_t alt_state, enum gg_state_t alt2_state)
+static gg_action_t gg_handle_resolve_async(struct gg_session *sess,
+	struct gg_event *e, enum gg_state_t next_state,
+	enum gg_state_t alt_state, enum gg_state_t alt2_state)
 {
 	int res;
 
@@ -552,7 +566,9 @@ static gg_action_t gg_handle_resolve_async(struct gg_session *sess, struct gg_ev
 		return GG_ACTION_FAIL;
 
 	if (sess->resolver_start(&sess->fd, &sess->resolver, sess->resolver_host) == -1) {
-		gg_debug_session(sess, GG_DEBUG_MISC, "// gg_watch_fd() resolving failed (errno=%d, %s)\n", errno, strerror(errno));
+		gg_debug_session(sess, GG_DEBUG_MISC, "// gg_watch_fd() "
+			"resolving failed (errno=%d, %s)\n",
+			errno, strerror(errno));
 		e->event.failure = GG_FAILURE_RESOLVING;
 		return GG_ACTION_FAIL;
 	}
@@ -564,24 +580,30 @@ static gg_action_t gg_handle_resolve_async(struct gg_session *sess, struct gg_ev
 	return GG_ACTION_WAIT;
 }
 
-static gg_action_t gg_handle_resolving(struct gg_session *sess, struct gg_event *e, enum gg_state_t next_state, enum gg_state_t alt_state, enum gg_state_t alt2_state)
+static gg_action_t gg_handle_resolving(struct gg_session *sess,
+	struct gg_event *e, enum gg_state_t next_state,
+	enum gg_state_t alt_state, enum gg_state_t alt2_state)
 {
 	char buf[256];
 	int count = -1;
 	int res;
 	unsigned int i;
+	struct in_addr *addrs;
 
 	res = gg_resolver_recv(sess->fd, buf, sizeof(buf));
 
 	if (res == -1 && (errno == EAGAIN || errno == EINTR)) {
-		gg_debug_session(sess, GG_DEBUG_MISC, "// gg_watch_fd() non-critical error (errno=%d, %s)\n", errno, strerror(errno));
+		gg_debug_session(sess, GG_DEBUG_MISC, "// gg_watch_fd() "
+			"non-critical error (errno=%d, %s)\n",
+			errno, strerror(errno));
 		return GG_ACTION_WAIT;
 	}
 
 	sess->resolver_cleanup(&sess->resolver, 0);
 
 	if (res == -1) {
-		gg_debug_session(sess, GG_DEBUG_MISC, "// gg_watch_fd() read error (errno=%d, %s)\n", errno, strerror(errno));
+		gg_debug_session(sess, GG_DEBUG_MISC, "// gg_watch_fd() read "
+			"error (errno=%d, %s)\n", errno, strerror(errno));
 		e->event.failure = GG_FAILURE_RESOLVING;
 		return GG_ACTION_FAIL;
 	}
@@ -601,8 +623,10 @@ static gg_action_t gg_handle_resolving(struct gg_session *sess, struct gg_event 
 
 	/* Sprawdź, czy mamy listę zakończoną INADDR_NONE */
 
+	addrs = (struct in_addr *)(void *)sess->recv_buf;
+
 	for (i = 0; i < sess->recv_done / sizeof(struct in_addr); i++) {
-		if (((struct in_addr*) sess->recv_buf)[i].s_addr == INADDR_NONE) {
+		if (addrs[i].s_addr == INADDR_NONE) {
 			count = i;
 			break;
 		}
@@ -640,7 +664,7 @@ static gg_action_t gg_handle_resolving(struct gg_session *sess, struct gg_event 
 			if (i > 0)
 				len += 2;
 
-			len += strlen(inet_ntoa(((struct in_addr*) sess->recv_buf)[i]));
+			len += strlen(inet_ntoa(addrs[i]));
 		}
 
 		list = malloc(len + 1);
@@ -654,7 +678,7 @@ static gg_action_t gg_handle_resolving(struct gg_session *sess, struct gg_event 
 			if (i > 0)
 				strcat(list, ", ");
 
-			strcat(list, inet_ntoa(((struct in_addr*) sess->recv_buf)[i]));
+			strcat(list, inet_ntoa(addrs[i]));
 		}
 
 		gg_debug_session(sess, GG_DEBUG_DUMP, "// gg_watch_fd() resolved: %s\n", list);
@@ -666,16 +690,18 @@ static gg_action_t gg_handle_resolving(struct gg_session *sess, struct gg_event 
 	gg_close(sess);
 
 	sess->state = next_state;
-	sess->resolver_result = (struct in_addr*) sess->recv_buf;
+	sess->resolver_result = addrs;
 	sess->resolver_count = count;
 	sess->resolver_index = 0;
 	sess->recv_buf = NULL;
 	sess->recv_done = 0;
-	
+
 	return GG_ACTION_NEXT;
 }
 
-static gg_action_t gg_handle_connect(struct gg_session *sess, struct gg_event *e, enum gg_state_t next_state, enum gg_state_t alt_state, enum gg_state_t alt2_state)
+static gg_action_t gg_handle_connect(struct gg_session *sess,
+	struct gg_event *e, enum gg_state_t next_state,
+	enum gg_state_t alt_state, enum gg_state_t alt2_state)
 {
 	struct in_addr addr;
 	int port;
@@ -689,6 +715,7 @@ static gg_action_t gg_handle_connect(struct gg_session *sess, struct gg_event *e
 	addr = sess->resolver_result[sess->resolver_index];
 
 	if (sess->state == GG_STATE_CONNECT_HUB) {
+		sess->hub_addr = addr.s_addr;
 		port = GG_APPMSG_PORT;
 	} else {
 		sess->proxy_addr = addr.s_addr;
@@ -700,7 +727,9 @@ static gg_action_t gg_handle_connect(struct gg_session *sess, struct gg_event *e
 	sess->fd = gg_connect(&addr, port, sess->async);
 
 	if (sess->fd == -1) {
-		gg_debug_session(sess, GG_DEBUG_MISC, "// gg_watch_fd() connection failed (errno=%d, %s)\n", errno, strerror(errno));
+		gg_debug_session(sess, GG_DEBUG_MISC, "// gg_watch_fd() "
+			"connection failed (errno=%d, %s)\n",
+			errno, strerror(errno));
 		sess->resolver_index++;
 		return GG_ACTION_NEXT;
 	}
@@ -713,14 +742,18 @@ static gg_action_t gg_handle_connect(struct gg_session *sess, struct gg_event *e
 	return GG_ACTION_WAIT;
 }
 
-static gg_action_t gg_handle_connecting(struct gg_session *sess, struct gg_event *e, enum gg_state_t next_state, enum gg_state_t alt_state, enum gg_state_t alt2_state)
+static gg_action_t gg_handle_connecting(struct gg_session *sess,
+	struct gg_event *e, enum gg_state_t next_state,
+	enum gg_state_t alt_state, enum gg_state_t alt2_state)
 {
 	int res;
 
 	sess->soft_timeout = 0;
 
 	if (gg_async_connect_failed(sess, &res)) {
-		gg_debug_session(sess, GG_DEBUG_MISC, "// gg_watch_fd() connection failed (errno=%d, %s)\n", res, strerror(res));
+		gg_debug_session(sess, GG_DEBUG_MISC, "// gg_watch_fd() "
+			"connection failed (errno=%d, %s)\n",
+			res, strerror(res));
 		gg_close(sess);
 		sess->resolver_index++;
 		sess->state = alt_state;
@@ -738,14 +771,22 @@ static gg_action_t gg_handle_connecting(struct gg_session *sess, struct gg_event
 	return GG_ACTION_NEXT;
 }
 
-static gg_action_t gg_handle_connect_gg(struct gg_session *sess, struct gg_event *e, enum gg_state_t next_state, enum gg_state_t alt_state, enum gg_state_t alt2_state)
+static gg_action_t gg_handle_connect_gg(struct gg_session *sess,
+	struct gg_event *e, enum gg_state_t next_state,
+	enum gg_state_t alt_state, enum gg_state_t alt2_state)
 {
 	struct in_addr addr;
 	uint16_t port;
 
-	gg_debug_session(sess, GG_DEBUG_MISC, "resolver_index=%d, connect_index=%d, connect_port={%d,%d}\n", sess->resolver_index, sess->connect_index, sess->connect_port[0], sess->connect_port[1]);
+	gg_debug_session(sess, GG_DEBUG_MISC, "resolver_index=%d, "
+		"connect_index=%d, connect_port={%d,%d}\n",
+		sess->resolver_index, sess->connect_index,
+		sess->connect_port[0], sess->connect_port[1]);
 
-	if ((unsigned int) sess->connect_index >= sizeof(sess->connect_port) / sizeof(sess->connect_port[0]) || sess->connect_port[sess->connect_index] == 0) {
+	if ((unsigned int) sess->connect_index >=
+		sizeof(sess->connect_port) / sizeof(sess->connect_port[0]) ||
+		sess->connect_port[sess->connect_index] == 0)
+	{
 		sess->connect_index = 0;
 		sess->resolver_index++;
 		if (sess->resolver_index >= sess->resolver_count) {
@@ -764,7 +805,9 @@ static gg_action_t gg_handle_connect_gg(struct gg_session *sess, struct gg_event
 	sess->fd = gg_connect(&addr, port, sess->async);
 
 	if (sess->fd == -1) {
-		gg_debug_session(sess, GG_DEBUG_MISC, "// gg_watch_fd() connection failed (errno=%d, %s)\n", errno, strerror(errno));
+		gg_debug_session(sess, GG_DEBUG_MISC, "// gg_watch_fd() "
+			"connection failed (errno=%d, %s)\n",
+			errno, strerror(errno));
 		sess->connect_index++;
 		return GG_ACTION_NEXT;
 	}
@@ -777,7 +820,9 @@ static gg_action_t gg_handle_connect_gg(struct gg_session *sess, struct gg_event
 	return GG_ACTION_WAIT;
 }
 
-static gg_action_t gg_handle_connecting_gg(struct gg_session *sess, struct gg_event *e, enum gg_state_t next_state, enum gg_state_t alt_state, enum gg_state_t alt2_state)
+static gg_action_t gg_handle_connecting_gg(struct gg_session *sess,
+	struct gg_event *e, enum gg_state_t next_state,
+	enum gg_state_t alt_state, enum gg_state_t alt2_state)
 {
 	int res;
 
@@ -785,7 +830,9 @@ static gg_action_t gg_handle_connecting_gg(struct gg_session *sess, struct gg_ev
 
 	/* jeśli wystąpił błąd podczas łączenia się... */
 	if (gg_async_connect_failed(sess, &res)) {
-		gg_debug_session(sess, GG_DEBUG_MISC, "// gg_watch_fd() connection failed (errno=%d, %s)\n", res, strerror(res));
+		gg_debug_session(sess, GG_DEBUG_MISC, "// gg_watch_fd() "
+			"connection failed (errno=%d, %s)\n",
+			res, strerror(res));
 		gg_close(sess);
 		sess->connect_index++;
 		sess->state = alt_state;
@@ -817,7 +864,9 @@ static gg_action_t gg_handle_connecting_gg(struct gg_session *sess, struct gg_ev
 	}
 }
 
-static gg_action_t gg_handle_send_hub(struct gg_session *sess, struct gg_event *e, enum gg_state_t next_state, enum gg_state_t alt_state, enum gg_state_t alt2_state)
+static gg_action_t gg_handle_send_hub(struct gg_session *sess,
+	struct gg_event *e, enum gg_state_t next_state,
+	enum gg_state_t alt_state, enum gg_state_t alt2_state)
 {
 	char *req, *client, *auth;
 	const char *host;
@@ -849,7 +898,8 @@ static gg_action_t gg_handle_send_hub(struct gg_session *sess, struct gg_event *
 
 	if (sess->ssl_flag != GG_SSL_DISABLED) {
 		req = gg_saprintf
-			("GET %s/appsvc/appmsg_ver10.asp?fmnumber=%u&fmt=2&lastmsg=%d&version=%s&age=2&gender=1 HTTP/1.0\r\n"
+			("GET %s/appsvc/appmsg_ver10.asp?fmnumber=%u&fmt=2&"
+			"lastmsg=%d&version=%s&age=2&gender=1 HTTP/1.0\r\n"
 			"Connection: close\r\n"
 			"Host: " GG_APPMSG_HOST "\r\n"
 			"%s"
@@ -862,6 +912,9 @@ static gg_action_t gg_handle_send_hub(struct gg_session *sess, struct gg_event *
 			"\r\n", host, sess->uin, sess->last_sysmsg, client, (auth) ? auth : "");
 	}
 
+	free(auth);
+	free(client);
+
 	if (req == NULL) {
 		gg_debug_session(sess, GG_DEBUG_MISC, "// gg_watch_fd() out of memory\n");
 		e->event.failure = GG_FAILURE_PROXY;
@@ -870,15 +923,12 @@ static gg_action_t gg_handle_send_hub(struct gg_session *sess, struct gg_event *
 
 	req_len = strlen(req);
 
-	free(auth);
-	free(client);
-
 	gg_debug_session(sess, GG_DEBUG_TRAFFIC, "// sending http query:\n%s", req);
 
 	res = send(sess->fd, req, req_len, 0);
 
 	free(req);
-	
+
 	if (res == -1 && errno != EINTR && errno != EAGAIN) {
 		gg_debug_session(sess, GG_DEBUG_MISC, "// gg_watch_fd() sending query failed\n");
 		e->event.failure = (!proxy) ? GG_FAILURE_HUB : GG_FAILURE_PROXY;
@@ -898,7 +948,9 @@ static gg_action_t gg_handle_send_hub(struct gg_session *sess, struct gg_event *
 	return GG_ACTION_WAIT;
 }
 
-static gg_action_t gg_handle_sending_hub_proxy(struct gg_session *sess, struct gg_event *e, enum gg_state_t next_state, enum gg_state_t alt_state, enum gg_state_t alt2_state)
+static gg_action_t gg_handle_sending_hub_proxy(struct gg_session *sess,
+	struct gg_event *e, enum gg_state_t next_state,
+	enum gg_state_t alt_state, enum gg_state_t alt2_state)
 {
 	if (gg_send_queued_data(sess) == -1) {
 		e->event.failure = GG_FAILURE_WRITING;
@@ -915,7 +967,9 @@ static gg_action_t gg_handle_sending_hub_proxy(struct gg_session *sess, struct g
 	return GG_ACTION_WAIT;
 }
 
-static gg_action_t gg_handle_reading_hub_proxy(struct gg_session *sess, struct gg_event *e, enum gg_state_t next_state, enum gg_state_t alt_state, enum gg_state_t alt2_state)
+static gg_action_t gg_handle_reading_hub_proxy(struct gg_session *sess,
+	struct gg_event *e, enum gg_state_t next_state,
+	enum gg_state_t alt_state, enum gg_state_t alt2_state)
 {
 	char buf[1024], *tmp, host[128];
 	int port = GG_DEFAULT_PORT;
@@ -929,12 +983,15 @@ static gg_action_t gg_handle_reading_hub_proxy(struct gg_session *sess, struct g
 	res = recv(sess->fd, buf, sizeof(buf), 0);
 
 	if (res == -1 && (errno == EAGAIN || errno == EINTR)) {
-		gg_debug_session(sess, GG_DEBUG_MISC, "// gg_watch_fd() non-critical recv error (errno=%d, %s)\n", errno, strerror(errno));
+		gg_debug_session(sess, GG_DEBUG_MISC, "// gg_watch_fd() "
+			"non-critical recv error (errno=%d, %s)\n",
+			errno, strerror(errno));
 		return GG_ACTION_WAIT;
 	}
 
 	if (res == -1) {
-		gg_debug_session(sess, GG_DEBUG_MISC, "// gg_watch_fd() recv error (errno=%d, %s)\n", errno, strerror(errno));
+		gg_debug_session(sess, GG_DEBUG_MISC, "// gg_watch_fd() recv "
+			"error (errno=%d, %s)\n", errno, strerror(errno));
 		e->event.failure = GG_FAILURE_CONNECTING;
 		return GG_ACTION_FAIL;
 	}
@@ -975,7 +1032,7 @@ static gg_action_t gg_handle_reading_hub_proxy(struct gg_session *sess, struct g
 
 	/* szukamy początku treści */
 	body = strstr(sess->recv_buf, "\r\n\r\n");
-	
+
 	if (body == NULL) {
 		body = strstr(sess->recv_buf, "\n\n");
 
@@ -990,7 +1047,7 @@ static gg_action_t gg_handle_reading_hub_proxy(struct gg_session *sess, struct g
 		body += 4;
 	}
 
-	// 17591 0 91.197.13.71:8074 91.197.13.71
+	/* 17591 0 91.197.13.71:8074 91.197.13.71 */
 	res = sscanf(body, "%d %*d %128s", &reply, host);
 
 	if (res != 2) {
@@ -1013,7 +1070,9 @@ static gg_action_t gg_handle_reading_hub_proxy(struct gg_session *sess, struct g
 			e->event.msg.message = (unsigned char*) strdup(tmp + 1);
 
 			if (e->event.msg.message == NULL) {
-				gg_debug_session(sess, GG_DEBUG_MISC, "// gg_watch_fd() not enough memory for system message\n");
+				gg_debug_session(sess, GG_DEBUG_MISC,
+					"// gg_watch_fd() not enough memory "
+					"for system message\n");
 				return GG_ACTION_FAIL;
 			}
 		}
@@ -1029,7 +1088,7 @@ static gg_action_t gg_handle_reading_hub_proxy(struct gg_session *sess, struct g
 	}
 
 	if (strcmp(host, "notoperating") == 0) {
-		gg_debug_session(sess, GG_DEBUG_MISC, "// gg_watch_fd() service unavailable\n", errno, strerror(errno));
+		gg_debug_session(sess, GG_DEBUG_MISC, "// gg_watch_fd() service unavailable\n");
 		e->event.failure = GG_FAILURE_UNAVAILABLE;
 		return GG_ACTION_FAIL;
 	}
@@ -1120,7 +1179,9 @@ static gg_action_t gg_handle_reading_hub_proxy(struct gg_session *sess, struct g
 	return GG_ACTION_NEXT;
 }
 
-static gg_action_t gg_handle_send_proxy_gg(struct gg_session *sess, struct gg_event *e, enum gg_state_t next_state, enum gg_state_t alt_state, enum gg_state_t alt2_state)
+static gg_action_t gg_handle_send_proxy_gg(struct gg_session *sess,
+	struct gg_event *e, enum gg_state_t next_state,
+	enum gg_state_t alt_state, enum gg_state_t alt2_state)
 {
 	char *req, *auth;
 	size_t req_len;
@@ -1136,7 +1197,9 @@ static gg_action_t gg_handle_send_proxy_gg(struct gg_session *sess, struct gg_ev
 
 	auth = gg_proxy_auth();
 
-	req = gg_saprintf("CONNECT %s:%d HTTP/1.0\r\n%s\r\n", sess->connect_host, sess->connect_port[sess->connect_index], (auth) ? auth : "");
+	req = gg_saprintf("CONNECT %s:%d HTTP/1.0\r\n%s\r\n",
+		sess->connect_host, sess->connect_port[sess->connect_index],
+		(auth) ? auth : "");
 
 	free(auth);
 
@@ -1175,9 +1238,13 @@ static gg_action_t gg_handle_send_proxy_gg(struct gg_session *sess, struct gg_ev
 	return GG_ACTION_WAIT;
 }
 
-static gg_action_t gg_handle_tls_negotiation(struct gg_session *sess, struct gg_event *e, enum gg_state_t next_state, enum gg_state_t alt_state, enum gg_state_t alt2_state)
+static gg_action_t gg_handle_tls_negotiation(struct gg_session *sess,
+	struct gg_event *e, enum gg_state_t next_state,
+	enum gg_state_t alt_state, enum gg_state_t alt2_state)
 {
+#if defined(GG_CONFIG_HAVE_GNUTLS) || defined(GG_CONFIG_HAVE_OPENSSL)
 	int valid_hostname = 0;
+#endif
 
 #ifdef GG_CONFIG_HAVE_GNUTLS
 	unsigned int status;
@@ -1205,7 +1272,9 @@ static gg_action_t gg_handle_tls_negotiation(struct gg_session *sess, struct gg_
 		}
 
 		if (res != GNUTLS_E_SUCCESS) {
-			gg_debug_session(sess, GG_DEBUG_MISC, "// gg_watch_fd() TLS handshake error: %d, %s\n", res, gnutls_strerror(res));
+			gg_debug_session(sess, GG_DEBUG_MISC, "// gg_watch_fd()"
+				" TLS handshake error: %d, %s\n",
+				res, gnutls_strerror(res));
 			e->event.failure = GG_FAILURE_TLS;
 			return GG_ACTION_FAIL;
 		}
@@ -1253,7 +1322,9 @@ static gg_action_t gg_handle_tls_negotiation(struct gg_session *sess, struct gg_
 	res = gnutls_certificate_verify_peers2(GG_SESSION_GNUTLS(sess), &status);
 
 	if (res != 0 || status != 0) {
-		gg_debug_session(sess, GG_DEBUG_MISC, "//   WARNING!  unable to verify peer certificate: 0x%x, %d, %s\n", status, res, gnutls_strerror(res));
+		gg_debug_session(sess, GG_DEBUG_MISC, "//   WARNING!  unable to"
+			" verify peer certificate: 0x%x, %d, %s\n", status, res,
+			gnutls_strerror(res));
 
 		if (sess->ssl_flag == GG_SSL_REQUIRED) {
 			e->event.failure = GG_FAILURE_TLS;
@@ -1275,7 +1346,7 @@ static gg_action_t gg_handle_tls_negotiation(struct gg_session *sess, struct gg_
 
 	if (res <= 0) {
 		int err;
-		
+
 		err = SSL_get_error(GG_SESSION_OPENSSL(sess), res);
 
 		if (res == 0) {
@@ -1308,7 +1379,9 @@ static gg_action_t gg_handle_tls_negotiation(struct gg_session *sess, struct gg_
 		}
 	}
 
-	gg_debug_session(sess, GG_DEBUG_MISC, "// gg_watch_fd() TLS negotiation succeded:\n//   cipher: %s\n", SSL_get_cipher_name(GG_SESSION_OPENSSL(sess)));
+	gg_debug_session(sess, GG_DEBUG_MISC, "// gg_watch_fd() TLS negotiation"
+		" succeded:\n//   cipher: %s\n",
+		SSL_get_cipher_name(GG_SESSION_OPENSSL(sess)));
 
 	peer = SSL_get_peer_certificate(GG_SESSION_OPENSSL(sess));
 
@@ -1332,7 +1405,9 @@ static gg_action_t gg_handle_tls_negotiation(struct gg_session *sess, struct gg_
 		res = SSL_get_verify_result(GG_SESSION_OPENSSL(sess));
 
 		if (res != X509_V_OK) {
-			gg_debug_session(sess, GG_DEBUG_MISC, "//   WARNING!  unable to verify peer certificate! res=%ld\n", res);
+			gg_debug_session(sess, GG_DEBUG_MISC, "//   WARNING!  "
+				"unable to verify peer certificate! "
+				"res=%ld\n", res);
 
 			if (sess->ssl_flag == GG_SSL_REQUIRED) {
 				e->event.failure = GG_FAILURE_TLS;
@@ -1366,6 +1441,7 @@ static gg_action_t gg_handle_tls_negotiation(struct gg_session *sess, struct gg_
 
 #endif
 
+#if defined(GG_CONFIG_HAVE_GNUTLS) || defined(GG_CONFIG_HAVE_OPENSSL)
 	if (!valid_hostname) {
 		gg_debug_session(sess, GG_DEBUG_MISC, "//   WARNING!  unable to verify hostname\n");
 
@@ -1380,9 +1456,12 @@ static gg_action_t gg_handle_tls_negotiation(struct gg_session *sess, struct gg_
 	sess->timeout = GG_DEFAULT_TIMEOUT;
 
 	return GG_ACTION_WAIT;
+#endif
 }
 
-static gg_action_t gg_handle_reading_proxy_gg(struct gg_session *sess, struct gg_event *e, enum gg_state_t next_state, enum gg_state_t alt_state, enum gg_state_t alt2_state)
+static gg_action_t gg_handle_reading_proxy_gg(struct gg_session *sess,
+	struct gg_event *e, enum gg_state_t next_state,
+	enum gg_state_t alt_state, enum gg_state_t alt2_state)
 {
 	char buf[256];
 	int res;
@@ -1394,12 +1473,15 @@ static gg_action_t gg_handle_reading_proxy_gg(struct gg_session *sess, struct gg
 	gg_debug_session(sess, GG_DEBUG_MISC, "recv() = %d\n", res);
 
 	if (res == -1 && (errno == EAGAIN || errno == EINTR)) {
-		gg_debug_session(sess, GG_DEBUG_MISC, "// gg_watch_fd() non-critical recv error (errno=%d, %s)\n", errno, strerror(errno));
+		gg_debug_session(sess, GG_DEBUG_MISC, "// gg_watch_fd() "
+			"non-critical recv error (errno=%d, %s)\n",
+			errno, strerror(errno));
 		return GG_ACTION_WAIT;
 	}
 
 	if (res == -1) {
-		gg_debug_session(sess, GG_DEBUG_MISC, "// gg_watch_fd() recv error (errno=%d, %s)\n", errno, strerror(errno));
+		gg_debug_session(sess, GG_DEBUG_MISC, "// gg_watch_fd() recv "
+			"error (errno=%d, %s)\n", errno, strerror(errno));
 		e->event.failure = GG_FAILURE_CONNECTING;
 		return GG_ACTION_FAIL;
 	}
@@ -1428,7 +1510,7 @@ static gg_action_t gg_handle_reading_proxy_gg(struct gg_session *sess, struct gg
 
 	/* szukamy początku treści */
 	body = strstr(sess->recv_buf, "\r\n\r\n");
-	
+
 	if (body == NULL) {
 		body = strstr(sess->recv_buf, "\n\n");
 
@@ -1443,8 +1525,7 @@ static gg_action_t gg_handle_reading_proxy_gg(struct gg_session *sess, struct gg
 		body += 4;
 	}
 
-	if (res != 0 && body == NULL)
-		return GG_ACTION_WAIT;
+	gg_debug_session(sess, GG_DEBUG_MISC, "// found body!\n");
 
 	gg_debug_session(sess, GG_DEBUG_TRAFFIC, "// received proxy reply:\n%s\n", sess->recv_buf);
 
@@ -1458,14 +1539,6 @@ static gg_action_t gg_handle_reading_proxy_gg(struct gg_session *sess, struct gg
 		e->event.failure = GG_FAILURE_CONNECTING;
 		return GG_ACTION_FAIL;
 	}
-
-	if (body == NULL) {
-		gg_debug_session(sess, GG_DEBUG_MISC, "// gg_watch_fd() can't find body\n");
-		e->event.failure = GG_FAILURE_CONNECTING;
-		return GG_ACTION_FAIL;
-	}
-
-	gg_debug_session(sess, GG_DEBUG_MISC, "// found body!\n");
 
 	if (sess->ssl_flag != GG_SSL_DISABLED) {
 		if (gg_session_init_ssl(sess) == -1) {
@@ -1496,7 +1569,7 @@ static gg_action_t gg_handle_reading_proxy_gg(struct gg_session *sess, struct gg
 	sess->check = GG_CHECK_READ;
 	sess->timeout = GG_DEFAULT_TIMEOUT;	/* Pierwszy pakiet musi przyjść */
 
-	// Jeśli zbuforowaliśmy za dużo, przeanalizuj
+	/* Jeśli zbuforowaliśmy za dużo, przeanalizuj */
 
 	if (sess->recv_buf + sess->recv_done > body) {
 		sess->recv_done = sess->recv_done - (body - sess->recv_buf);
@@ -1512,7 +1585,9 @@ static gg_action_t gg_handle_reading_proxy_gg(struct gg_session *sess, struct gg
 	return GG_ACTION_WAIT;
 }
 
-static gg_action_t gg_handle_connected(struct gg_session *sess, struct gg_event *e, enum gg_state_t next_state, enum gg_state_t alt_state, enum gg_state_t alt2_state)
+static gg_action_t gg_handle_connected(struct gg_session *sess,
+	struct gg_event *e, enum gg_state_t next_state,
+	enum gg_state_t alt_state, enum gg_state_t alt2_state)
 {
 #if 0
 	char buf[1024];
@@ -1524,15 +1599,21 @@ static gg_action_t gg_handle_connected(struct gg_session *sess, struct gg_event 
 	res = gg_read(sess, buf, sizeof(buf));
 
 	if (res == -1 && (errno == EAGAIN || errno == EINTR)) {
-		gg_debug_session(sess, GG_DEBUG_MISC, "// gg_watch_fd() non-critical read error (errno=%d, %s)\n", errno, strerror(errno));
+		gg_debug_session(sess, GG_DEBUG_MISC, "// gg_watch_fd() "
+			"non-critical read error (errno=%d, %s)\n",
+			errno, strerror(errno));
 		return GG_ACTION_WAIT;
 	}
-	
+
 	if (res == -1 || res == 0) {
-		if (res == -1)
-			gg_debug_session(sess, GG_DEBUG_MISC, "// gg_watch_fd() read error (errno=%d, %s)\n", errno, strerror(errno));
-		else
-			gg_debug_session(sess, GG_DEBUG_MISC, "// gg_watch_fd() connection closed\n");
+		if (res == -1) {
+			gg_debug_session(sess, GG_DEBUG_MISC, "// gg_watch_fd()"
+				" read error (errno=%d, %s)\n",
+				errno, strerror(errno));
+		} else {
+			gg_debug_session(sess, GG_DEBUG_MISC, "// gg_watch_fd()"
+				" connection closed\n");
+		}
 
 		if (sess->state == GG_STATE_DISCONNECTING && res == 0) {
 			e->type = GG_EVENT_DISCONNECT_ACK;
@@ -1569,11 +1650,16 @@ static gg_action_t gg_handle_connected(struct gg_session *sess, struct gg_event 
 		}
 
 		if (errno != EAGAIN) {
-			gg_debug_session(sess, GG_DEBUG_MISC, "// gg_watch_fd() gg_recv_packet failed (errno=%d, %s)\n", errno, strerror(errno));
+			gg_debug_session(sess, GG_DEBUG_MISC, "// gg_watch_fd()"
+				" gg_recv_packet failed (errno=%d, %s)\n",
+				errno, strerror(errno));
 			return GG_ACTION_FAIL;
 		}
 	} else {
-		if (gg_session_handle_packet(sess, gh->type, (const char *) gh + sizeof(struct gg_header), gh->length, e) == -1) {
+		if (gg_session_handle_packet(sess, gh->type,
+			(const char *) gh + sizeof(struct gg_header),
+			gh->length, e) == -1)
+		{
 			free(gh);
 			return GG_ACTION_FAIL;
 		}
@@ -1590,7 +1676,9 @@ static gg_action_t gg_handle_connected(struct gg_session *sess, struct gg_event 
 #endif
 }
 
-static gg_action_t gg_handle_error(struct gg_session *sess, struct gg_event *e, enum gg_state_t next_state, enum gg_state_t alt_state, enum gg_state_t alt2_state)
+static gg_action_t gg_handle_error(struct gg_session *sess, struct gg_event *e,
+	enum gg_state_t next_state, enum gg_state_t alt_state,
+	enum gg_state_t alt2_state)
 {
 	struct gg_session_private *p = sess->private_data;
 
@@ -1603,6 +1691,7 @@ static gg_action_t gg_handle_error(struct gg_session *sess, struct gg_event *e, 
 
 static const gg_state_transition_t handlers[] =
 {
+	/* style:maxlinelength:start-ignore */
 	{ GG_STATE_RESOLVE_HUB_SYNC, gg_handle_resolve_sync, GG_STATE_CONNECT_HUB, GG_STATE_SEND_HUB, 0 },
 	{ GG_STATE_RESOLVE_GG_SYNC, gg_handle_resolve_sync, GG_STATE_CONNECT_GG, GG_STATE_READING_KEY, 0 },
 	{ GG_STATE_RESOLVE_PROXY_HUB_SYNC, gg_handle_resolve_sync, GG_STATE_CONNECT_PROXY_HUB, GG_STATE_SEND_PROXY_HUB, 0 },
@@ -1651,6 +1740,7 @@ static const gg_state_transition_t handlers[] =
 	{ GG_STATE_CONNECTED, gg_handle_connected, 0, 0, 0 },
 	{ GG_STATE_DISCONNECTING, gg_handle_connected, 0, 0, 0 },
 	{ GG_STATE_ERROR, gg_handle_error, 0, 0, 0 },
+	/* style:maxlinelength:end-ignore */
 };
 
 struct gg_event *gg_eventqueue_add(struct gg_session *sess)
@@ -1743,15 +1833,22 @@ struct gg_event *gg_watch_fd(struct gg_session *sess)
 
 		for (i = 0; i < sizeof(handlers) / sizeof(handlers[0]); i++) {
 			if (handlers[i].state == (enum gg_state_t) sess->state) {
-				gg_debug_session(sess, GG_DEBUG_MISC, "// gg_watch_fd() %s\n", gg_debug_state(sess->state));
-				res = (*handlers[i].handler)(sess, ge, handlers[i].next_state, handlers[i].alt_state, handlers[i].alt2_state);
+				gg_debug_session(sess, GG_DEBUG_MISC,
+					"// gg_watch_fd() %s\n",
+					gg_debug_state(sess->state));
+				res = (*handlers[i].handler)(sess, ge,
+					handlers[i].next_state,
+					handlers[i].alt_state,
+					handlers[i].alt2_state);
 				found = 1;
 				break;
 			}
 		}
 
 		if (!found) {
-			gg_debug_session(sess, GG_DEBUG_MISC | GG_DEBUG_ERROR, "// gg_watch_fd() invalid state %s\n", gg_debug_state(sess->state));
+			gg_debug_session(sess, GG_DEBUG_MISC | GG_DEBUG_ERROR,
+				"// gg_watch_fd() invalid state %s\n",
+				gg_debug_state(sess->state));
 			ge->event.failure = GG_FAILURE_INTERNAL;
 		}
 

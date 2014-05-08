@@ -19,6 +19,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "base64.h"
+#include "config.h"
+
 #ifdef HAVE_OPENSSL
 
 #include <openssl/sha.h>
@@ -72,7 +75,7 @@ static char gg_base64_charset[] =
  *
  * \ingroup helper
  */
-char *gg_base64_encode(const char *buf, ssize_t len)
+char *gg_base64_encode2(const char *buf, ssize_t len)
 {
 	char *out, *res;
 	unsigned int i = 0, j = 0, k = 0;
@@ -85,13 +88,13 @@ char *gg_base64_encode(const char *buf, ssize_t len)
 	if (!res)
 		return NULL;
 
-	while (j < len) {
+	while (j < (size_t)len) {
 		switch (i % 4) {
 			case 0:
 				k = (buf[j] & 252) >> 2;
 				break;
 			case 1:
-				if (j+1 < len)
+				if (j+1 < (size_t)len)
 					k = ((buf[j] & 3) << 4) | ((buf[j + 1] & 240) >> 4);
 				else
 					k = (buf[j] & 3) << 4;
@@ -99,7 +102,7 @@ char *gg_base64_encode(const char *buf, ssize_t len)
 				j++;
 				break;
 			case 2:
-				if (j+1 < len)
+				if (j+1 < (size_t)len)
 					k = ((buf[j] & 15) << 2) | ((buf[j + 1] & 192) >> 6);
 				else
 					k = (buf[j] & 15) << 2;

@@ -1,3 +1,21 @@
+/*
+ *  (C) Copyright 2001-2006 Wojtek Kaniewski <wojtekka@irc.pl>
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU Lesser General Public License Version
+ *  2.1 as published by the Free Software Foundation.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307,
+ *  USA.
+ */
+
 #ifndef SCRIPT_H
 #define SCRIPT_H
 
@@ -36,15 +54,11 @@ extern state_t script[];
 
 extern const char *tests[];
 
-#ifdef false
-#undef false
+#ifdef _WIN32
+#define logon_time_t uint32_t
+#else
+#define logon_time_t time_t
 #endif
-#define false 0
-
-#ifdef true
-#undef true
-#endif
-#define true 1
 
 #ifdef FALSE
 #undef FALSE
@@ -57,9 +71,9 @@ extern const char *tests[];
 #define TRUE 1
 
 #ifdef GG_CONFIG_BIGENDIAN
-#define ip(a,b,c,d) ((a)<<24|(b)<<16|(c)<<8|(d))
+#define ip(a, b, c, d) ((a)<<24|(b)<<16|(c)<<8|(d))
 #else
-#define ip(a,b,c,d) ((a)|(b)<<8|(c)<<16|(d)<<24)
+#define ip(a, b, c, d) ((a)|(b)<<8|(c)<<16|(d)<<24)
 #endif
 
 #endif /* SCRIPT_H */

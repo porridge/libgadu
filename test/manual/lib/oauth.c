@@ -21,6 +21,8 @@
 #include <string.h>
 #include <time.h>
 
+#include "oauth.h"
+
 #include "hmac.h"
 #include "urlencode.h"
 #include "base64.h"
@@ -44,7 +46,9 @@ static void gg_oauth_generate_nonce(char *buf, int len)
 	*buf = 0;
 }
 
-static char *gg_oauth_generate_signature(const char *method, const char *url, const char *request, const char *consumer_secret, const char *token_secret)
+static char *gg_oauth_generate_signature(const char *method, const char *url,
+	const char *request, const char *consumer_secret,
+	const char *token_secret)
 {
 	char *text, *key, *res;
 	unsigned char digest[20];
@@ -65,14 +69,16 @@ static char *gg_oauth_generate_signature(const char *method, const char *url, co
 	free(key);
 	free(text);
 
-	res = gg_base64_encode((const char*) digest, 20);
+	res = gg_base64_encode2((const char*) digest, 20);
 
 	printf("signature = '%s'\n", res);
 
 	return res;
 }
 
-char *gg_oauth_generate_header(const char *method, const char *url, const const char *consumer_key, const char *consumer_secret, const char *token, const char *token_secret)
+char *gg_oauth_generate_header(const char *method, const char *url,
+	const char *consumer_key, const char *consumer_secret,
+	const char *token, const char *token_secret)
 {
 	char *request, *signature, *res;
 	char nonce[80], timestamp[16];
@@ -127,4 +133,3 @@ char *gg_oauth_generate_header(const char *method, const char *url, const const 
 
 	return res;
 }
-

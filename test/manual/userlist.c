@@ -1,9 +1,28 @@
+/*
+ *  (C) Copyright 2001-2006 Wojtek Kaniewski <wojtekka@irc.pl>
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU Lesser General Public License Version
+ *  2.1 as published by the Free Software Foundation.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307,
+ *  USA.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
 #include <errno.h>
 #include <signal.h>
+#include <getopt.h>
 
 #include "libgadu.h"
 #include "network.h"
@@ -38,6 +57,10 @@ int main(int argc, char **argv)
 	char *content = NULL;
 	int debug = 0;
 	int res = 0;
+
+#ifdef _WIN32
+	gg_win32_init_network();
+#endif
 
 	while ((opt = getopt(argc, argv, "cv:gpf:hdr")) != -1) {
 		switch (opt) {
@@ -79,7 +102,7 @@ int main(int argc, char **argv)
 			case 'd':
 				debug = 1;
 				break;
-			
+
 			case 'h':
 				usage(argv[0]);
 				exit(0);
@@ -96,7 +119,9 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
+#ifndef _WIN32
 	signal(SIGPIPE, SIG_IGN);
+#endif
 
 	if (debug) {
 		gg_debug_file = stderr;
@@ -170,6 +195,7 @@ int main(int argc, char **argv)
 					else
 						printf("%s", ge->event.userlist100_reply.reply);
 					break;
+				case GG_USERLIST100_REPLY_UPTODATE:
 				case GG_USERLIST100_REPLY_ACK:
 					res = 0;
 					break;
@@ -190,4 +216,3 @@ int main(int argc, char **argv)
 
 	return res;
 }
-

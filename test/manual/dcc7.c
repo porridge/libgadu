@@ -1,3 +1,21 @@
+/*
+ *  (C) Copyright 2001-2006 Wojtek Kaniewski <wojtekka@irc.pl>
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU Lesser General Public License Version
+ *  2.1 as published by the Free Software Foundation.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307,
+ *  USA.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -7,19 +25,11 @@
 #include <errno.h>
 #include <signal.h>
 #include <ctype.h>
-#include <sys/select.h>
 
 #include "libgadu.h"
 #include "network.h"
+#include "internal.h"
 #include "userconfig.h"
-
-#define debug(msg...) \
-	do { \
-		fprintf(stderr, "\033[1m"); \
-		fprintf(stderr, msg); \
-		fprintf(stderr, "\033[0m"); \
-		fflush(stderr); \
-	} while(0)
 
 int test_mode;
 int connected;
@@ -33,11 +43,36 @@ enum {
 	TEST_MODE_LAST
 };
 
+static void debug(const char *msg, ...) GG_GNUC_PRINTF(1, 2);
+static void debug(const char *msg, ...)
+{
+	va_list ap;
+
+	fprintf(stderr, "\033[1m");
+
+	va_start(ap, msg);
+	vfprintf(stderr, msg, ap);
+	va_end(ap);
+
+	fprintf(stderr, "\033[0m");
+	fflush(stderr);
+}
+
+#undef connect
+#ifdef _WIN32
+static gg_win32_hook_data_t connect_hook;
+
+static int my_connect(SOCKET socket, const struct sockaddr *address, int address_len)
+#else
 extern int __connect(int socket, const struct sockaddr *address, socklen_t address_len);
 
 int connect(int socket, const struct sockaddr *address, socklen_t address_len)
+#endif
 {
 	struct sockaddr_in sin;
+#ifdef _WIN32
+	int ret;
+#endif
 
 	if (connected && test_mode == TEST_MODE_SEND_NAT) {
 		memcpy(&sin, address, address_len);
@@ -45,7 +80,15 @@ int connect(int socket, const struct sockaddr *address, socklen_t address_len)
 		address = (struct sockaddr*) &sin;
 	}
 
+#ifdef _WIN32
+	gg_win32_hook_set_enabled(&connect_hook, 0);
+	ret = connect(socket, address, address_len);
+	gg_win32_hook_set_enabled(&connect_hook, 1);
+
+	return ret;
+#else
 	return __connect(socket, address, address_len);
+#endif
 }
 
 int main(int argc, char **argv)
@@ -75,11 +118,16 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
+#ifdef _WIN32
+	gg_win32_init_network();
+	gg_win32_hook(connect, my_connect, &connect_hook);
+#else
 	signal(SIGPIPE, SIG_IGN);
+#endif
 	gg_debug_file = stdout;
 	gg_debug_level = ~0;
 
-	if (!config_file && pipe(fds) == -1) {
+	if (!config_file && socketpair(AF_LOCAL, SOCK_STREAM, 0, fds) == -1) {
 		perror("pipe");
 		exit(1);
 	}
@@ -90,8 +138,12 @@ int main(int argc, char **argv)
 	glp.async = 1;
 	glp.client_addr = config_ip;
 	glp.client_port = config_port;
+	glp.protocol_version = GG_PROTOCOL_VERSION_100;
 
-	if (config_dir && (test_mode == TEST_MODE_RECEIVE || test_mode == TEST_MODE_RECEIVE_NAT || test_mode == TEST_MODE_RECEIVE_RESUME)) {
+	if (config_dir && (test_mode == TEST_MODE_RECEIVE ||
+		test_mode == TEST_MODE_RECEIVE_NAT ||
+		test_mode == TEST_MODE_RECEIVE_RESUME))
+	{
 		if (chdir(config_dir) == -1) {
 			perror("chdir");
 			exit(1);
@@ -222,13 +274,19 @@ int main(int argc, char **argv)
 						status = ge->event.status60.status;
 					}
 
-					if (uin == config_peer && (GG_S_A(status) || GG_S_B(status)) && (test_mode == TEST_MODE_SEND || test_mode == TEST_MODE_SEND_NAT)) {
+					if (uin == config_peer &&
+						(GG_S_A(status) || GG_S_B(status)) &&
+						(test_mode == TEST_MODE_SEND || test_mode == TEST_MODE_SEND_NAT))
+					{
 						debug("Sending file...\n");
-					
-						if (config_file)
-							gd = gg_dcc7_send_file(gs, config_peer, config_file, NULL, NULL);
-						else
-							gd = gg_dcc7_send_file_fd(gs, config_peer, fds[0], config_size, "test.bin", "DummySHA1HashOfAAAAA");
+
+						if (config_file) {
+							gd = gg_dcc7_send_file(gs, config_peer,
+								config_file, NULL, NULL);
+						} else {
+							gd = gg_dcc7_send_file_fd(gs, config_peer, fds[0],
+								config_size, "test.bin", "DummySHA1HashOfAAAAA");
+						}
 
 						if (!gd) {
 							perror("gg_dcc7_send_file");
@@ -241,12 +299,18 @@ int main(int argc, char **argv)
 				case GG_EVENT_DCC7_NEW:
 					debug("Incoming direct connection\n");
 
-					if (test_mode == TEST_MODE_RECEIVE || test_mode == TEST_MODE_RECEIVE_NAT || test_mode == TEST_MODE_RECEIVE_RESUME) {
+					if (test_mode == TEST_MODE_RECEIVE ||
+						test_mode == TEST_MODE_RECEIVE_NAT ||
+						test_mode == TEST_MODE_RECEIVE_RESUME)
+					{
 						gd = ge->event.dcc7_new;
 						if (config_dir) {
-							gd->file_fd = open((char*) gd->filename, O_WRONLY | O_CREAT, 0600);
-//							lseek(gd->file_fd, gd->size, SEEK_SET);
-						} else 
+							gd->file_fd = open((char*) gd->filename,
+								O_WRONLY | O_CREAT, 0600);
+#if 0
+							lseek(gd->file_fd, gd->size, SEEK_SET);
+#endif
+						} else
 							gd->file_fd = open("/dev/null", O_WRONLY);
 						if (gd->file_fd == -1) {
 							perror("open");
@@ -259,7 +323,7 @@ int main(int argc, char **argv)
 					}
 
 					break;
-				
+
 				case GG_EVENT_DCC7_ERROR:
 					debug("Direct connection error\n");
 					exit(1);
@@ -287,7 +351,9 @@ int main(int argc, char **argv)
 			gg_event_free(ge);
 		}
 
-		if (gd && gd->fd != -1 && (FD_ISSET(gd->fd, &rds) || FD_ISSET(gd->fd, &wds) || (gd->timeout == 0 && gd->soft_timeout))) {
+		if (gd && gd->fd != -1 && (FD_ISSET(gd->fd, &rds) ||
+			FD_ISSET(gd->fd, &wds) || (gd->timeout == 0 && gd->soft_timeout)))
+		{
 			struct gg_event *ge;
 
 			if (!(ge = gg_dcc7_watch_fd(gd))) {
@@ -337,4 +403,3 @@ int main(int argc, char **argv)
 
 	return 0;
 }
-

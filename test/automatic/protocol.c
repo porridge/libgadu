@@ -1,3 +1,21 @@
+/*
+ *  (C) Copyright 2001-2006 Wojtek Kaniewski <wojtekka@irc.pl>
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU Lesser General Public License Version
+ *  2.1 as published by the Free Software Foundation.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307,
+ *  USA.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -7,42 +25,56 @@
 #include <string.h>
 #include <errno.h>
 #include <ctype.h>
-#include <arpa/inet.h>
-#include <sys/select.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netdb.h>
 
 #include "libgadu.h"
+#include "network.h"
 
 #include "script.h"
 
 #define LOCALHOST_NAME "localhost"
 #define LOCALHOST_ADDR "127.0.0.1"
 
-#define debug(msg...) \
-	do { \
-		fprintf(stderr, "\033[1m"); \
-		fprintf(stderr, msg); \
-		fprintf(stderr, "\033[0m"); \
-		fflush(stderr); \
-	} while(0)
-
-#define error(state, msg...) \
-	do { \
-		fprintf(stderr, "\033[1;31m"); \
-		if (script[state].test != -1) \
-			fprintf(stderr, "File: %s, Line: %d, Test: %s\n", script[state].filename, script[state].line, tests[script[state].test]); \
-		else \
-			fprintf(stderr, "File: %s, Line: %d\n", script[state].filename, script[state].line); \
-		fprintf(stderr, msg); \
-		fprintf(stderr, "\033[0m"); \
-		fflush(stderr); \
-	} while(0)
-
 static char outbuf[4096];
 static int outbuflen = 0;
 static int fd = -1;	/* connected socket */
+
+static void debug(const char *msg, ...) GG_GNUC_PRINTF(1, 2);
+static void debug(const char *msg, ...)
+{
+	va_list ap;
+
+	fprintf(stderr, "\033[1m");
+
+	va_start(ap, msg);
+	vfprintf(stderr, msg, ap);
+	va_end(ap);
+
+	fprintf(stderr, "\033[0m");
+	fflush(stderr);
+}
+
+static void error(int state, const char *msg, ...) GG_GNUC_PRINTF(2, 3);
+static void error(int state, const char *msg, ...)
+{
+	va_list ap;
+
+	fprintf(stderr, "\033[1;31m");
+	if (script[state].test != -1) {
+		fprintf(stderr, "File: %s, Line: %d, Test: %s\n",
+			script[state].filename, script[state].line,
+			tests[script[state].test]);
+	} else {
+		fprintf(stderr, "File: %s, Line: %d\n",
+			script[state].filename, script[state].line);
+	}
+
+	va_start(ap, msg);
+	vfprintf(stderr, msg, ap);
+	va_end(ap);
+
+	fprintf(stderr, "\033[0m");
+	fflush(stderr);
+}
 
 int main(int argc, char **argv)
 {
@@ -60,6 +92,10 @@ int main(int argc, char **argv)
 	uint32_t server_addr;
 	uint16_t server_port;
 
+#ifdef _WIN32
+	gg_win32_init_network();
+#endif
+
 	gg_debug_file = stdout;
 	gg_debug_level = ~0;
 
@@ -68,7 +104,12 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
-	setsockopt(lfd, SOL_SOCKET, SO_REUSEADDR, &value, sizeof(value));
+	if (setsockopt(lfd, SOL_SOCKET, SO_REUSEADDR,
+		(const void *)&value, sizeof(value)) != 0)
+	{
+		perror("setsockopt");
+		exit(1);
+	}
 
 	memset(&sin, 0, sizeof(sin));
 	sin.sin_family = AF_INET;
@@ -123,7 +164,6 @@ int main(int argc, char **argv)
 			glp.server_addr = server_addr;
 			glp.server_port = server_port;
 			glp.async = 1;
-			glp.resolver = GG_RESOLVER_PTHREAD;
 
 			if (!(gs = gg_login(&glp))) {
 				perror("gg_login");
@@ -153,7 +193,7 @@ int main(int argc, char **argv)
 			if (outbuflen > 0) {
 				if ((size_t)outbuflen + script[state].data_len > sizeof(outbuf)) {
 					errno = ENOMEM;
-					perror("write");
+					perror("send");
 					exit(1);
 				}
 
@@ -162,21 +202,23 @@ int main(int argc, char **argv)
 			} else {
 				int res;
 
-				res = write(fd, script[state].data, script[state].data_len);
+				res = send(fd, script[state].data, script[state].data_len, 0);
 
 				if (res < 0) {
-					perror("write");
+					perror("send");
 					exit(1);
 				}
 
 				if ((size_t)outbuflen + script[state].data_len - res > sizeof(outbuf)) {
 					errno = ENOMEM;
-					perror("write");
+					perror("send");
 					exit(1);
 				}
 
 				if (res != script[state].data_len) {
-					memcpy(outbuf + outbuflen, script[state].data + res, script[state].data_len - res);
+					memcpy(outbuf + outbuflen,
+						script[state].data + res,
+						script[state].data_len - res);
 					outbuflen += script[state].data_len - res;
 				}
 			}
@@ -200,19 +242,28 @@ int main(int argc, char **argv)
 		if (script[state].type == EXPECT_DATA && inbuflen >= 8) {
 			int len;
 
-			len = (((unsigned char) inbuf[4]) | ((unsigned char) inbuf[5]) << 8 | ((unsigned char) inbuf[6]) << 16 | ((unsigned char) inbuf[7]) << 24) + 8;
+			len = (((unsigned char) inbuf[4]) |
+				((unsigned char) inbuf[5]) << 8 |
+				((unsigned char) inbuf[6]) << 16 |
+				((unsigned char) inbuf[7]) << 24) + 8;
 
 			if (inbuflen >= len) {
 				int i;
 
 				if (script[state].data_len != len) {
-					error(state, "Invalid data length %d vs expected %d\n", len, script[state].data_len);
+					error(state, "Invalid data length %d vs expected %d\n",
+						len, script[state].data_len);
 					exit(1);
 				}
 
 				for (i = 0; i < script[state].data_len; i++) {
-					if (((unsigned char) inbuf[i] & script[state].data_mask[i]) != script[state].data[i]) {
-						error(state, "Received invalid data at offset %d: expected 0x%02x, received 0x%02x\n", i, (unsigned char) script[state].data[i], (unsigned char) inbuf[i]);
+					if (((unsigned char) inbuf[i] & script[state].data_mask[i]) !=
+						script[state].data[i])
+					{
+						error(state, "Received invalid data at offset %d: "
+							"expected 0x%02x, received 0x%02x\n", i,
+							(unsigned char) script[state].data[i],
+							(unsigned char) inbuf[i]);
 						exit(1);
 					}
 				}
@@ -304,7 +355,7 @@ int main(int argc, char **argv)
 		}
 
 		if (fd != -1 && FD_ISSET(fd, &rds)) {
-			res = read(fd, inbuf + inbuflen, sizeof(inbuf) - inbuflen);
+			res = recv(fd, inbuf + inbuflen, sizeof(inbuf) - inbuflen, 0);
 
 			if (res < 1) {
 				if (script[state].type != EXPECT_DISCONNECT) {
@@ -325,10 +376,10 @@ int main(int argc, char **argv)
 		}
 
 		if (fd != -1 && FD_ISSET(fd, &wds)) {
-			res = write(fd, outbuf, outbuflen);
+			res = send(fd, outbuf, outbuflen, 0);
 
 			if (res == -1) {
-				perror("write");
+				perror("send");
 				exit(1);
 			} else if (res == outbuflen) {
 				outbuflen = 0;
@@ -351,14 +402,18 @@ int main(int argc, char **argv)
 				exit(1);
 			}
 
-			if (ge->type != GG_EVENT_NONE || (script[state].type == EXPECT_EVENT && script[state].event == GG_EVENT_NONE)) {
+			if (ge->type != GG_EVENT_NONE || (script[state].type == EXPECT_EVENT &&
+				script[state].event == GG_EVENT_NONE))
+			{
 				if (script[state].type != EXPECT_EVENT) {
 					error(state, "Unexpected event %s (%d)\n", gg_debug_event(ge->type), ge->type);
 					exit(1);
 				}
 
 				if ((script[state].event != -1 && ge->type != script[state].event)) {
-					error(state, "Invalid event %s (%d), expected %s (%d)\n", gg_debug_event(ge->type), ge->type, gg_debug_event(script[state].event), script[state].event);
+					error(state, "Invalid event %s (%d), expected %s (%d)\n",
+						gg_debug_event(ge->type), ge->type,
+						gg_debug_event(script[state].event), script[state].event);
 					exit(1);
 				}
 

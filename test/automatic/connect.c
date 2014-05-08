@@ -1,3 +1,21 @@
+/*
+ *  (C) Copyright 2001-2006 Wojtek Kaniewski <wojtekka@irc.pl>
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU Lesser General Public License Version
+ *  2.1 as published by the Free Software Foundation.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307,
+ *  USA.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -8,26 +26,30 @@
 #include <string.h>
 #include <errno.h>
 #include <ctype.h>
-#include <arpa/inet.h>
-#include <sys/select.h>
-#include <sys/socket.h>
-#include <sys/wait.h>
-#include <sys/ioctl.h>
-#include <netinet/in.h>
-#include <netdb.h>
-#include <pthread.h>
+#include "config.h"
+
+#if defined(GG_CONFIG_HAVE_PTHREAD)
+#  include <pthread.h>
+#elif defined(_WIN32)
+#  define GG_SIMULATE_WIN32_PTHREAD
+#endif
 
 #include "libgadu.h"
+#include "network.h"
+#include "internal.h"
 
 #ifdef GG_CONFIG_HAVE_GNUTLS
 #include <gnutls/gnutls.h>
 #endif
 
-#define HOST_LOCAL "127.0.0.1"
+/* must be different from INADDR_LOOPBACK=127.0.0.1 */
+#define HOST_LOCAL "127.0.0.2"
 #define HOST_PROXY "proxy.example.org"
 
-//#define SERVER_TIMEOUT 60
-//#define CLIENT_TIMEOUT 60
+#if 0
+#define SERVER_TIMEOUT 60
+#define CLIENT_TIMEOUT 60
+#endif
 
 #define TEST_MAX (3*3*3*3*2*2*2)
 
@@ -65,6 +87,21 @@ typedef struct {
 	bool tried_resolver;
 } test_param_t;
 
+#ifdef GG_SIMULATE_WIN32_PTHREAD
+
+typedef CRITICAL_SECTION pthread_mutex_t;
+#define PTHREAD_MUTEX_INITIALIZER { 0 }
+
+typedef struct
+{
+	HANDLE handle;
+
+	void *(*func)(void *);
+	void *arg;
+} pthread_t;
+
+#endif
+
 /** Log buffer */
 static char *log_buffer;
 static pthread_mutex_t log_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -72,7 +109,9 @@ static pthread_mutex_t log_mutex = PTHREAD_MUTEX_INITIALIZER;
 /** Server data */
 static int server_ports[PORT_COUNT];
 static pthread_mutex_t server_mutex = PTHREAD_MUTEX_INITIALIZER;
+#ifndef GG_SIMULATE_WIN32_PTHREAD
 static pthread_cond_t server_cond = PTHREAD_COND_INITIALIZER;
+#endif
 static bool server_init = false;
 static int server_pipe[2];
 
@@ -91,16 +130,73 @@ static gnutls_dh_params_t dh_params;
 #define KEY_FILE "connect.pem"
 #endif
 
-static void failure(void) __attribute__ ((noreturn));
+#ifdef _WIN32
+static bool errno_is_set = 0;
+#endif
+
+static void failure(void) GG_NORETURN;
 
 static void failure(void)
 {
 	exit(1);
 }
 
+#ifdef GG_SIMULATE_WIN32_PTHREAD
+
+static inline int pthread_mutex_lock(pthread_mutex_t *mutex)
+{
+	EnterCriticalSection(mutex);
+	return 0;
+}
+
+static inline int pthread_mutex_unlock(pthread_mutex_t *mutex)
+{
+	LeaveCriticalSection(mutex);
+	return 0;
+}
+
+static inline void GG_CDECL _pthread_create_body(void *args)
+{
+	pthread_t *th = args;
+
+	th->func(th->arg);
+}
+
+static inline int pthread_create(pthread_t *th, void *attr,
+	void *(*func)(void *), void *arg)
+{
+	if (th == NULL || func == NULL)
+		return -1;
+	if (attr != NULL || arg != NULL)
+		return -1;
+
+	th->func = func;
+	th->arg = arg;
+	th->handle = (HANDLE)_beginthread(_pthread_create_body, 0, th);
+	if (!th->handle)
+		return -1;
+
+	return 0;
+}
+
+static inline int pthread_join(pthread_t th, void **res)
+{
+	if (res != NULL)
+		return -1;
+
+	if (!th.handle)
+		return 0;
+
+	WaitForSingleObject(th.handle, INFINITE);
+
+	return 0;
+}
+
+#endif /* GG_SIMULATE_WIN32_PTHREAD */
+
 static test_param_t *get_test_param(void)
 {
-	static test_param_t test = { false };
+	static test_param_t test;
 
 	return &test;
 }
@@ -165,6 +261,7 @@ static inline unsigned int get32(char *ptr)
 	return tmp[0] | (tmp[1] << 8) | (tmp[2] << 16) | (tmp[3] << 24);
 }
 
+static void debug(const char *fmt, ...) GG_GNUC_PRINTF(1, 2);
 static void debug(const char *fmt, ...)
 {
 	va_list ap;
@@ -174,10 +271,9 @@ static void debug(const char *fmt, ...)
 	va_end(ap);
 }
 
+#ifndef _WIN32
 extern int __connect(int socket, const struct sockaddr *address, socklen_t address_len);
-extern struct hostent *__gethostbyname(const char *name);
-int __gethostbyname_r(const char *name,  struct hostent *ret, char *buf,
-size_t buflen,  struct hostent **result, int *h_errnop);
+#endif
 
 typedef struct {
 	struct in_addr addr;
@@ -185,7 +281,18 @@ typedef struct {
 	char name[1];
 } resolver_storage_t;
 
+int gethostbyname_r(const char *name, struct hostent *ret, char *buf,
+	size_t buflen, struct hostent **result, int *h_errnop);
+
+#undef h_errno
+static int h_errno;
+
+#undef gethostbyname
+#ifdef _WIN32
+static struct hostent *my_gethostbyname(const char *name)
+#else
 struct hostent *gethostbyname(const char *name)
+#endif
 {
 	static char buf[256];
 	static struct hostent he;
@@ -193,14 +300,14 @@ struct hostent *gethostbyname(const char *name)
 
 	if (gethostbyname_r(name, &he, buf, sizeof(buf), &he_ptr, &h_errno) != 0)
 		return NULL;
-	
+
 	return he_ptr;
 }
 
-int gethostbyname_r(const char *name, struct hostent *ret, char *buf, size_t buflen, struct hostent **result, int *h_errnop)
+int gethostbyname_r(const char *name, struct hostent *ret, char *buf,
+	size_t buflen, struct hostent **result, int *h_errnop)
 {
 	resolver_storage_t *storage = (void*) buf;
-	int h_errno;
 	test_param_t *test;
 
 	test = get_test_param();
@@ -216,11 +323,11 @@ int gethostbyname_r(const char *name, struct hostent *ret, char *buf, size_t buf
 		if (test->plug_resolver == PLUG_TIMEOUT) {
 			if (test->async_mode) {
 				int res;
-				if ((res = write(timeout_pipe[1], "", 1)) != 1) {
+				if ((res = send(timeout_pipe[1], "", 1, 0)) != 1) {
 					if (res == -1)
-						perror("write");
+						perror("send");
 					else
-						fprintf(stderr, "write returned %d\n", res);
+						fprintf(stderr, "send returned %d\n", res);
 					failure();
 				}
 			}
@@ -231,7 +338,9 @@ int gethostbyname_r(const char *name, struct hostent *ret, char *buf, size_t buf
 		return -1;
 	}
 
-	if ((!test->proxy_mode && strcmp(name, GG_APPMSG_HOST) != 0) || (test->proxy_mode && strcmp(name, HOST_PROXY) != 0)) {
+	if ((!test->proxy_mode && strcmp(name, GG_APPMSG_HOST) != 0) ||
+		(test->proxy_mode && strcmp(name, HOST_PROXY) != 0))
+	{
 		debug("Invalid argument for gethostbyname(): \"%s\"\n", name);
 		*h_errnop = HOST_NOT_FOUND;
 		return -1;
@@ -247,13 +356,20 @@ int gethostbyname_r(const char *name, struct hostent *ret, char *buf, size_t buf
 	ret->h_addrtype = AF_INET;
 	ret->h_length = sizeof(struct in_addr);
 	ret->h_addr_list = storage->addr_list;
-	
+
 	*result = ret;
 
 	return 0;
 }
 
+#undef connect
+#ifdef _WIN32
+static gg_win32_hook_data_t connect_hook;
+
+static int my_connect(SOCKET socket, const struct sockaddr *address, int address_len)
+#else
 int connect(int socket, const struct sockaddr *address, socklen_t address_len)
+#endif
 {
 	struct sockaddr_in sin;
 	int result, plug, port;
@@ -263,12 +379,29 @@ int connect(int socket, const struct sockaddr *address, socklen_t address_len)
 
 #ifdef GG_CONFIG_HAVE_GNUTLS
 	/* GnuTLS may want to connect */
-	if (!gnutls_initialized)
+	if (!gnutls_initialized) {
+#ifdef _WIN32
+		int ret;
+
+		gg_win32_hook_set_enabled(&connect_hook, 0);
+		ret = connect(socket, address, address_len);
+		gg_win32_hook_set_enabled(&connect_hook, 1);
+
+		errno_is_set = 0;
+		return ret;
+#else
 		return __connect(socket, address, address_len);
 #endif
+	}
+#endif
 
-	if (address_len < sizeof(sin)) {
-		debug("Invalid argument for connect(): sa_len < %d\n", sizeof(sin));
+#ifdef _WIN32
+	errno_is_set = 1;
+#endif
+
+	if ((size_t)address_len < sizeof(sin)) {
+		debug("Invalid argument for connect(): sa_len < %"
+			GG_SIZE_FMT "\n", sizeof(sin));
 		errno = EINVAL;
 		return -1;
 	}
@@ -280,6 +413,19 @@ int connect(int socket, const struct sockaddr *address, socklen_t address_len)
 		errno = EINVAL;
 		return -1;
 	}
+
+#ifdef _WIN32
+	if (sin.sin_addr.s_addr == htonl(INADDR_LOOPBACK)) {
+		int ret;
+
+		gg_win32_hook_set_enabled(&connect_hook, 0);
+		ret = connect(socket, address, address_len);
+		gg_win32_hook_set_enabled(&connect_hook, 1);
+
+		errno_is_set = 0;
+		return ret;
+	}
+#endif
 
 	if (sin.sin_addr.s_addr != inet_addr(HOST_LOCAL)) {
 		debug("Invalid argument for connect(): sin_addr = %s\n", inet_ntoa(sin.sin_addr));
@@ -325,6 +471,29 @@ int connect(int socket, const struct sockaddr *address, socklen_t address_len)
 			sin.sin_port = htons(port);
 			break;
 		case PLUG_RESET:
+#ifdef _WIN32
+			/* TODO: it doesn't seems to fit win32 sockets behavior.
+			 * In real case, win32 may hang here - just remove this
+			 * block and see what's happens.
+			 *
+			 * For blocking sockets, connect() should return
+			 * ECONNREFUSED. For async it should:
+			 * - return EINPROGRESS;
+			 * - next call to select() returns >= 1;
+			 * - getsockopt(..., SO_ERROR, ...) returns ECONNREFUSED.
+			 *
+			 * Instead, on win32 select() returns 0 and getsockopt
+			 * always returns 0.
+			 *
+			 * Function send(fd, "", 0, 0) called just after
+			 * connect, returns ECONNRESET both for "RESET" and
+			 * "TIMEOUT" sockets.
+			 */
+			if (test->async_mode) {
+				errno = ECONNREFUSED;
+				return -1;
+			}
+#endif
 			sin.sin_port = htons(server_ports[PORT_CLOSED]);
 			break;
 		case PLUG_TIMEOUT:
@@ -332,8 +501,8 @@ int connect(int socket, const struct sockaddr *address, socklen_t address_len)
 				errno = ETIMEDOUT;
 			} else {
 				int res;
-				if ((res = write(timeout_pipe[1], "", 1)) != 1) {
-					debug("write() returned %d\n", res);
+				if ((res = send(timeout_pipe[1], "", 1, 0)) != 1) {
+					debug("send() returned %d\n", res);
 					errno = EBADF;
 					return -1;
 				}
@@ -342,10 +511,39 @@ int connect(int socket, const struct sockaddr *address, socklen_t address_len)
 			return -1;
 	}
 
+#ifdef _WIN32
+	gg_win32_hook_set_enabled(&connect_hook, 0);
+	result = connect(socket, (struct sockaddr*) &sin, address_len);
+	gg_win32_hook_set_enabled(&connect_hook, 1);
+
+	errno_is_set = 0;
+#else
 	result = __connect(socket, (struct sockaddr*) &sin, address_len);
+#endif
 
 	return result;
 }
+
+#ifdef _WIN32
+static gg_win32_hook_data_t get_last_error_hook;
+
+static int my_get_last_error(void)
+{
+	int result;
+
+	if (errno_is_set) {
+		errno_is_set = 0;
+		return errno;
+	}
+
+	gg_win32_hook_set_enabled(&get_last_error_hook, 0);
+	result = WSAGetLastError();
+	gg_win32_hook_set_enabled(&get_last_error_hook, 1);
+
+	return result;
+}
+
+#endif
 
 /** @return 1 on success, 0 on failure, -1 on error */
 static int client_func(const test_param_t *test)
@@ -362,7 +560,6 @@ static int client_func(const test_param_t *test)
 	glp.uin = 1;
 	glp.password = "dupa.8";
 	glp.async = test->async_mode;
-	glp.resolver = GG_RESOLVER_PTHREAD;
 
 	if (test->server)
 		glp.server_addr = inet_addr(HOST_LOCAL);
@@ -370,7 +567,7 @@ static int client_func(const test_param_t *test)
 	if (test->ssl_mode)
 		glp.tls = GG_SSL_ENABLED;
 
-	while (read(timeout_pipe[0], &tmp, 1) != -1);
+	while (recv(timeout_pipe[0], &tmp, 1, 0) != -1);
 
 	gs = gg_login(&glp);
 
@@ -418,9 +615,9 @@ static int client_func(const test_param_t *test)
 				gg_free_session(gs);
 				return 0;
 			}
-			
+
 			if (res == -1 && errno != EINTR) {
-				debug("select() failed: %s\n", strerror(errno));
+				debug("select() failed: %s (errno=%d)\n", strerror(errno), errno);
 				gg_free_session(gs);
 				return -1;
 			}
@@ -428,7 +625,7 @@ static int client_func(const test_param_t *test)
 				continue;
 
 			if (FD_ISSET(timeout_pipe[0], &rd)) {
-				if (read(timeout_pipe[0], &tmp, 1) != 1) {
+				if (recv(timeout_pipe[0], &tmp, 1, 0) != 1) {
 					debug("Test error\n");
 					gg_free_session(gs);
 					return -1;
@@ -441,14 +638,16 @@ static int client_func(const test_param_t *test)
 				}
 			}
 
-			if (FD_ISSET(gs->fd, &rd) || FD_ISSET(gs->fd, &wr) || (FD_ISSET(timeout_pipe[0], &rd) && gs->soft_timeout)) {
+			if (FD_ISSET(gs->fd, &rd) || FD_ISSET(gs->fd, &wr) ||
+				(FD_ISSET(timeout_pipe[0], &rd) && gs->soft_timeout))
+			{
 				struct gg_event *ge;
-				
+
 				if (FD_ISSET(timeout_pipe[0], &rd)) {
 					debug("Soft timeout\n");
 					gs->timeout = 0;
 				}
-		
+
 				ge = gg_watch_fd(gs);
 
 				if (!ge) {
@@ -590,10 +789,12 @@ static void* server_func(void* arg)
 		failure();
 	}
 	server_init = true;
+#ifndef GG_SIMULATE_WIN32_PTHREAD
 	if (pthread_cond_signal(&server_cond) != 0) {
 		fprintf(stderr, "pthread_cond_signal failed!\n");
 		failure();
 	}
+#endif
 	if (pthread_mutex_unlock(&server_mutex) != 0) {
 		fprintf(stderr, "pthread_mutex_unlock failed!\n");
 		failure();
@@ -623,7 +824,7 @@ static void* server_func(void* arg)
 
 		if (client_fd != -1) {
 			FD_SET(client_fd, &rd);
-				
+
 			if (client_fd > max_fd)
 				max_fd = client_fd;
 		}
@@ -694,12 +895,18 @@ static void* server_func(void* arg)
 				case CLIENT_HUB:
 					if (strstr(buf, "\r\n\r\n") != NULL) {
 						if (!test->ssl_mode) {
-							if (send(client_fd, hub_reply, strlen(hub_reply), 0) != strlen(hub_reply)) {
+							if (send(client_fd, hub_reply,
+								strlen(hub_reply), 0) !=
+								(ssize_t)strlen(hub_reply))
+							{
 								fprintf(stderr, "send() not completed\n");
 								failure();
 							}
 						} else {
-							if (send(client_fd, hub_ssl_reply, strlen(hub_ssl_reply), 0) != strlen(hub_ssl_reply)) {
+							if (send(client_fd, hub_ssl_reply,
+								strlen(hub_ssl_reply), 0) !=
+								(ssize_t)strlen(hub_ssl_reply))
+							{
 								fprintf(stderr, "send() not completed\n");
 								failure();
 							}
@@ -714,7 +921,10 @@ static void* server_func(void* arg)
 
 				case CLIENT_GG:
 					if (len > 8 && len >= get32(buf + 4)) {
-						if (send(client_fd, login_ok_packet, sizeof(login_ok_packet), 0) != sizeof(login_ok_packet)) {
+						if (send(client_fd, login_ok_packet,
+							sizeof(login_ok_packet), 0) !=
+							sizeof(login_ok_packet))
+						{
 							fprintf(stderr, "send() not completed\n");
 							failure();
 						}
@@ -724,7 +934,11 @@ static void* server_func(void* arg)
 				case CLIENT_GG_SSL:
 #ifdef GG_CONFIG_HAVE_GNUTLS
 					if (len > 8 && len >= get32(buf + 4)) {
-						if (gnutls_record_send(session, login_ok_packet, sizeof(login_ok_packet)) != sizeof(login_ok_packet)) {
+						if (gnutls_record_send(session,
+							login_ok_packet,
+							sizeof(login_ok_packet)) !=
+							sizeof(login_ok_packet))
+						{
 							fprintf(stderr, "gnutls_record_send() not completed\n");
 							failure();
 						}
@@ -738,22 +952,36 @@ static void* server_func(void* arg)
 
 						test = get_test_param();
 
-						if (strncmp(buf, "GET http://" GG_APPMSG_HOST, strlen("GET http://" GG_APPMSG_HOST)) == 0) {
+						if (strncmp(buf,
+							"GET http://" GG_APPMSG_HOST,
+							strlen("GET http://" GG_APPMSG_HOST)) == 0)
+						{
 							test->tried_80 = 1;
 							if (test->plug_80 == PLUG_NONE) {
 								if (!test->ssl_mode) {
-									if (send(client_fd, hub_reply, strlen(hub_reply), 0) != strlen(hub_reply)) {
-										fprintf(stderr, "send() not completed\n");
+									if (send(client_fd, hub_reply,
+										strlen(hub_reply), 0) !=
+										(ssize_t)strlen(hub_reply))
+									{
+										fprintf(stderr,
+											"send() not completed\n");
 										failure();
 									}
 								} else {
-									if (send(client_fd, hub_ssl_reply, strlen(hub_ssl_reply), 0) != strlen(hub_ssl_reply)) {
-										fprintf(stderr, "send() not completed\n");
+									if (send(client_fd, hub_ssl_reply,
+										strlen(hub_ssl_reply), 0) !=
+										(ssize_t)strlen(hub_ssl_reply))
+									{
+										fprintf(stderr,
+											"send() not completed\n");
 										failure();
 									}
 								}
 							} else {
-								if (send(client_fd, proxy_error, strlen(proxy_error), 0) != strlen(proxy_error)) {
+								if (send(client_fd, proxy_error,
+									strlen(proxy_error), 0) !=
+									(ssize_t)strlen(proxy_error))
+								{
 									fprintf(stderr, "send() not completed\n");
 									failure();
 								}
@@ -763,11 +991,17 @@ static void* server_func(void* arg)
 								failure();
 							}
 							client_fd = -1;
-						} else if (strncmp(buf, "CONNECT " HOST_LOCAL ":443 ", strlen("CONNECT " HOST_LOCAL ":443 ")) == 0) {
+						} else if (strncmp(buf,
+							"CONNECT " HOST_LOCAL ":443 ",
+							strlen("CONNECT " HOST_LOCAL ":443 ")) == 0)
+						{
 							test->tried_443 = 1;
 
 							if (test->plug_443 == PLUG_NONE) {
-								if (send(client_fd, proxy_reply, strlen(proxy_reply), 0) != strlen(proxy_reply)) {
+								if (send(client_fd, proxy_reply,
+									strlen(proxy_reply), 0) !=
+									(ssize_t)strlen(proxy_reply))
+								{
 									fprintf(stderr, "send() not completed\n");
 									failure();
 								}
@@ -778,7 +1012,11 @@ static void* server_func(void* arg)
 
 									res = server_ssl_init(&session, client_fd);
 									if (res != GNUTLS_E_SUCCESS) {
-										debug("Handshake failed: %d, %s\n", res, gnutls_strerror(res));
+										/* XXX: this indentation
+										 * hits 80-th column
+										 * with tabs only! */
+										debug("Handshake failed: %d, %s\n",
+											res, gnutls_strerror(res));
 										if (close(client_fd) == -1) {
 											perror("close");
 											failure();
@@ -787,8 +1025,14 @@ static void* server_func(void* arg)
 										continue;
 									}
 
-									if (gnutls_record_send(session, welcome_packet, sizeof(welcome_packet)) != sizeof(welcome_packet)) {
-										fprintf(stderr, "gnutls_record_send() not completed\n");
+									if (gnutls_record_send(session,
+										welcome_packet,
+										sizeof(welcome_packet)) !=
+										sizeof(welcome_packet))
+									{
+										fprintf(stderr,
+											"gnutls_record_send() "
+											"not completed\n");
 										failure();
 									}
 
@@ -796,14 +1040,21 @@ static void* server_func(void* arg)
 								} else
 #endif
 								{
-									if (send(client_fd, welcome_packet, sizeof(welcome_packet), 0) != sizeof(welcome_packet)) {
-										fprintf(stderr, "send() not completed\n");
+									if (send(client_fd, welcome_packet,
+										sizeof(welcome_packet), 0) !=
+										sizeof(welcome_packet))
+									{
+										fprintf(stderr,
+											"send() not completed\n");
 										failure();
 									}
 									ctype = CLIENT_GG;
 								}
 							} else {
-								if (send(client_fd, proxy_error, strlen(proxy_error), 0) != strlen(proxy_error)) {
+								if (send(client_fd, proxy_error,
+									strlen(proxy_error), 0) !=
+									(ssize_t)strlen(proxy_error))
+								{
 									fprintf(stderr, "send() not completed\n");
 									failure();
 								}
@@ -811,7 +1062,10 @@ static void* server_func(void* arg)
 							len = 0;
 						} else {
 							debug("Invalid proxy request");
-							if (send(client_fd, proxy_error, strlen(proxy_error), 0) != strlen(proxy_error)) {
+							if (send(client_fd, proxy_error,
+								strlen(proxy_error), 0) !=
+								(ssize_t)strlen(proxy_error))
+							{
 								fprintf(stderr, "send() not completed\n");
 								failure();
 							}
@@ -875,16 +1129,20 @@ static void* server_func(void* arg)
 						client_fd = -1;
 						continue;
 					}
-						
-					if (gnutls_record_send(session, welcome_packet, sizeof(welcome_packet)) != sizeof(welcome_packet)) {
+
+					if (gnutls_record_send(session, welcome_packet,
+						sizeof(welcome_packet)) != sizeof(welcome_packet))
+					{
 						fprintf(stderr, "gnutls_record_send() not completed\n");
 						failure();
 					}
 				}
-#endif 
+#endif
 				else if (i == PORT_443 || i == PORT_8074) {
 					ctype = CLIENT_GG;
-					if (send(client_fd, welcome_packet, sizeof(welcome_packet), 0) != sizeof(welcome_packet)) {
+					if (send(client_fd, welcome_packet,
+						sizeof(welcome_packet), 0) != sizeof(welcome_packet))
+					{
 						fprintf(stderr, "send() not completed\n");
 						failure();
 					}
@@ -934,10 +1192,38 @@ int main(int argc, char **argv)
 	int res;
 #endif
 	pthread_t server_thread;
-	
-#ifdef FIONBIO
-	int one = 1;
+	const char *srcdir;
+	size_t srcdir_len;
+	char cert_file_path[2000], key_file_path[2000];
+
+#ifdef _WIN32
+	gg_win32_init_network();
+	gg_win32_hook(connect, my_connect, &connect_hook);
+	gg_win32_hook(gethostbyname, my_gethostbyname, NULL);
+	gg_win32_hook(WSAGetLastError, my_get_last_error, &get_last_error_hook);
 #endif
+
+#ifdef GG_SIMULATE_WIN32_PTHREAD
+	InitializeCriticalSection(&log_mutex);
+	InitializeCriticalSection(&server_mutex);
+#endif
+
+	srcdir = getenv("srcdir");
+	if (srcdir == NULL || srcdir[0] == '\0')
+		srcdir = ".";
+
+	srcdir_len = strlen(srcdir);
+	if (srcdir_len > 1000) {
+		fprintf(stderr, "srcdir path too long\n");
+		failure();
+	}
+
+	strncpy(cert_file_path, srcdir, srcdir_len);
+	strncpy(key_file_path, srcdir, srcdir_len);
+	cert_file_path[srcdir_len] = '/';
+	key_file_path[srcdir_len] = '/';
+	strcpy(cert_file_path + srcdir_len + 1, CERT_FILE);
+	strcpy(key_file_path + srcdir_len + 1, KEY_FILE);
 
 #ifdef GG_CONFIG_HAVE_GNUTLS
 	if ((res = gnutls_global_init()) != GNUTLS_E_SUCCESS) {
@@ -948,7 +1234,9 @@ int main(int argc, char **argv)
 		fprintf(stderr, "gnutls_certificate_allocate_credentials: %d, %s\n", res, gnutls_strerror(res));
 		failure();
 	}
-	if ((res = gnutls_certificate_set_x509_key_file(x509_cred, CERT_FILE, KEY_FILE, GNUTLS_X509_FMT_PEM)) != GNUTLS_E_SUCCESS) {
+	if ((res = gnutls_certificate_set_x509_key_file(x509_cred,
+		cert_file_path, key_file_path, GNUTLS_X509_FMT_PEM)) != GNUTLS_E_SUCCESS)
+	{
 		fprintf(stderr, "gnutls_certificate_set_x509_key_file: %d, %s\n", res, gnutls_strerror(res));
 		failure();
 	}
@@ -977,7 +1265,9 @@ int main(int argc, char **argv)
 		test_to = atoi(argv[2]);
 	}
 
-	if (argc < 3 || test_from < 1 || test_from > TEST_MAX || test_from > test_to || test_to < 1 || test_to > TEST_MAX) {
+	if (argc < 3 || test_from < 1 || test_from > TEST_MAX ||
+		test_from > test_to || test_to < 1 || test_to > TEST_MAX)
+	{
 		test_from = 1;
 		test_to = TEST_MAX;
 	}
@@ -985,17 +1275,18 @@ int main(int argc, char **argv)
 	gg_debug_handler = debug_handler;
 	gg_debug_level = ~0;
 
-	if (pipe(server_pipe) == -1 || pipe(timeout_pipe) == -1) {
-		perror("pipe");
+	if (socketpair(AF_LOCAL, SOCK_STREAM, 0, server_pipe) == -1) {
+		perror("server_pipe");
 		failure();
 	}
 
-#ifdef FIONBIO
-	if (ioctl(timeout_pipe[0], FIONBIO, &one) == -1) {
-#else
-	if (fcntl(timeout_pipe[0], F_SETFL, O_NONBLOCK) == -1) {
-#endif
-		perror("ioctl/fcntl");
+	if (socketpair(AF_LOCAL, SOCK_STREAM, 0, timeout_pipe) == -1) {
+		perror("timeout_pipe");
+		failure();
+	}
+
+	if (!gg_fd_set_nonblocking(timeout_pipe[0])) {
+		perror("gg_fd_set_nonblocking() failed!");
 		failure();
 	}
 
@@ -1008,11 +1299,24 @@ int main(int argc, char **argv)
 		fprintf(stderr, "pthread_mutex_lock() failed!\n");
 		failure();
 	}
-	while (!server_init)
+	while (!server_init) {
+#ifdef GG_SIMULATE_WIN32_PTHREAD
+		if (pthread_mutex_unlock(&server_mutex) != 0) {
+			fprintf(stderr, "pthread_mutex_unlock() failed!\n");
+			failure();
+		}
+		usleep(10000); /* 10ms */
+		if (pthread_mutex_lock(&server_mutex) != 0) {
+			fprintf(stderr, "pthread_mutex_lock() failed!\n");
+			failure();
+		}
+#else
 		if (pthread_cond_wait(&server_cond, &server_mutex) != 0) {
 			fprintf(stderr, "pthread_cond_wait() failed!\n");
 			failure();
 		}
+#endif
+	}
 	if (pthread_mutex_unlock(&server_mutex) != 0) {
 		fprintf(stderr, "pthread_mutex_unlock() failed!\n");
 		failure();
@@ -1043,8 +1347,13 @@ int main(int argc, char **argv)
 				if ((!test->ssl_mode && test->plug_8074 == PLUG_NONE) || test->plug_443 == PLUG_NONE)
 					expect = 1;
 		} else {
-			if (test->plug_resolver == PLUG_NONE && test->plug_8080 == PLUG_NONE && (test->plug_80 == PLUG_NONE || test->server) && test->plug_443 == PLUG_NONE)
+			if (test->plug_resolver == PLUG_NONE &&
+				test->plug_8080 == PLUG_NONE &&
+				(test->plug_80 == PLUG_NONE || test->server) &&
+				test->plug_443 == PLUG_NONE)
+			{
 				expect = 1;
+			}
 		}
 
 		for (j = 0; j < 2; j++) {
@@ -1092,12 +1401,16 @@ int main(int argc, char **argv)
 				debug("Didn't use hub\n");
 			}
 
-			if (test->server && (!test->proxy_mode || test->plug_resolver == PLUG_NONE) && !test->tried_8074 && !test->tried_443) {
+			if (test->server && (!test->proxy_mode || test->plug_resolver == PLUG_NONE)
+				&& !test->tried_8074 && !test->tried_443)
+			{
 				result = false;
 				debug("Didn't try connecting directly\n");
 			}
 
-			if ((test->server || (test->plug_resolver == PLUG_NONE && test->plug_80 == PLUG_NONE)) && test->plug_8074 != PLUG_NONE && !test->tried_443 && !test->proxy_mode) {
+			if ((test->server || (test->plug_resolver == PLUG_NONE && test->plug_80 == PLUG_NONE)) &&
+				test->plug_8074 != PLUG_NONE && !test->tried_443 && !test->proxy_mode)
+			{
 				result = false;
 				debug("Didn't try 443\n");
 			}
@@ -1118,8 +1431,8 @@ int main(int argc, char **argv)
 		}
 	}
 
-	if (write(server_pipe[1], "", 1) != 1) {
-		perror("write");
+	if (send(server_pipe[1], "", 1, 0) != 1) {
+		perror("send");
 		failure();
 	}
 
@@ -1128,7 +1441,9 @@ int main(int argc, char **argv)
 		failure();
 	}
 
-	if (close(timeout_pipe[0]) == -1 || close(timeout_pipe[1]) == -1 || close(server_pipe[0]) == -1 || close(server_pipe[1]) == -1) {
+	if (close(timeout_pipe[0]) == -1 || close(timeout_pipe[1]) == -1 ||
+		close(server_pipe[0]) == -1 || close(server_pipe[1]) == -1)
+	{
 		perror("close");
 		failure();
 	}
@@ -1137,6 +1452,11 @@ int main(int argc, char **argv)
 	gnutls_certificate_free_credentials(x509_cred);
 	gnutls_dh_params_deinit(dh_params);
 	gnutls_global_deinit();
+#endif
+
+#ifdef GG_SIMULATE_WIN32_PTHREAD
+	DeleteCriticalSection(&log_mutex);
+	DeleteCriticalSection(&server_mutex);
 #endif
 
 	return exit_code;

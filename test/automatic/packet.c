@@ -1,9 +1,27 @@
-#include <sys/socket.h>
+/*
+ *  (C) Copyright 2001-2006 Wojtek Kaniewski <wojtekka@irc.pl>
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU Lesser General Public License Version
+ *  2.1 as published by the Free Software Foundation.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307,
+ *  USA.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
 #include "libgadu.h"
+#include "network.h"
 #include "internal.h"
 
 enum {
@@ -16,6 +34,8 @@ enum {
 int state;
 int offset;
 int expected_packet;
+static int recv_called = 0;
+static int send_called = 0;
 
 struct {
 	const char *data;
@@ -82,9 +102,16 @@ struct {
 	{ "", -ENOTSOCK, EXPECT_ERROR, 0, 0, NULL },
 };
 
+#undef recv
+#ifdef _WIN32
+static int my_recv(SOCKET fd, char *buf, int len, int flags)
+#else
 ssize_t recv(int fd, void *buf, size_t len, int flags)
+#endif
 {
 	ssize_t result;
+
+	recv_called = 1;
 
 	if (fd != 123) {
 		fprintf(stderr, "recv: Invalid descriptor\n");
@@ -98,7 +125,7 @@ ssize_t recv(int fd, void *buf, size_t len, int flags)
 	result = input[state].result;
 
 	if (result > -1 && result - offset >= 0) {
-		if ((size_t)(result - offset) > len) {
+		if ((size_t)(result - offset) > (size_t)len) {
 			memcpy(buf, input[state].data + offset, len);
 			offset += len;
 			result = len;
@@ -135,7 +162,7 @@ static void gs_init(struct gg_session *gs, struct gg_session_private *gsp, int a
 	gs->async = async;
 }
 
-// TODO: napisać test na r1324
+/* TODO: napisać test na r1324 */
 static void test_recv_packet(void)
 {
 	struct gg_session gs;
@@ -152,6 +179,11 @@ static void test_recv_packet(void)
 
 		gh = gg_recv_packet(&gs);
 
+		if (!recv_called) {
+			fprintf(stderr, "recv hook not called\n");
+			exit(1);
+		}
+
 		if (gh == NULL) {
 			if (expected_packet) {
 				fprintf(stderr, "Returned nothing, expected packet\n");
@@ -165,7 +197,9 @@ static void test_recv_packet(void)
 				}
 			} else {
 				if (input[state-1].expect != EXPECT_ERROR) {
-					fprintf(stderr, "Returned error (%s) when expected something\n", strerror(errno));
+					fprintf(stderr, "Returned error (%s) "
+						"when expected something\n",
+						strerror(errno));
 					exit(1);
 				}
 
@@ -189,7 +223,10 @@ static void test_recv_packet(void)
 				exit(1);
 			}
 
-			if (memcmp(((char*) gh) + sizeof(*gh), input[state-1].expected_data, input[state-1].length) != 0) {
+			if (memcmp(((char*) gh) + sizeof(*gh),
+				input[state-1].expected_data,
+				input[state-1].length) != 0)
+			{
 				fprintf(stderr, "Invalid packet payload\n");
 				exit(1);
 			}
@@ -216,16 +253,23 @@ struct {
 	{ "\x67\x45\x00\x00\x06\x00\x00\x00""PQRSTU", 14, -1, EAGAIN },
 };
 
+#undef send
+#ifdef _WIN32
+static int my_send(SOCKET fd, const char *buf, int len, int flags)
+#else
 ssize_t send(int fd, const void *buf, size_t len, int flags)
+#endif
 {
 	ssize_t res;
+
+	send_called = 1;
 
 	if (send_state >= sizeof(send_list) / sizeof(send_list[0])) {
 		fprintf(stderr, "Unexpected send\n");
 		exit(1);
 	}
 
-	if (len != send_list[send_state].expect_len) {
+	if ((size_t)len != send_list[send_state].expect_len) {
 		fprintf(stderr, "Expected %d bytes instead of %d\n", (int) send_list[send_state].expect_len, (int) len);
 		exit(1);
 	}
@@ -239,7 +283,7 @@ ssize_t send(int fd, const void *buf, size_t len, int flags)
 	res = send_list[send_state].result_value;
 	send_state++;
 
-	printf("send(%d, %p, %d, %d) = %d\n", fd, buf, (int) len, flags, (int) res);
+	printf("send(%d, %p, %d, %d) = %d\n", (int)fd, buf, (int) len, flags, (int) res);
 
 	return res;
 }
@@ -254,7 +298,10 @@ static void test_send_packet(void)
 	/* Poprawne wysyłanie */
 
 	if (gg_send_packet(&gs, 0x1234, "ABC", 3, "DEF", 3, NULL) != 0) {
-		fprintf(stderr, "Expected success\n");
+		if (!send_called)
+			fprintf(stderr, "send hook not called\n");
+		else
+			fprintf(stderr, "Expected success\n");
 		exit(1);
 	}
 
@@ -298,7 +345,9 @@ static void test_send_packet(void)
 		exit(1);
 	}
 
-	if (gs.send_buf == NULL || gs.send_left != 14 || memcmp(gs.send_buf, "\x67\x45\x00\x00\x06\x00\x00\x00""PQRSTU", 14) != 0) {
+	if (gs.send_buf == NULL || gs.send_left != 14 || memcmp(gs.send_buf,
+		"\x67\x45\x00\x00\x06\x00\x00\x00""PQRSTU", 14) != 0)
+	{
 		fprintf(stderr, "Not queued properly\n");
 		exit(1);
 	}
@@ -310,7 +359,10 @@ static void test_send_packet(void)
 		exit(1);
 	}
 
-	if (gs.send_buf == NULL || gs.send_left != 25 || memcmp(gs.send_buf, "\x67\x45\x00\x00\x06\x00\x00\x00""PQRSTU""\x78\x56\x00\x00\x03\x00\x00\x00""VWX", 25) != 0) {
+	if (gs.send_buf == NULL || gs.send_left != 25 || memcmp(gs.send_buf,
+		"\x67\x45\x00\x00\x06\x00\x00\x00""PQRSTU""\x78\x56\x00\x00\x03"
+		"\x00\x00\x00""VWX", 25) != 0)
+	{
 		fprintf(stderr, "Not queued properly\n");
 		exit(1);
 	}
@@ -327,8 +379,23 @@ static void test_send_packet(void)
 	fprintf(stderr, "Test succeeded.\n");
 }
 
+#ifdef _WIN32
+
+static int my_get_last_error(void)
+{
+	return errno;
+}
+
+#endif
+
 int main(void)
 {
+#ifdef _WIN32
+	gg_win32_hook(WSAGetLastError, my_get_last_error, NULL);
+	gg_win32_hook(recv, my_recv, NULL);
+	gg_win32_hook(send, my_send, NULL);
+#endif
+
 	test_recv_packet();
 	test_send_packet();
 

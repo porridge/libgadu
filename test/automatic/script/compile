@@ -197,7 +197,7 @@ sub parse
 					$first = 0;
 				}
 				if ($first) {
-					print "true)";
+					print "TRUE)";
 				}
 				print ");\n";
 
@@ -418,7 +418,6 @@ print "\n";
 print "#include <stdio.h>\n";
 print "#include <stdlib.h>\n";
 print "#include <string.h>\n";
-print "#include <arpa/inet.h>\n";
 print "#include \"script.h\"\n";
 print "\n";
 

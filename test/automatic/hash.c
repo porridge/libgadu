@@ -1,12 +1,49 @@
+/*
+ *  (C) Copyright 2001-2006 Wojtek Kaniewski <wojtekka@irc.pl>
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU Lesser General Public License Version
+ *  2.1 as published by the Free Software Foundation.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307,
+ *  USA.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include <fcntl.h>
-#include <sys/types.h>
 
 #include "libgadu.h"
 #include "internal.h"
+#include "fileio.h"
+
+static inline int
+gg_mkstemp(char *path)
+{
+	mode_t old_umask;
+	int ret;
+
+	old_umask = umask(S_IRWXO | S_IRWXG);
+#if defined(_BSD_SOURCE) || defined(_SVID_SOURCE) || (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE >= 500)
+	ret = mkstemp(path);
+#else
+	if (strcmp(mktemp(path), "") == 0)
+		ret = -1;
+	else /* XXX: O_CREAT shouldn't be necessary */
+		ret = open(path, O_EXCL | O_RDWR | O_CREAT);
+#endif
+	umask(old_umask);
+
+	return ret;
+}
 
 static char *sha1_to_string(uint8_t *sha1)
 {
@@ -15,7 +52,7 @@ static char *sha1_to_string(uint8_t *sha1)
 
 	for (i = 0; i < 20; i++)
 		sprintf(str + i * 2, "%02x", sha1[i]);
-	
+
 	return str;
 }
 
@@ -56,7 +93,8 @@ static void test_login_hash(const char *password, uint32_t seed, const char *exp
 	}
 
 	if (!sha1_compare(result, expect)) {
-		printf("hash failed for \"%s\", 0x%08x, expected %s, got %s\n", password, seed, expect, sha1_to_string(result));
+		printf("hash failed for \"%s\", 0x%08x, expected %s, got %s\n",
+			password, seed, expect, sha1_to_string(result));
 		exit(1);
 	}
 }
@@ -85,7 +123,7 @@ static void test_file_hash(unsigned int megs, const char *expect)
 
 	strcpy(name, "hash.XXXXXX");
 
-	fd = mkstemp(name);
+	fd = gg_mkstemp(name);
 
 	if (fd == -1) {
 		fprintf(stderr, "Unable to create temporary file\n");

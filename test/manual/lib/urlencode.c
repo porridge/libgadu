@@ -20,6 +20,8 @@
 #include <stdarg.h>
 #include <string.h>
 
+#include "urlencode.h"
+
 #define gg_urlencode_isvalid(c) \
 ( \
 	(((c) >= 'a') && ((c) <= 'z')) || \
@@ -33,7 +35,7 @@
 
 static const char gg_urlencode_hex_table[] = "0123456789ABCDEF";
 
-unsigned int gg_urlencode_strlen(const char *p)
+size_t gg_urlencode_strlen(const char *p)
 {
 	int len = 0;
 
@@ -148,8 +150,7 @@ char *gg_urlencode_printf(char *format, ...)
 			*tmp++ = format[i];
 	}
 	*tmp = '\0';
-	
+
 	free(args);
 	return buf;
 }
-

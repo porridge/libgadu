@@ -1,25 +1,42 @@
+/*
+ *  (C) Copyright 2001-2006 Wojtek Kaniewski <wojtekka@irc.pl>
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU Lesser General Public License Version
+ *  2.1 as published by the Free Software Foundation.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307,
+ *  USA.
+ */
+
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
-#include <sys/wait.h>
-#include <sys/socket.h>
 #include <sys/time.h>
 #include <time.h>
 #include <signal.h>
-#include <arpa/inet.h>
 #include "libgadu.h"
 #include "userconfig.h"
 
+#include "network.h"
+
 volatile int disconnect_flag;
 
-void sigint(int sig)
+static void sigint(int sig)
 {
 	disconnect_flag = 1;
 }
 
-void usage(const char *argv0)
+static void usage(const char *argv0)
 {
 	printf("usage: %s [OPTIONS] [uin [password]]\n"
 		"\n"
@@ -35,7 +52,7 @@ void usage(const char *argv0)
 		"\n", argv0);
 }
 
-void parse_address(const char *arg, char **host, int *port)
+static void parse_address(const char *arg, char **host, int *port)
 {
 	const char *colon;
 
@@ -68,8 +85,12 @@ int main(int argc, char **argv)
 	int hide_sysmsg = 0;
 	int ch;
 
+#ifdef _WIN32
+	gg_win32_init_network();
+#endif
+
 	gg_debug_level = 255;
-	
+
 	memset(&glp, 0, sizeof(glp));
 	glp.async = 1;
 
@@ -194,7 +215,7 @@ int main(int argc, char **argv)
 
 		tv.tv_sec = 1;
 		tv.tv_usec = 0;
-		
+
 		ret = select(fd + 1, &rd, &wd, NULL, &tv);
 
 		if (ret == -1) {
@@ -212,7 +233,7 @@ int main(int argc, char **argv)
 				break;
 			}
 		}
-	
+
 		if (gs != NULL && (FD_ISSET(fd, &rd) || FD_ISSET(fd, &wd) || (gs->timeout == 0 && gs->soft_timeout))) {
 			struct gg_event *ge;
 
@@ -241,8 +262,13 @@ int main(int argc, char **argv)
 			}
 
 			if (ge->type == GG_EVENT_MSG) {
-				if (ge->event.msg.sender != 0 || !hide_sysmsg)
-					printf("Received message from %d:\n- plain text: %s\n- html: %s\n", ge->event.msg.sender, ge->event.msg.message, ge->event.msg.xhtml_message);
+				if (ge->event.msg.sender != 0 || !hide_sysmsg) {
+					printf("Received message from %d:\n- "
+						"plain text: %s\n- html: %s\n",
+						ge->event.msg.sender,
+						ge->event.msg.message,
+						ge->event.msg.xhtml_message);
+				}
 			}
 
 			gg_event_free(ge);
@@ -250,11 +276,10 @@ int main(int argc, char **argv)
 	}
 
 	free(gg_proxy_host);
-	
+
 	gg_free_session(gs);
 
 	config_free();
 
 	return 0;
 }
-

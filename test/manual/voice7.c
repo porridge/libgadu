@@ -56,14 +56,6 @@
 #define EKG_CODEC_MELP    0x04
 
 
-#define debug(msg...) \
-	do { \
-		fprintf(stderr, "\033[1m"); \
-		fprintf(stderr, msg); \
-		fprintf(stderr, "\033[0m"); \
-		fflush(stderr); \
-	} while(0)
-
 int test_mode;
 int connected;
 
@@ -83,22 +75,37 @@ gsm voice_gsm_enc = NULL, voice_gsm_dec = NULL;
 void *voice_speex_enc = NULL;
 void *voice_speex_dec = NULL;
 
-SpeexBits speex_enc_bits; 
+SpeexBits speex_enc_bits;
 SpeexBits speex_dec_bits;
 #endif
+
+static void debug(const char *msg, ...) GG_GNUC_PRINTF(1, 2);
+static void debug(const char *msg, ...)
+{
+	va_list ap;
+
+	fprintf(stderr, "\033[1m");
+
+	va_start(ap, msg);
+	vfprintf(stderr, msg, ap);
+	va_end(ap);
+
+	fprintf(stderr, "\033[0m");
+	fflush(stderr);
+}
 
 void voice_close()
 {
 	if (voice_fd != -1) {
 		close(voice_fd);
 		voice_fd = -1;
-	} 
+	}
 #if HAVE_GSM
 	if (voice_gsm_dec) {
 		gsm_destroy(voice_gsm_dec);
 		voice_gsm_dec = NULL;
 	}
-	
+
 	if (voice_gsm_enc) {
 		gsm_destroy(voice_gsm_enc);
 		voice_gsm_enc = NULL;
@@ -124,7 +131,7 @@ void voice_close()
 int voice_open_ext(const char *pathname, int speed, int sample, int channels, int codec)
 {
 	int value;
-	
+
 	if (voice_fd != -1)
 		return -1;
 
@@ -133,7 +140,7 @@ int voice_open_ext(const char *pathname, int speed, int sample, int channels, in
 
 	if (ioctl(voice_fd, SNDCTL_DSP_SPEED, &speed) == -1)
 		goto fail;
-	
+
 	if (ioctl(voice_fd, SNDCTL_DSP_SAMPLESIZE, &sample) == -1)
 		goto fail;
 
@@ -141,7 +148,7 @@ int voice_open_ext(const char *pathname, int speed, int sample, int channels, in
 		goto fail;
 
 	value = AFMT_S16_LE;
-	
+
 	if (ioctl(voice_fd, SNDCTL_DSP_SETFMT, &value) == -1)
 		goto fail;
 
@@ -168,8 +175,11 @@ int voice_open_ext(const char *pathname, int speed, int sample, int channels, in
 
 	if (codec & EKG_CODEC_SPEEX) {
 #if HAVE_SPEEX
-		if (!(voice_speex_enc = speex_encoder_init(&speex_wb_mode)) || !(voice_speex_dec = speex_decoder_init(&speex_wb_mode)))
+		if (!(voice_speex_enc = speex_encoder_init(&speex_wb_mode)) ||
+			!(voice_speex_dec = speex_decoder_init(&speex_wb_mode)))
+		{
 			goto fail;
+		}
 
 		speex_bits_init(&speex_enc_bits);
 		speex_bits_init(&speex_dec_bits);
@@ -206,9 +216,11 @@ int voice_record(char *buf, int length, int codec)
 			break;
 
 		default:
-			return read(voice_fd, input, 320);	/* przeczytaj cokolwiek, zeby nam petelka z select() nie robila 100% CPU */
+			/* przeczytaj cokolwiek, zeby nam petelka z select()
+			 * nie robila 100% CPU */
+			return read(voice_fd, input, 320);
 	}
-	
+
 	while (pos <= (buf + length - ramki_dwie)) {
 		if (read(voice_fd, input, 320) != 320)
 			return -1;
@@ -346,8 +358,10 @@ int main(int argc, char **argv)
 	glp.password = config_password;
 	glp.async = 1;
 	glp.status = GG_STATUS_AVAIL;
-//	glp.client_addr = config_ip;
-//	glp.client_port = config_port;
+#if 0
+	glp.client_addr = config_ip;
+	glp.client_port = config_port;
+#endif
 	glp.protocol_version = 0x2a;
 	glp.has_audio = 1;
 	glp.last_sysmsg = -1;
@@ -474,15 +488,18 @@ int main(int argc, char **argv)
 						status = ge->event.status60.status;
 					}
 
-					if (!once && uin == config_peer && (GG_S_A(status) || GG_S_B(status)) && test_mode == TEST_MODE_SEND) {
+					if (!once && uin == config_peer && (GG_S_A(status) ||
+						GG_S_B(status)) && test_mode == TEST_MODE_SEND)
+					{
 						debug("Sending voice request...\n");
 
 						if (voice_open_ext("/dev/dsp", 8000, 16, 2, EKG_CODEC_GSM) == -1) {
-							printf("voice_open_ext('/dev/dsp', 8000, 16, 2, CODEC_GSM) failed\n");
+							printf("voice_open_ext('/dev/dsp', "
+								"8000, 16, 2, CODEC_GSM) failed\n");
 							exit(1);
 						}
 						printf("+OK\n");
-					
+
 						gd = gg_dcc7_voice_chat(gs, config_peer, 0x00);
 
 						if (!gd) {
@@ -503,7 +520,8 @@ int main(int argc, char **argv)
 						gd = ge->event.dcc7_new;
 
 						if (voice_open_ext("/dev/dsp", 8000, 16, 2, EKG_CODEC_GSM) == -1) {
-							printf("voice_open_ext('/dev/dsp', 8000, 16, 2, CODEC_GSM) failed\n");
+							printf("voice_open_ext('/dev/dsp', "
+								"8000, 16, 2, CODEC_GSM) failed\n");
 							exit(1);
 						}
 						printf("+OK\n");
@@ -512,7 +530,7 @@ int main(int argc, char **argv)
 					}
 
 					break;
-				
+
 				case GG_EVENT_DCC7_ERROR:
 					debug("Direct connection error\n");
 					exit(1);
@@ -533,7 +551,9 @@ int main(int argc, char **argv)
 			gg_event_free(ge);
 		}
 
-		if (gd && gd->fd != -1 && (FD_ISSET(gd->fd, &rds) || FD_ISSET(gd->fd, &wds) || (gd->timeout == 0 && gd->soft_timeout))) {
+		if (gd && gd->fd != -1 && (FD_ISSET(gd->fd, &rds) ||
+			FD_ISSET(gd->fd, &wds) || (gd->timeout == 0 && gd->soft_timeout)))
+		{
 			struct gg_event *ge;
 
 			if (!(ge = gg_dcc7_watch_fd(gd))) {
@@ -559,8 +579,11 @@ int main(int argc, char **argv)
 					exit(1);
 
 				case GG_EVENT_DCC7_VOICE_DATA:
-					gg_debug(GG_DEBUG_MISC, "## GG_EVENT_DCC7_VOICE_DATA [%u]\n", ge->event.dcc7_voice_data.length);
-					printf("## GG_EVENT_DCC7_VOICE_DATA [%u]\n", ge->event.dcc7_voice_data.length);
+					gg_debug(GG_DEBUG_MISC,
+						"## GG_EVENT_DCC7_VOICE_DATA [%u]\n",
+						ge->event.dcc7_voice_data.length);
+					printf("## GG_EVENT_DCC7_VOICE_DATA [%u]\n",
+						ge->event.dcc7_voice_data.length);
 
 					if (voice_fd == -1) {
 						printf("voice_fd == -1\n");
@@ -568,11 +591,14 @@ int main(int argc, char **argv)
 					}
 
 					if (ge->event.dcc7_voice_data.length == GG_DCC7_VOICE_FRAME_GSM_LENGTH)
-						voice_play(ge->event.dcc7_voice_data.data, ge->event.dcc7_voice_data.length, EKG_CODEC_GSM);
+						voice_play(ge->event.dcc7_voice_data.data,
+							ge->event.dcc7_voice_data.length, EKG_CODEC_GSM);
 					else if (ge->event.dcc7_voice_data.length == GG_DCC7_VOICE_FRAME_SPEEX_LENGTH)
-						voice_play(ge->event.dcc7_voice_data.data, ge->event.dcc7_voice_data.length, EKG_CODEC_SPEEX);
+						voice_play(ge->event.dcc7_voice_data.data,
+							ge->event.dcc7_voice_data.length, EKG_CODEC_SPEEX);
 					else if (ge->event.dcc7_voice_data.length == GG_DCC7_VOICE_FRAME_MELP_LENGTH)
-						voice_play(ge->event.dcc7_voice_data.data, ge->event.dcc7_voice_data.length, EKG_CODEC_MELP);
+						voice_play(ge->event.dcc7_voice_data.data,
+							ge->event.dcc7_voice_data.length, EKG_CODEC_MELP);
 					break;
 
 				case GG_EVENT_NONE:
@@ -589,7 +615,7 @@ int main(int argc, char **argv)
 		if (voice_fd != -1 && FD_ISSET(voice_fd, &rds)) {
 			char buf[GG_DCC_VOICE_FRAME_LENGTH];	/* dłuższy z buforów */
 			int length = GG_DCC_VOICE_FRAME_LENGTH;
-	
+
 			if (gd) {
 				if (gd->state == GG_STATE_READING_VOICE_DATA) {
 					/* XXX, implementowac speex */
@@ -598,7 +624,10 @@ int main(int argc, char **argv)
 
 					if (1)
 						gg_dcc7_voice_send(gd, buf, length);
-					else	gg_dcc7_voice_mic_off(gd);		/* ten pakiet mamy wysylac co 1s */
+					else {
+						/* ten pakiet mamy wysylac co 1s */
+						gg_dcc7_voice_mic_off(gd);
+					}
 
 				} else
 					voice_record(buf, length, EKG_CODEC_NONE);

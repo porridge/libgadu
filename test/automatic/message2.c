@@ -1,3 +1,21 @@
+/*
+ *  (C) Copyright 2001-2006 Wojtek Kaniewski <wojtekka@irc.pl>
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU Lesser General Public License Version
+ *  2.1 as published by the Free Software Foundation.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307,
+ *  USA.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -18,11 +36,15 @@ struct test_data
 	size_t attr_len;
 };
 
-#define SPAN(text) "<span style=\"color:#000000; font-family:'MS Shell Dlg 2'; font-size:9pt; \">" text "</span>"
-#define SPAN_COLOR(color, text) "<span style=\"color:#" color "; font-family:'MS Shell Dlg 2'; font-size:9pt; \">" text "</span>"
+#define SPAN(text) "<span style=\"color:#000000; " \
+	"font-family:'MS Shell Dlg 2'; font-size:9pt; \">" text "</span>"
+#define SPAN_COLOR(color, text) "<span style=\"color:#" color "; " \
+	"font-family:'MS Shell Dlg 2'; font-size:9pt; \">" text "</span>"
 
 const struct test_data text_to_html[] =
 {
+	/* style:maxlinelength:start-ignore */
+
 	/* Typowa wiadomość */
 	{ "<bzdura>\n\"ala&ma'kota\"", SPAN("&lt;bzdura&gt;<br>&quot;ala&amp;ma&apos;kota&quot;"), GG_ENCODING_UTF8, NULL, 0 },
 
@@ -123,10 +145,14 @@ const struct test_data text_to_html[] =
 	 * ale przy wiadomości zawierającej jedynie obrazek, nie dokleja tagów
 	 * <span>, więc improwizujemy. */
 	{ "", "", GG_ENCODING_UTF8, NULL, 0 },
+
+	/* style:maxlinelength:end-ignore */
 };
 
 const struct test_data html_to_text[] =
 {
+	/* style:maxlinelength:start-ignore */
+
 	/* Typowa wiadomość */
 	{ SPAN("&lt;bzdura&gt;<br>&quot;ala&amp;ma&apos;kota&quot;"), "<bzdura>\n\"ala&ma'kota\"", GG_ENCODING_UTF8, "\x00\x00\x08\x00\x00\x00", 6 },
 
@@ -216,9 +242,12 @@ const struct test_data html_to_text[] =
 
 	/* Pusty tekst */
 	{ "", "", GG_ENCODING_UTF8, NULL, 0 },
+
+	/* style:maxlinelength:end-ignore */
 };
 
-static void test_text_to_html(const char *input, const unsigned char *attr, size_t attr_len, const char *output, gg_encoding_t encoding)
+static void test_text_to_html(const char *input, const unsigned char *attr,
+	size_t attr_len, const char *output, gg_encoding_t encoding)
 {
 	char *result;
 	size_t len;
@@ -257,10 +286,12 @@ static void test_text_to_html(const char *input, const unsigned char *attr, size
 	}
 
 #ifdef HAVE_LIBXML2
-	// Doklej <html></html>, żeby mieć tag dokumentu.
+	/* Doklej <html></html>, żeby mieć tag dokumentu. */
 
 	if (encoding == GG_ENCODING_CP1250) {
-		tmp = realloc(result, strlen(result) + strlen("<?xml version=\"1.0\" encoding=\"windows-1250\"?><html></html>") + 1);
+		tmp = realloc(result, strlen(result) +
+			strlen("<?xml version=\"1.0\" "
+			"encoding=\"windows-1250\"?><html></html>") + 1);
 	} else {
 		tmp = realloc(result, strlen(result) + strlen("<html></html>") + 1);
 	}
@@ -274,20 +305,21 @@ static void test_text_to_html(const char *input, const unsigned char *attr, size
 	result = tmp;
 
 	if (encoding == GG_ENCODING_CP1250) {
-		memmove(result + strlen("<?xml version=\"1.0\" encoding=\"windows-1250\"?><html>"), result, strlen(result) + 1);
-		memcpy(result, "<?xml version=\"1.0\" encoding=\"windows-1250\"?><html>", strlen("<?xml version=\"1.0\" encoding=\"windows-1250\"?><html>"));
+		const char *xmls = "<?xml version=\"1.0\" encoding=\"windows-1250\"?><html>";
+		memmove(result + strlen(xmls), result, strlen(result) + 1);
+		memcpy(result, xmls, strlen(xmls));
 	} else {
 		memmove(result + strlen("<html>"), result, strlen(result) + 1);
 		memcpy(result, "<html>", strlen("<html>"));
 	}
 	strcat(result, "</html>");
 
-	// Zamień <br> na <x/>, żeby parser się nie wywalił.
+	/* Zamień <br> na <x/>, żeby parser się nie wywalił. */
 
 	while ((tmp = strstr(result, "<br>")) != NULL)
 		memcpy(tmp, "<x/>", 4);
 
-	// Zamień <img ...> na <xx .../>, żeby parser się nie wywalił.
+	/* Zamień <img ...> na <xx .../>, żeby parser się nie wywalił. */
 
 	while ((tmp = strstr(result, "<img ")) != NULL) {
 		memcpy(tmp + 1, "xx", 2);
@@ -295,7 +327,7 @@ static void test_text_to_html(const char *input, const unsigned char *attr, size
 		tmp[27] = '/';
 	}
 
-	// Parsuj!
+	/* Parsuj! */
 
 	ctxt = xmlNewParserCtxt();
 
@@ -322,7 +354,8 @@ static void test_text_to_html(const char *input, const unsigned char *attr, size
 	free(result);
 }
 
-static void test_html_to_text(const char *input, const char *output, const unsigned char *attr, size_t attr_len, gg_encoding_t encoding)
+static void test_html_to_text(const char *input, const char *output,
+	const unsigned char *attr, size_t attr_len, gg_encoding_t encoding)
 {
 	char *result;
 	unsigned char *formats;
@@ -349,7 +382,9 @@ static void test_html_to_text(const char *input, const char *output, const unsig
 	gg_message_html_to_text(result, formats, &fmt_len2, input, encoding);
 
 	if (fmt_len2 != fmt_len) {
-		printf("different format_length computed, first: %lu, second: %lu\n", (long unsigned int) fmt_len, (long unsigned int) fmt_len2);
+		printf("different format_length computed, first: %lu, "
+			"second: %lu\n", (long unsigned int) fmt_len,
+			(long unsigned int) fmt_len2);
 		free(result);
 		free(formats);
 		exit(1);
@@ -377,7 +412,7 @@ static void test_html_to_text(const char *input, const char *output, const unsig
 
 	if (!formats_match) {
 		/* Zachowaj tę samą długość, co "format attributes" */
-		printf("expected	 :");
+		printf("expected\t :");
 		for (i = 0; i < attr_len; i++)
 			printf(" %02x", (unsigned int) attr[i]);
 		printf("\n");
@@ -395,11 +430,18 @@ int main(int argc, char **argv)
 {
 	size_t i;
 
-	for (i = 0; i < sizeof(text_to_html) / sizeof(text_to_html[0]); i++)
-		test_text_to_html(text_to_html[i].src, (const unsigned char*) text_to_html[i].attr, text_to_html[i].attr_len, text_to_html[i].dst, text_to_html[i].encoding);
+	for (i = 0; i < sizeof(text_to_html) / sizeof(text_to_html[0]); i++) {
+		test_text_to_html(text_to_html[i].src,
+			(const unsigned char*) text_to_html[i].attr,
+			text_to_html[i].attr_len, text_to_html[i].dst,
+			text_to_html[i].encoding);
+	}
 
-	for (i = 0; i < sizeof(html_to_text) / sizeof(html_to_text[0]); i++)
-		test_html_to_text(html_to_text[i].src, html_to_text[i].dst, (const unsigned char*) html_to_text[i].attr, html_to_text[i].attr_len, html_to_text[i].encoding);
+	for (i = 0; i < sizeof(html_to_text) / sizeof(html_to_text[0]); i++) {
+		test_html_to_text(html_to_text[i].src, html_to_text[i].dst,
+			(const unsigned char*) html_to_text[i].attr,
+			html_to_text[i].attr_len, html_to_text[i].encoding);
+	}
 
 	return 0;
 }

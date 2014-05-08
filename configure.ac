@@ -1,8 +1,8 @@
 dnl $Id$
 
-AC_INIT([libgadu], [1.12.0-rc2])
+AC_INIT([libgadu], [1.12.0-rc3])
 AC_CONFIG_SRCDIR([src/libgadu.c])
-AM_INIT_AUTOMAKE([subdir-objects])
+AM_INIT_AUTOMAKE()
 
 AC_PREREQ(2.50)
 AC_CANONICAL_HOST
@@ -28,9 +28,41 @@ export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig"
 PKG_PROG_PKG_CONFIG
 
 if test "$GCC"; then
+dnl Other warnings that may be useful:
+dnl -Wdeclaration-after-statement -Wendif-labels
+dnl -Werror-implicit-function-declaration -Wformat-security -Winit-self
+dnl -Wmissing-declarations -Wmissing-noreturn -Wfloat-equal
 	CFLAGS="$CFLAGS -Wall -Wextra -Wmissing-prototypes \
-		-Wno-unused-parameter -Waggregate-return"
+		-Wno-unused-parameter -Waggregate-return \
+		-Wdeclaration-after-statement -Wundef -Wcast-align \
+		-Wpointer-arith"
 fi
+
+dnl
+dnl  Egzotyczne systemy operacyjne
+dnl
+is_mingw="no"
+case "$host" in
+	*-*-mingw* | *-*-cygwin*)
+		MINGW_LDFLAGS="-no-undefined -lws2_32"
+		MINGW_LIBGEN="-Wl,--output-def,libgadu.def.in"
+		MINGW_LIBDATA="libgadu.def"
+		LDFLAGS_NO_INSTALL="-no-fast-install"
+		SRCDIR=`(cd $srcdir && pwd)`
+		AC_SUBST([AM_TESTS_ENVIRONMENT], [$SRCDIR/test/automatic/wine-wrapper.sh])
+		is_mingw="yes"
+		;;
+	*)
+		MINGW_LDFLAGS=""
+		MINGW_LIBDATA=""
+		LDFLAGS_NO_INSTALL="-no-install"
+		;;
+esac
+AM_CONDITIONAL([HAVE_MINGW], [test "x$is_mingw" = "xyes"])
+AC_SUBST([MINGW_LDFLAGS])
+AC_SUBST([MINGW_LIBGEN])
+AC_SUBST([MINGW_LIBDATA])
+AC_SUBST([LDFLAGS_NO_INSTALL])
 
 AC_C_BIGENDIAN
 
@@ -190,14 +222,14 @@ dnl
 AC_ARG_WITH(pthread,
   [  --without-pthread       do not use pthread resolver even if found])
 
+have_pthread="no"
 if test "x$with_pthread" != "xno"; then
 	ACX_PTHREAD(
 	[
 		dnl workaround dla pkgconfiga
 		if test "x$PTHREAD_CFLAGS" = "x-pthread"; then
 			PTHREAD_LIBS="$PTHREAD_LIBS -pthread"
-		else
-			AM_CPPFLAGS="$AM_CPPFLAGS $PTHREAD_CFLAGS"
+			PTHREAD_CFLAGS=""
 		fi
 
 		LIBS_PRIVATE="$PTHREAD_LIBS $LIBS_PRIVATE"
@@ -211,10 +243,6 @@ if test "x$with_pthread" != "xno"; then
 			AC_MSG_ERROR([Your system does not support pthreads])
 		fi
 	])
-fi
-
-if test "x$with_pthread" = "xyes"; then
-	AC_DEFINE([GG_CONFIG_PTHREAD_DEFAULT], [], [Defined if pthread resolver is the default one.])
 fi
 
 dnl
@@ -255,7 +283,7 @@ dnl
 AC_ARG_WITH(gnutls,
   [  --without-gnutls        do not use GnuTLS even if found])
 
-have_gnutls=""
+have_gnutls="no"
 
 if test "x$with_gnutls" != "xno"; then
 	PKG_CHECK_MODULES([GNUTLS], [gnutls >= 2.10.0], [
@@ -327,6 +355,7 @@ if test "x$have_openssl" = "xyes"; then
 	REQUIRES_PRIVATE="$REQUIRES_PRIVATE openssl"
 	AC_DEFINE([GG_CONFIG_HAVE_OPENSSL], [], [Defined if libgadu was compiled and linked with OpenSSL support.])
 else
+	have_openssl="no"
 	AC_DEFINE([GG_CONFIG_IS_GPL_COMPLIANT], [], [Defined if libgadu is GPL compliant (was not linked with OpenSSL or any other non-GPL compliant library support).])
 fi
 
@@ -346,36 +375,26 @@ AC_ARG_ENABLE(tests,
 AM_CONDITIONAL([ENABLE_TESTS], [test "x$enable_tests" != "xno"])
 
 if test "x$enable_tests" != "xno"; then
+	enable_tests="yes"
+
 	dnl
 	dnl  Sprawdź, czy można korzystać z __funkcji w libc.
 	dnl
 
-	AC_CHECK_LIB(c, __connect, [have_glibc="yes"])
-
-	dnl
-	dnl  GnuTLS dla connect
-	dnl
-
-	dnl Dla testów zawsze używaj GnuTLS, o ile tylko jest dostępne.
-	if test "x$have_gnutls" != "xyes"; then
-		PKG_CHECK_MODULES([GNUTLS], [gnutls >= 2.10.0], [
-			AC_DEFINE([HAVE_GNUTLS], [], [Defined if GnuTLS is available.])
-			have_gnutls="yes"
-		], [:])
-	fi
+	AC_CHECK_LIB(c, __connect, [have_glibc="yes"], [have_glibc="no"])
 
 	dnl
 	dnl  curl i expat dla search
 	dnl
 
-	AC_CHECK_LIB(curl, curl_easy_init, [have_curl="yes"])
+	AC_CHECK_LIB(curl, curl_easy_init, [have_curl="yes"], [have_curl="no"])
 	if test "x$have_curl" = "xyes"; then
 		AC_CHECK_HEADERS(curl/curl.h, [], [have_curl="no"])
 	fi
 
-	AC_CHECK_LIB(expat, XML_ParserCreate, [have_expat="yes"])
+	AC_CHECK_LIB(expat, XML_ParserCreate, [have_expat="yes"], [have_expat="no"])
 	if test "x$have_expat" = "xyes"; then
-		AC_CHECK_HEADERS(expat.h, [have_expat="no"])
+		AC_CHECK_HEADERS(expat.h, [], [have_expat="no"])
 	fi
 
 	dnl
@@ -385,6 +404,8 @@ if test "x$enable_tests" != "xno"; then
 	AC_CHECK_PROG([PERL], [perl], [perl], [:])
 	if test "x$PERL" != "x:"; then
 		have_perl="yes"
+	else
+		have_perl="no"
 	fi
 
 	dnl
@@ -392,13 +413,16 @@ if test "x$enable_tests" != "xno"; then
 	dnl
 
 	PKG_CHECK_MODULES([LIBXML2], [libxml-2.0], [
+		have_libxml2="yes"
 		AC_DEFINE([HAVE_LIBXML2], [], [Defined if libxml2 is available.])
-	], [:])
+	], [
+		have_libxml2="no"
+	])
 fi
 
 AM_CONDITIONAL([HAVE_GLIBC], [test "x$have_glibc" = "xyes"])
 AM_CONDITIONAL([HAVE_GNUTLS_TESTS], [test "x$have_gnutls" = "xyes"])
-AM_CONDITIONAL([HAVE_CURL_AND_EXPAT_AND_OPENSSL], [test "x$have_curl" = "xyes" -a "x$have_expat" = "xyes" -a "x$have_openssl" = "xyes"])
+AM_CONDITIONAL([HAVE_CURL_AND_EXPAT], [test "x$have_curl" = "xyes" -a "x$have_expat" = "xyes"])
 AM_CONDITIONAL([HAVE_PERL], [test "x$have_perl" = "xyes"])
 
 dnl
@@ -416,25 +440,6 @@ else
 	SUBDIRS_DOXYGEN=""
 fi
 
-dnl
-dnl  Egzotyczne systemy operacyjne
-dnl
-case "$host" in
-	*-*-mingw* | *-*-cygwin*)
-		MINGW_LDFLAGS="-no-undefined -lws2_32 -Wl,--output-def,libgadu.def"
-		MINGW_LIBDATA="libgadu.def"
-		LDFLAGS_NO_INSTALL="-no-fast-install"
-		;;
-	*)
-		MINGW_LDFLAGS=""
-		MINGW_LIBDATA=""
-		LDFLAGS_NO_INSTALL="-no-install"
-		;;
-esac
-AC_SUBST([MINGW_LDFLAGS])
-AC_SUBST([MINGW_LIBDATA])
-AC_SUBST([LDFLAGS_NO_INSTALL])
-
 AC_CONFIG_FILES([Makefile src/Makefile include/Makefile pkgconfig/Makefile pkgconfig/libgadu.pc docs/Makefile docs/Doxyfile examples/Makefile])
 
 AM_COND_IF([ENABLE_TESTS],
@@ -448,3 +453,27 @@ AM_COND_IF([ENABLE_TESTS],
 )
 
 AC_OUTPUT
+
+echo
+echo $PACKAGE $VERSION
+echo
+
+echo Build with gnutls.... : $have_gnutls
+echo Build with openssl... : $have_openssl
+echo Build with protobuf-c : $have_protobuf_c
+echo Build with pthread... : $have_pthread
+echo Build with zlib...... : $have_zlib
+echo
+
+echo Enable tests......... : $enable_tests
+if test "x$enable_tests" = "xyes"; then
+	echo Build with glibc..... : $have_glibc
+	echo Build with libcurl... : $have_curl
+	echo Build with libexpat.. : $have_expat
+	echo Build with libxml2... : $have_libxml2
+	echo Build with perl...... : $have_perl
+fi
+
+echo
+echo configure complete, now type \'make\'
+echo
