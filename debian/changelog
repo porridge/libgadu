@@ -1,3 +1,11 @@
+libgadu (1:1.12.0-2) experimental; urgency=low
+
+  * Add build-depends on libprotobuf-c-dev to avoid using the embedded copy.
+    (Closes: #755548)
+  * Update the lintian override.
+
+ -- Marcin Owsiany <porridge@debian.org>  Fri, 25 Jul 2014 14:25:16 +0200
+
 libgadu (1:1.12.0-1) unstable; urgency=low
 
   * New upstream release
