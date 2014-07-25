@@ -7,4 +7,4 @@
 # Also, see #630982 against doxygen to have some kind of infrastructure to get
 # rid of spurious copies in case doxygen ever transitions to actually using
 # jquery proper.
-libgadu-doc binary: embedded-javascript-library usr/share/doc/libgadu-doc/api/jquery.js
+libgadu-doc binary: embedded-javascript-library usr/share/doc/libgadu-doc/api/jquery.js please use libjs-jquery
