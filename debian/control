@@ -48,7 +48,9 @@ Description: Gadu-Gadu protocol library - debug symbols
 Package: libgadu-dev
 Section: libdevel
 Architecture: any
-Depends: libgadu3 (= ${binary:Version}), ${misc:Depends}
+Depends: libgadu3 (= ${binary:Version}), ${misc:Depends},
+# pkg-config needs gnutls (#765654)
+ libgnutls-dev
 Pre-Depends: ${misc:Pre-Depends}
 Description: Gadu-Gadu protocol library - development files
  Gadu-Gadu is an instant messaging program, very popular in
