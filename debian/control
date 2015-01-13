@@ -16,7 +16,7 @@ Build-Depends:
 # documentation building
  doxygen
 Build-Conflicts: autoconf2.13, automake1.4
-Standards-Version: 3.9.5
+Standards-Version: 3.9.6
 Homepage: http://toxygen.net/libgadu/
 Vcs-Git: git://github.com/porridge/libgadu.git -b debian-1.12
 Vcs-Browser: https://github.com/porridge/libgadu
