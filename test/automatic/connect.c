@@ -251,6 +251,7 @@ static void debug_handler(int level, const char *format, va_list ap)
 	}
 }
 
+#if 0
 static inline void set32(char *ptr, unsigned int value)
 {
 	unsigned char *tmp = (unsigned char*) ptr;
@@ -260,6 +261,7 @@ static inline void set32(char *ptr, unsigned int value)
 	tmp[2] = (value >> 16) & 255;
 	tmp[3] = (value >> 24) & 255;
 }
+#endif
 
 static inline unsigned int get32(char *ptr)
 {
@@ -1201,7 +1203,9 @@ int main(int argc, char **argv)
 	pthread_t server_thread;
 	const char *srcdir;
 	size_t srcdir_len;
+#ifdef GG_CONFIG_HAVE_GNUTLS
 	char cert_file_path[2000], key_file_path[2000];
+#endif
 
 #ifdef _WIN32
 	gg_win32_init_network();
@@ -1225,6 +1229,7 @@ int main(int argc, char **argv)
 		failure();
 	}
 
+#ifdef GG_CONFIG_HAVE_GNUTLS
 	strncpy(cert_file_path, srcdir, srcdir_len);
 	strncpy(key_file_path, srcdir, srcdir_len);
 	cert_file_path[srcdir_len] = '/';
@@ -1232,7 +1237,6 @@ int main(int argc, char **argv)
 	strcpy(cert_file_path + srcdir_len + 1, CERT_FILE);
 	strcpy(key_file_path + srcdir_len + 1, KEY_FILE);
 
-#ifdef GG_CONFIG_HAVE_GNUTLS
 	if ((res = gnutls_global_init()) != GNUTLS_E_SUCCESS) {
 		fprintf(stderr, "gnutls_global_init: %d, %s\n", res, gnutls_strerror(res));
 		failure();

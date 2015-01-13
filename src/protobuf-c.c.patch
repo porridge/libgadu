@@ -1,149 +1,105 @@
 --- protobuf-c.c
 +++ protobuf-c.c
-@@ -58,6 +58,14 @@
-      * use size_t consistently
-  */
+@@ -48,6 +48,9 @@
+ #include <stdlib.h>	/* for malloc, free */
+ #include <string.h>	/* for strcmp, strlen, memcpy, memmove, memset */
  
++/* Pull WORDS_BIGENDIAN etc */
 +#include "config.h"
-+#define HAVE_PROTOBUF_C_CONFIG_H 0
-+#ifdef GG_CONFIG_BIGENDIAN
-+#  define IS_LITTLE_ENDIAN 0
-+#else
-+#  define IS_LITTLE_ENDIAN 1
-+#endif
 +
- #if HAVE_PROTOBUF_C_CONFIG_H
- #include "protobuf-c-config.h"
- #endif
-@@ -78,6 +86,7 @@
- #endif
- 
  #include "protobuf-c.h"
-+#include "internal.h"
  
- unsigned protobuf_c_major = PROTOBUF_C_MAJOR;
- unsigned protobuf_c_minor = PROTOBUF_C_MINOR;
-@@ -141,6 +150,7 @@
+ #define TRUE				1
+@@ -1660,9 +1663,11 @@
+ 	}
+ 	return rv;
  
- /* --- allocator --- */
- 
-+static void protobuf_c_out_of_memory_default (void) GG_NORETURN;
- static void protobuf_c_out_of_memory_default (void)
- {
-   fprintf (stderr, "Out Of Memory!!!\n");
-@@ -371,7 +381,7 @@
-     case PROTOBUF_C_TYPE_DOUBLE:
-       return rv + 8;
-     case PROTOBUF_C_TYPE_ENUM:
--      // TODO: is this correct for negative-valued enums?
-+      /* TODO: is this correct for negative-valued enums? */
-       return rv + uint32_size (*(const uint32_t *) member);
-     case PROTOBUF_C_TYPE_STRING:
-       {
-@@ -384,7 +394,7 @@
-         size_t len = ((const ProtobufCBinaryData*) member)->len;
-         return rv + uint32_size (len) + len;
-       }
--    //case PROTOBUF_C_TYPE_GROUP:
-+    /* case PROTOBUF_C_TYPE_GROUP: */
-     case PROTOBUF_C_TYPE_MESSAGE:
-       {
-         const ProtobufCMessage *msg = * (ProtobufCMessage * const *) member;
-@@ -496,7 +506,7 @@
-           rv += uint32_size (len) + len;
-         }
-       break;
--    //case PROTOBUF_C_TYPE_GROUP:          // NOT SUPPORTED
-+    /* case PROTOBUF_C_TYPE_GROUP:          // NOT SUPPORTED */
-     }
-   if (field->packed)
-     header_size += uint32_size (rv);
-@@ -798,7 +808,7 @@
-         out[0] |= PROTOBUF_C_WIRE_TYPE_LENGTH_PREFIXED;
-         return rv + binary_data_pack (bd, out + rv);
-       }
--    //case PROTOBUF_C_TYPE_GROUP:          // NOT SUPPORTED
-+    /* case PROTOBUF_C_TYPE_GROUP:          // NOT SUPPORTED */
-     case PROTOBUF_C_TYPE_MESSAGE:
-       {
-         out[0] |= PROTOBUF_C_WIRE_TYPE_LENGTH_PREFIXED;
-@@ -909,7 +919,7 @@
-                      const void *member,
-                      uint8_t *out)
- {
--  char *array = * (char * const *) member;
-+  void *array = * (char * const *) member;
-   unsigned i;
-   if (field->packed)
-     {
-@@ -1014,7 +1024,7 @@
-       for (i = 0; i < count; i++)
-         {
-           rv += required_field_pack (field, array, out + rv);
--          array += siz;
-+          array = ((char*)array) + siz;
-         }
-       return rv;
-     }
-@@ -1143,7 +1153,7 @@
-         rv += sublen;
-         break;
-       }
--    //PROTOBUF_C_TYPE_GROUP,          // NOT SUPPORTED
-+    /* PROTOBUF_C_TYPE_GROUP,          // NOT SUPPORTED */
-     case PROTOBUF_C_TYPE_MESSAGE:
-       {
-         uint8_t simple_buffer_scratch[256];
-@@ -1353,10 +1363,11 @@
-     }
-   return rv;
- 
--goto no_packing_needed;
-+#if IS_LITTLE_ENDIAN
++#if !defined(WORDS_BIGENDIAN)
  no_packing_needed:
-   buffer->append (buffer, rv, array);
-   return rv;
+ 	buffer->append(buffer, rv, array);
+ 	return rv;
 +#endif
  }
  
  static size_t
-@@ -1812,7 +1823,7 @@
-         bd->len = len - pref_len;
-         return 1;
-       }
--    //case PROTOBUF_C_TYPE_GROUP,          // NOT SUPPORTED
-+    /* case PROTOBUF_C_TYPE_GROUP,          // NOT SUPPORTED */
-     case PROTOBUF_C_TYPE_MESSAGE:
-       if (wire_type != PROTOBUF_C_WIRE_TYPE_LENGTH_PREFIXED)
-         return 0;
-@@ -1891,7 +1902,7 @@
-   const ProtobufCFieldDescriptor *field = scanned_member->field;
-   size_t *p_n = STRUCT_MEMBER_PTR(size_t, message, field->quantifier_offset);
-   size_t siz = sizeof_elt_in_repeated_array (field->type);
--  char *array = *(char**)member + siz * (*p_n);
-+  void *array = *(char**)member + siz * (*p_n);
-   const uint8_t *at = scanned_member->data + scanned_member->length_prefix_len;
-   size_t rem = scanned_member->len - scanned_member->length_prefix_len;
-   size_t count = 0;
-@@ -2018,11 +2029,12 @@
-   *p_n += count;
-   return TRUE;
+@@ -1695,7 +1700,7 @@
+ 		siz = sizeof_elt_in_repeated_array(field->type);
+ 		for (i = 0; i < count; i++) {
+ 			rv += required_field_pack_to_buffer(field, array, buffer);
+-			array += siz;
++			array = ((char*)array) + siz;
+ 		}
+ 		return rv;
+ 	}
+@@ -1991,7 +1996,6 @@
  
--goto no_unpacking_needed;
-+#if IS_LITTLE_ENDIAN
- no_unpacking_needed:
-   memcpy (array, at, count * siz);
-   *p_n += count;
-   return TRUE;
-+#endif
- }
+ 			switch (fields[i].type) {
+ 			case PROTOBUF_C_TYPE_BYTES: {
+-				el_size = sizeof(ProtobufCBinaryData);
+ 				uint8_t *e_data =
+ 					((ProtobufCBinaryData *) earlier_elem)->data;
+ 				uint8_t *l_data =
+@@ -1999,6 +2003,7 @@
+ 				const ProtobufCBinaryData *d_bd =
+ 					(ProtobufCBinaryData *) def_val;
  
- static protobuf_c_boolean
-@@ -2205,6 +2217,7 @@
-       size_t used = parse_tag_and_wiretype (rem, at, &tag, &wire_type);
-       const ProtobufCFieldDescriptor *field;
-       ScannedMember tmp;
-+      memset(&tmp, 0, sizeof(ScannedMember));
-       if (used == 0)
-         {
-           UNPACK_ERROR (("error parsing tag/wiretype at offset %u",
++				el_size = sizeof(ProtobufCBinaryData);
+ 				need_to_merge =
+ 					(e_data != NULL &&
+ 					 (d_bd != NULL &&
+@@ -2009,11 +2014,11 @@
+ 				break;
+ 			}
+ 			case PROTOBUF_C_TYPE_STRING: {
+-				el_size = sizeof(char *);
+ 				char *e_str = *(char **) earlier_elem;
+ 				char *l_str = *(char **) latter_elem;
+ 				const char *d_str = def_val;
+ 
++				el_size = sizeof(char *);
+ 				need_to_merge = e_str != d_str && l_str == d_str;
+ 				break;
+ 			}
+@@ -2742,6 +2747,8 @@
+ 		const ProtobufCFieldDescriptor *field;
+ 		ScannedMember tmp;
+ 
++		memset(&tmp, 0, sizeof(ScannedMember));
++
+ 		if (used == 0) {
+ 			PROTOBUF_C_UNPACK_ERROR("error parsing tag/wiretype at offset %u",
+ 						(unsigned) (at - data));
+@@ -2887,6 +2894,7 @@
+ 					      field->quantifier_offset);
+ 			if (*n_ptr != 0) {
+ 				unsigned n = *n_ptr;
++				void *a;
+ 				*n_ptr = 0;
+ 				assert(rv->descriptor != NULL);
+ #define CLEAR_REMAINING_N_PTRS()                                              \
+@@ -2896,7 +2904,7 @@
+                   if (field->label == PROTOBUF_C_LABEL_REPEATED)              \
+                     STRUCT_MEMBER (size_t, rv, field->quantifier_offset) = 0; \
+                 }
+-				void *a = do_alloc(allocator, siz * n);
++				a = do_alloc(allocator, siz * n);
+ 				if (!a) {
+ 					CLEAR_REMAINING_N_PTRS();
+ 					goto error_cleanup;
+@@ -3049,6 +3057,8 @@
+ protobuf_c_boolean
+ protobuf_c_message_check(const ProtobufCMessage *message)
+ {
++	unsigned i;
++
+ 	if (!message ||
+ 	    !message->descriptor ||
+ 	    message->descriptor->magic != PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC)
+@@ -3056,7 +3066,6 @@
+ 		return FALSE;
+ 	}
+ 
+-	unsigned i;
+ 	for (i = 0; i < message->descriptor->n_fields; i++) {
+ 		const ProtobufCFieldDescriptor *f = message->descriptor->fields + i;
+ 		ProtobufCType type = f->type;

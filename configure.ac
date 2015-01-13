@@ -1,6 +1,6 @@
 dnl $Id$
 
-AC_INIT([libgadu], [1.12.0])
+AC_INIT([libgadu], [1.12.1])
 AC_CONFIG_SRCDIR([src/libgadu.c])
 AM_INIT_AUTOMAKE()
 
@@ -266,11 +266,11 @@ AC_ARG_WITH(protobuf,
   [  --without-protobuf      do not use libprotobuf-c even if found])
 
 if test "x$with_protobuf" != "xno"; then
-	AC_CHECK_LIB(protobuf-c, protobuf_c_message_pack, [have_protobuf_c=yes], [have_protobuf_c=no])
-	if test "x$have_protobuf_c" = "xyes"; then
-		LIBS_PRIVATE="$LIBS_PRIVATE -lprotobuf-c"
+	PKG_CHECK_MODULES([PROTOBUF_C], [libprotobuf-c >= 1.0.0], [
+		LIBS_PRIVATE="$LIBS_PRIVATE $PROTOBUF_C_LIBS"
 		AC_DEFINE([GG_CONFIG_HAVE_PROTOBUF_C], [], [Defined if libgadu was compiled and linked with system provided libprotobuf-c.])
-	fi
+		have_protobuf_c=yes
+	], [have_protobuf_c=no])
 else
 	have_protobuf_c=no
 fi
@@ -436,8 +436,10 @@ if test "x$DOXYGEN" = "xdoxygen"; then
 	SUBDIRS_DOXYGEN="docs"
 	AC_SUBST([DOXYFILE_HTML_DIR])
 	DOXYFILE_HTML_DIR="html"
+	have_doxygen="yes"
 else
 	SUBDIRS_DOXYGEN=""
+	have_doxygen="no"
 fi
 
 AC_CONFIG_FILES([Makefile src/Makefile include/Makefile pkgconfig/Makefile pkgconfig/libgadu.pc docs/Makefile docs/Doxyfile examples/Makefile])
@@ -463,6 +465,7 @@ echo Build with openssl... : $have_openssl
 echo Build with protobuf-c : $have_protobuf_c
 echo Build with pthread... : $have_pthread
 echo Build with zlib...... : $have_zlib
+echo Build with docs...... : $have_doxygen
 echo
 
 echo Enable tests......... : $enable_tests
