@@ -1,3 +1,11 @@
+libgadu (1:1.12.1-2) unstable; urgency=medium
+
+  * Upload to unstable
+  * Removed the explicit automake version setting, since this package is
+    generally well behaved regarding its automake usage. (Closes: #793581)
+
+ -- Marcin Owsiany <porridge@debian.org>  Fri, 07 Aug 2015 22:01:08 +0200
+
 libgadu (1:1.12.1-1) experimental; urgency=low
 
   * New upstream release

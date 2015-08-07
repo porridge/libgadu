@@ -1,12 +1,6 @@
 #!/usr/bin/make -f
 # libgadu package rules file
-# Copyright 2002-2012 Marcin Owsiany <porridge@debian.org>
-
-# As recommended by "current Debian best practice" prescribed by autotools-dev,
-# we specify an explicit automake version:
-export AUTOMAKE=automake-1.14
-# We rely on debhelper's autoconf build system to set configure build/host
-# flags appropriately to help cross-compiling.
+# Copyright 2002-2015 Marcin Owsiany <porridge@debian.org>
 
 # Force the glibc-generated stack dump to stderr instead of /dev/tty for the
 # test suite:
