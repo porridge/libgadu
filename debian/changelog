@@ -1,3 +1,11 @@
+libgadu (1:1.12.1-3) unstable; urgency=medium
+
+  * Switch on --with-c99-vsnprintf for cross-building.
+    Thanks to Helmut Grohne for a patch (Closes: #839541)
+  * Update some links.
+
+ -- Marcin Owsiany <porridge@debian.org>  Wed, 05 Oct 2016 22:25:32 +0200
+
 libgadu (1:1.12.1-2) unstable; urgency=medium
 
   * Upload to unstable
