@@ -12,10 +12,14 @@ Configuration options
 
 	./configure \
 		--disable-silent-rules \
+		--with-c99-vsnprintf \
 		--with-pthread \
 		--without-bind \
 		--without-openssl \
 		--with-gnutls
+
+  c99-vsnprintf is enabled explicitly in order to make cross-compilation
+  possible (Bug#839541).
 
 
 Changelog
