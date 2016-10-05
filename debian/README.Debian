@@ -27,9 +27,9 @@ Changelog
 
   API changes are listed in the html documentation provided in the libgadu-doc
   package (api/index.html contains a link).
-  All other changes can be found in the SVN changelog, available via websvn
-  interface at http://toxygen.net/websvn/listing.php?repname=libgadu&path=/&sc=0
+  Release notes are on the http://libgadu.net/ homepage, and all other changes
+  can be found in the Git history:
+  https://github.com/wojtekka/libgadu/commits/master
 
-
- -- Marcin Owsiany <porridge@debian.org>,  Mon, 18 Jun 2012 16:45:27 +0100
+ -- Marcin Owsiany <porridge@debian.org>,  Wed, 05 Oct 2016 22:10:36 +0200
 
