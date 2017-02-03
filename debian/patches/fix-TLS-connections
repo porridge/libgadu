@@ -1,0 +1,18 @@
+Description: fix TLS connections
+ Cherry-pick a fix for TLS connections broken due to an incompatible
+ server-side change. (Closes: #853928)
+Author: Marcin Owsiany <porridge@debian.org>
+Bug-Debian: http://bugs.debian.org/853928
+Origin: upstream, https://github.com/wojtekka/libgadu/commit/cf07f39da1d69c7219be928e3afcedbdd3c0f49c
+
+--- libgadu-1.12.1.orig/src/events.c
++++ libgadu-1.12.1/src/events.c
+@@ -898,7 +898,7 @@ static gg_action_t gg_handle_send_hub(st
+ 
+ 	if (sess->ssl_flag != GG_SSL_DISABLED) {
+ 		req = gg_saprintf
+-			("GET %s/appsvc/appmsg_ver10.asp?fmnumber=%u&fmt=2&"
++			("GET %s/appsvc/appmsg_ver11.asp?tls=1&fmnumber=%u&fmt=2&"
+ 			"lastmsg=%d&version=%s&age=2&gender=1 HTTP/1.0\r\n"
+ 			"Connection: close\r\n"
+ 			"Host: " GG_APPMSG_HOST "\r\n"
