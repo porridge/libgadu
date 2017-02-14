@@ -1,3 +1,11 @@
+libgadu (1:1.12.2-1) experimental; urgency=low
+
+  * New upstream release
+  * Bumped Standards-Version (no changes needed)
+  * Orphaned the package
+
+ -- Marcin Owsiany <porridge@debian.org>  Tue, 14 Feb 2017 20:29:44 +0100
+
 libgadu (1:1.12.1-4) unstable; urgency=high
 
   * Cherry-pick a fix for TLS connections broken due to an incompatible
