@@ -1,5 +1,3 @@
-/* $Id$ */
-
 /*
  *  (C) Copyright 2009 Jakub Zawadzki <darkjames@darkjames.ath.cx>
  *
@@ -21,6 +19,24 @@
 #ifndef LIBGADU_INTERNAL_H
 #define LIBGADU_INTERNAL_H
 
+#if defined(LIBGADU_DEBUG_H) || \
+	defined(LIBGADU_DEFLATE_H) || \
+	defined(LIBGADU_ENCODING_H) || \
+	defined(LIBGADU_FILEIO_H) || \
+	defined(LIBGADU_LIBGADU_H) || \
+	defined(LIBGADU_MESSAGE_H) || \
+	defined(LIBGADU_NETWORK_H) || \
+	defined(LIBGADU_PROTOBUF_H) || \
+	defined(LIBGADU_PROTOCOL_H) || \
+	defined(LIBGADU_RESOLVER_H) || \
+	defined(LIBGADU_SESSION_H) || \
+	defined(LIBGADU_STRMAN_H) || \
+	defined(LIBGADU_TVBUFF_H) || \
+	defined(LIBGADU_TVBUILDER_H)
+#  error "internal.h must be included first"
+#endif
+
+#include "config.h"
 #include "libgadu.h"
 
 #define GG_DEFAULT_CLIENT_VERSION_100 "10.1.0.11070"
@@ -59,12 +75,14 @@
 	(offsetof(struct gg_login_params, member) < (glp)->struct_size || \
 	offsetof(struct gg_login_params, member) <= offsetof(struct gg_login_params, struct_size))
 
+#ifdef _MSC_VER
+#  define inline __inline
+#endif
+
 #ifdef __GNUC__
-#  define GG_UNUSED __attribute__ ((unused))
 #  define GG_NORETURN __attribute__ ((noreturn))
 #  define GG_CDECL __attribute__ ((__cdecl__))
 #else
-#  define GG_UNUSED
 #  define GG_NORETURN
 #  define GG_CDECL
 #endif
@@ -191,8 +209,11 @@ void gg_image_sendout(struct gg_session *sess);
 void gg_strarr_free(char **strarr);
 char ** gg_strarr_dup(char **strarr);
 
+int gg_rand(void *buff, size_t len);
+
 #ifdef _WIN32
 
+#include <winsock2.h>
 #include <windows.h>
 
 typedef struct {

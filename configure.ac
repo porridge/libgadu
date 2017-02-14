@@ -1,6 +1,4 @@
-dnl $Id$
-
-AC_INIT([libgadu], [1.12.1])
+AC_INIT([libgadu], [1.12.2])
 AC_CONFIG_SRCDIR([src/libgadu.c])
 AM_INIT_AUTOMAKE()
 
@@ -63,6 +61,8 @@ AC_SUBST([MINGW_LDFLAGS])
 AC_SUBST([MINGW_LIBGEN])
 AC_SUBST([MINGW_LIBDATA])
 AC_SUBST([LDFLAGS_NO_INSTALL])
+
+AC_CHECK_FUNCS([mkstemp])
 
 AC_C_BIGENDIAN
 
@@ -267,9 +267,15 @@ AC_ARG_WITH(protobuf,
 
 if test "x$with_protobuf" != "xno"; then
 	PKG_CHECK_MODULES([PROTOBUF_C], [libprotobuf-c >= 1.0.0], [
-		LIBS_PRIVATE="$LIBS_PRIVATE $PROTOBUF_C_LIBS"
-		AC_DEFINE([GG_CONFIG_HAVE_PROTOBUF_C], [], [Defined if libgadu was compiled and linked with system provided libprotobuf-c.])
-		have_protobuf_c=yes
+		protobufc_ver=`$PKG_CONFIG --modversion libprotobuf-c`
+		if test "x$protobufc_ver" = "x1.0.0-rc1"; then
+			echo "WARNING: libprotobuf-c $protobufc_ver found. It's not compatible with 1.0.0 API"
+			have_protobuf_c=no
+		else
+			LIBS_PRIVATE="$LIBS_PRIVATE $PROTOBUF_C_LIBS"
+			AC_DEFINE([GG_CONFIG_HAVE_PROTOBUF_C], [], [Defined if libgadu was compiled and linked with system provided libprotobuf-c.])
+			have_protobuf_c=yes
+		fi
 	], [have_protobuf_c=no])
 else
 	have_protobuf_c=no
@@ -295,6 +301,9 @@ if test "x$with_gnutls" != "xno"; then
 		# "REQUIRES_PRIVATE" takes care of that for pkg-config.
 		LIBS="$LIBS $GNUTLS_LIBS"
 		have_gnutls="yes"
+	], [:])
+	PKG_CHECK_MODULES([GNUTLS_2_12], [gnutls >= 2.12.0], [
+		AC_DEFINE([HAVE_GNUTLS_2_12], [], [Defined if GnuTLS >= 2.12.0 is available.])
 	], [:])
 fi
 
@@ -412,7 +421,7 @@ if test "x$enable_tests" != "xno"; then
 	dnl  Sprawdź, czy mamy libxml2 do testów automatycznych
 	dnl
 
-	PKG_CHECK_MODULES([LIBXML2], [libxml-2.0], [
+	PKG_CHECK_MODULES([LIBXML2], [libxml-2.0 >= 2.2.3], [
 		have_libxml2="yes"
 		AC_DEFINE([HAVE_LIBXML2], [], [Defined if libxml2 is available.])
 	], [
@@ -421,9 +430,12 @@ if test "x$enable_tests" != "xno"; then
 fi
 
 AM_CONDITIONAL([HAVE_GLIBC], [test "x$have_glibc" = "xyes"])
-AM_CONDITIONAL([HAVE_GNUTLS_TESTS], [test "x$have_gnutls" = "xyes"])
 AM_CONDITIONAL([HAVE_CURL_AND_EXPAT], [test "x$have_curl" = "xyes" -a "x$have_expat" = "xyes"])
 AM_CONDITIONAL([HAVE_PERL], [test "x$have_perl" = "xyes"])
+
+AM_CONDITIONAL([BUILD_CONNECT_TEST], [test \( "x$have_glibc" = "xyes" -a \
+	"x$have_gnutls" = "xyes" -a "x$have_pthread" = "xyes" \) -o \
+	"x$is_mingw" = "xyes"])
 
 dnl
 dnl  Sprawdź, czy mamy czym generować dokumentację
@@ -441,6 +453,18 @@ else
 	SUBDIRS_DOXYGEN=""
 	have_doxygen="no"
 fi
+
+dnl
+dnl  Ostrzeżenia kompilatora
+dnl
+
+AC_ARG_ENABLE(werror,
+        [  --enable-werror         halt on warnings])
+
+if test "x$enable_werror" == "xyes"; then
+	CFLAGS="$CFLAGS -Werror"
+fi
+
 
 AC_CONFIG_FILES([Makefile src/Makefile include/Makefile pkgconfig/Makefile pkgconfig/libgadu.pc docs/Makefile docs/Doxyfile examples/Makefile])
 

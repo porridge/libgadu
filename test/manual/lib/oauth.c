@@ -16,6 +16,8 @@
  *  USA.
  */
 
+#include "internal.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -28,10 +30,16 @@
 #include "base64.h"
 #include "oauth_parameter.h"
 #include "fileio.h"
-#include "internal.h"
 
 #ifdef _WIN32
 #include <windows.h>
+#endif
+
+#ifdef HAVE_GNUTLS_2_12
+#  include <gnutls/gnutls.h>
+#  include <gnutls/crypto.h>
+#elif defined(GG_CONFIG_HAVE_OPENSSL)
+#  include <openssl/rand.h>
 #endif
 
 char *gg_oauth_static_nonce;		/* dla unit testów */
@@ -39,65 +47,54 @@ char *gg_oauth_static_timestamp;	/* dla unit testów */
 
 /* copy-paste from common.c */
 #define gg_debug(...)
-static int gg_rand(void *buff, size_t len)
+int gg_rand(void *buff, size_t len)
 {
-#ifdef _WIN32
-	HCRYPTPROV hProvider = 0;
-	int res = 0;
+#ifdef HAVE_GNUTLS_2_12
+	int res;
 
-	if (!CryptAcquireContextW(&hProvider, 0, 0, PROV_RSA_FULL,
-		CRYPT_VERIFYCONTEXT | CRYPT_SILENT))
-	{
+	if (gnutls_global_init() != GNUTLS_E_SUCCESS) {
 		gg_debug(GG_DEBUG_MISC | GG_DEBUG_ERROR, "// gg_rand() "
-			"couldn't acquire crypto context\n");
-		return -1;
+			"gnutls init failed\n");
+		return 0;
 	}
 
-	if (!CryptGenRandom(hProvider, len, buff)) {
+	res = gnutls_rnd(GNUTLS_RND_NONCE, buff, len);
+	gnutls_global_deinit();
+
+	if (res != GNUTLS_E_SUCCESS) {
 		gg_debug(GG_DEBUG_MISC | GG_DEBUG_ERROR, "// gg_rand() "
-			"couldn't fill random buffer\n");
-		res = -1;
+			"gnutls rand failed\n");
+		return 0;
 	}
 
-	CryptReleaseContext(hProvider, 0);
+	return 1;
+#elif defined(GG_CONFIG_HAVE_OPENSSL)
+	if (RAND_bytes(buff, len) != 1) {
+		gg_debug(GG_DEBUG_MISC | GG_DEBUG_ERROR, "// gg_rand() "
+			"openssl rand failed\n");
+		return 0;
+	}
 
-	return res;
+	return 1;
 #else
-	uint8_t *buff_b = buff;
+	size_t i;
+	uint8_t *bytebuff = buff;
 
-	int fd = open("/dev/random", O_RDONLY);
-	if (fd < 0)
-		fd = open("/dev/urandom", O_RDONLY);
-	if (fd < 0) {
-		gg_debug(GG_DEBUG_MISC | GG_DEBUG_ERROR, "// gg_rand() "
-			"couldn't open random device\n");
-		return -1;
+	for (i = 0; i < len; i++) {
+		/* This is not the most efficient way,
+		 * but rand is not a preferred way too.
+		 */
+		bytebuff[i] = rand() & 0xFF;
 	}
 
-	while (len > 0) {
-		/* TODO: handle EINTR */
-		ssize_t got_data = read(fd, buff_b, len);
-		if (got_data < 0) {
-			gg_debug(GG_DEBUG_MISC | GG_DEBUG_ERROR, "// gg_rand() "
-				"couldn't read from random device\n");
-			close(fd);
-			return -1;
-		}
-
-		buff_b += got_data;
-		len -= got_data;
-	}
-
-	close(fd);
-
-	return 0;
+	return 1;
 #endif
 }
 #undef gg_debug
 
 static int uniform_rand_10(void)
 {
-	uint8_t rval;
+	uint8_t rval = 255;
 
 	do {
 		if (gg_rand(&rval, sizeof(rval)) != 0)

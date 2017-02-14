@@ -1,5 +1,3 @@
-/* $Id$ */
-
 /*
  *  (C) Copyright 2001-2010 Wojtek Kaniewski <wojtekka@irc.pl>
  *                          Robert J. Woźny <speedy@ziew.org>
@@ -28,7 +26,6 @@
  * \brief Konwersja między różnymi kolejnościami bajtów
  */
 
-#include "libgadu.h"
 #include "internal.h"
 
 /**

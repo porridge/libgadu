@@ -1,5 +1,3 @@
-/* $Id$ */
-
 /*
  *  (C) Copyright 2011 Bartosz Brachaczek <b.brachaczek@gmail.com>
  *
@@ -27,6 +25,10 @@
 #ifndef LIBGADU_FILEIO_H
 #define LIBGADU_FILEIO_H
 
+#ifdef LIBGADU_NETWORK_H
+#  error "Always include fileio.h before network.h"
+#endif
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -46,8 +48,12 @@
 #  define fstat _fstat
 #  undef write
 #  define write _write
-#  define S_IRWXO 0
-#  define S_IRWXG 0
+#  ifndef S_IRWXO
+#    define S_IRWXO 0
+#  endif
+#  ifndef S_IRWXG
+#    define S_IRWXG 0
+#  endif
 #else
 #  ifdef sun
 #    include <sys/filio.h>

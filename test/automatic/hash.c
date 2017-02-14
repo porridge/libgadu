@@ -16,13 +16,13 @@
  *  USA.
  */
 
+#include "internal.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
 
-#include "libgadu.h"
-#include "internal.h"
 #include "fileio.h"
 
 static inline int
@@ -33,7 +33,7 @@ gg_mkstemp(char *path)
 
 	file_mask = S_IRWXO | S_IRWXG;
 	old_umask = umask(file_mask);
-#if defined(_BSD_SOURCE) || defined(_SVID_SOURCE) || (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE >= 500)
+#ifdef HAVE_MKSTEMP
 	ret = mkstemp(path);
 #else
 #ifdef _WIN32
@@ -131,7 +131,7 @@ static void test_file_hash(unsigned int megs, const char *expect)
 	char name[32];
 	uint8_t result[20];
 
-	strcpy(name, "hash.XXXXXX");
+	strcpy(name, "hashdata.XXXXXX");
 
 	fd = gg_mkstemp(name);
 

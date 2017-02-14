@@ -1,5 +1,3 @@
-/* $Id$ */
-
 /*
  *  (C) Copyright 2001-2003 Wojtek Kaniewski <wojtekka@irc.pl>
  *
@@ -31,11 +29,10 @@
 
 /** \cond obsolete */
 
+#include "internal.h"
+
 #include <errno.h>
 #include <string.h>
-
-#include "libgadu.h"
-#include "internal.h"
 
 struct gg_http *gg_userlist_get(uin_t uin, const char *passwd, int async)
 {

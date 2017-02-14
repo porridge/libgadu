@@ -1,5 +1,3 @@
-/* $Id$ */
-
 /*
  *  (C) Copyright 2001-2010 Wojtek Kaniewski <wojtekka@irc.pl>
  *                          Robert J. Woźny <speedy@ziew.org>
@@ -28,14 +26,14 @@
  * \brief Główny moduł biblioteki
  */
 
-#include "strman.h"
-#include "network.h"
-#include "fileio.h"
+#include "internal.h"
 
-#include "libgadu.h"
+#include "strman.h"
+#include "fileio.h"
+#include "network.h"
+
 #include "protocol.h"
 #include "resolver.h"
-#include "internal.h"
 #include "encoding.h"
 #include "debug.h"
 #include "session.h"
@@ -120,14 +118,6 @@ char *gg_proxy_username = NULL;
  * \ingroup proxy
  */
 char *gg_proxy_password = NULL;
-
-#ifndef DOXYGEN
-
-#ifndef lint
-static char rcsid[] GG_UNUSED = "$Id$";
-#endif
-
-#endif /* DOXYGEN */
 
 static void gg_compat_message_sent(struct gg_session *sess, int seq, size_t recipients_count, uin_t *recipients);
 static void gg_compat_message_cleanup(struct gg_session *sess);
@@ -1242,9 +1232,12 @@ void gg_free_session(struct gg_session *sess)
 		gg_session_gnutls_t *tmp;
 
 		tmp = (gg_session_gnutls_t*) sess->ssl;
-		gnutls_deinit(tmp->session);
-		gnutls_certificate_free_credentials(tmp->xcred);
-		gnutls_global_deinit();
+		if (tmp->session_ready)
+			gnutls_deinit(tmp->session);
+		if (tmp->xcred_ready)
+			gnutls_certificate_free_credentials(tmp->xcred);
+		if (tmp->global_init_called)
+			gnutls_global_deinit();
 		free(sess->ssl);
 	}
 #endif

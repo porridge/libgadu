@@ -1,5 +1,3 @@
-/* $Id$ */
-
 /*
  *  (C) Copyright 2011 Bartosz Brachaczek <b.brachaczek@gmail.com>
  *
@@ -24,11 +22,11 @@
  * \brief Funkcje kompresji Deflate
  */
 
+#include "internal.h"
+
 #include <stdlib.h>
 #include <string.h>
 
-#include "libgadu.h"
-#include "internal.h"
 #include "deflate.h"
 
 #ifdef GG_CONFIG_HAVE_ZLIB

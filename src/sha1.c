@@ -1,5 +1,3 @@
-/* $Id$ */
-
 /*
  *  (C) Copyright 2007 Wojtek Kaniewski <wojtekka@irc.pl>
  *
@@ -26,13 +24,12 @@
  * \brief Funkcje wyznaczania skrótu SHA1
  */
 
+#include "internal.h"
+
 #include <errno.h>
 #include <string.h>
 
-#include "libgadu.h"
-#include "internal.h"
 #include "fileio.h"
-#include "config.h"
 
 /** \cond ignore */
 
@@ -303,6 +300,9 @@ static int gg_file_hash_sha1_part(int fd, SHA_CTX *ctx, off_t pos, size_t len)
 		res = read(fd, buf, chunk_len);
 
 		if (res == -1 && errno != EINTR)
+			break;
+
+		if (res == 0)
 			break;
 
 		if (res != -1) {

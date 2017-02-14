@@ -1,5 +1,3 @@
-/* $Id$ */
-
 /*
  *  (C) Copyright 2001-2010 Wojtek Kaniewski <wojtekka@irc.pl>
  *                          Tomasz Chiliński <chilek@chilan.com>
@@ -29,6 +27,8 @@
  * \brief Obsługa połączeń bezpośrednich od wersji Gadu-Gadu 7.x
  */
 
+#include "internal.h"
+
 #include "fileio.h"
 #include "network.h"
 #include "strman.h"
@@ -39,10 +39,8 @@
 #include <stdlib.h>
 #include <time.h>
 
-#include "libgadu.h"
 #include "protocol.h"
 #include "resolver.h"
-#include "internal.h"
 #include "debug.h"
 
 #ifdef _MSC_VER
@@ -290,8 +288,12 @@ static int gg_dcc7_listen_and_send_info(struct gg_dcc7 *dcc)
 	uint16_t external_port;
 	uint32_t external_addr;
 	struct in_addr addr;
+	uint32_t randval;
 
 	gg_debug_dcc(dcc, GG_DEBUG_FUNCTION, "** gg_dcc7_listen_and_send_info(%p)\n", dcc);
+
+	if (!gg_rand(&randval, sizeof(randval)))
+		return -1;
 
 	if (gg_dcc7_listen(dcc, dcc->sess->client_addr, dcc->sess->client_port) == -1)
 		return -1;
@@ -317,7 +319,7 @@ static int gg_dcc7_listen_and_send_info(struct gg_dcc7 *dcc)
 	pkt.type = GG_DCC7_TYPE_P2P;
 	pkt.id = dcc->cid;
 	snprintf((char*) pkt.info, sizeof(pkt.info), "%s %d", inet_ntoa(addr), external_port);
-	snprintf((char*) pkt.hash, sizeof(pkt.hash), "%u", external_addr + external_port * rand());
+	snprintf((char*) pkt.hash, sizeof(pkt.hash), "%u", external_addr + external_port * randval);
 
 	return gg_send_packet(dcc->sess, GG_DCC7_INFO, &pkt, sizeof(pkt), NULL);
 }
@@ -789,7 +791,7 @@ int gg_dcc7_handle_info(struct gg_session *sess, struct gg_event *e, const void 
 
 #if defined(HAVE__STRTOUI64) || defined(HAVE_STRTOULL)
 		{
-			uint64_t cid;
+			uint64_t cid, dcc_cid;
 
 #  ifdef HAVE__STRTOUI64
 			cid = _strtoui64(tmp + 2, NULL, 0);
@@ -797,14 +799,16 @@ int gg_dcc7_handle_info(struct gg_session *sess, struct gg_event *e, const void 
 			cid = strtoull(tmp + 2, NULL, 0);
 #  endif
 
+			GG_STATIC_ASSERT(sizeof(dcc_cid) == sizeof(dcc->cid), bad_cid_size);
+			memcpy(&dcc_cid, &dcc->cid, sizeof(dcc_cid));
+			dcc_cid = gg_fix64(dcc_cid);
+
 			gg_debug_session(sess, GG_DEBUG_MISC,
 				"// gg_dcc7_handle_info() info.str=%s, "
-				"info.id=%llu, sess.id=%llu\n", tmp + 2, cid,
-				*((unsigned long long*) &dcc->cid));
+				"info.id=%" PRIu64 ", sess.id=%" PRIu64 "\n",
+				tmp + 2, cid, dcc_cid);
 
-			cid = gg_fix64(cid);
-
-			if (memcmp(&dcc->cid, &cid, sizeof(cid)) != 0) {
+			if (cid != dcc_cid) {
 				gg_debug_session(sess, GG_DEBUG_MISC, "// gg_dcc7_handle_info() invalid session id\n");
 				e->type = GG_EVENT_DCC7_ERROR;
 				e->event.dcc7_error = GG_ERROR_DCC7_HANDSHAKE;

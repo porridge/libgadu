@@ -1,5 +1,3 @@
-/* $Id$ */
-
 /*
  *  (C) Copyright 2012 Tomek Wasilczyk <www.wasilczyk.pl>
  *
@@ -23,6 +21,8 @@
  *
  * \brief Funkcje pomocnicze do obsługi formatu protocol buffers
  */
+
+#include "internal.h"
 
 #include "protobuf.h"
 

@@ -21,7 +21,6 @@
 #include <string.h>
 #include "libgadu.h"
 #include "message.h"
-#include "config.h"
 #ifdef HAVE_LIBXML2
 #include <libxml/parser.h>
 #include <libxml/tree.h>
@@ -429,6 +428,13 @@ static void test_html_to_text(const char *input, const char *output,
 int main(int argc, char **argv)
 {
 	size_t i;
+
+#ifdef HAVE_LIBXML2
+	if (xmlFindCharEncodingHandler("windows-1250") == NULL) {
+		printf("WARNING: CP1250 support is missing, forcing ISO-8859-1\n");
+		xmlAddEncodingAlias("iso-8859-1", "windows-1250");
+	}
+#endif
 
 	for (i = 0; i < sizeof(text_to_html) / sizeof(text_to_html[0]); i++) {
 		test_text_to_html(text_to_html[i].src,

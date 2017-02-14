@@ -19,8 +19,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "base64.h"
 #include "config.h"
+
+#include "base64.h"
 
 #ifdef HAVE_OPENSSL
 
@@ -30,7 +31,7 @@
 #include <openssl/bio.h>
 #include <openssl/buffer.h>
 
-char *gg_base64_encode(const char *input, ssize_t len)
+char *gg_base64_encode2(const char *input, ssize_t len)
 {
 	BIO *bmem, *b64;
 	BUF_MEM *bptr;

@@ -26,14 +26,14 @@
  * \brief Funkcje rozwiązywania nazw
  */
 
+#include "internal.h"
+
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "strman.h"
 #include "network.h"
-#include "config.h"
-#include "libgadu.h"
 #include "resolver.h"
 #include "session.h"
 
@@ -98,8 +98,8 @@ int gg_gethostbyname_real(const char *hostname, struct in_addr **result, unsigne
 	char *new_buf = NULL;
 	struct hostent he;
 	struct hostent *he_ptr = NULL;
-	size_t buf_len = 1024;
-	int res = -1;
+	size_t buf_len;
+	int res;
 	int h_errnop;
 	int ret = 0;
 #ifdef GG_CONFIG_HAVE_PTHREAD
@@ -118,6 +118,8 @@ int gg_gethostbyname_real(const char *hostname, struct in_addr **result, unsigne
 		pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &old_state);
 #endif
 
+	buf_len = 1024;
+	res = -1;
 	buf = malloc(buf_len);
 
 #ifdef GG_CONFIG_HAVE_PTHREAD
@@ -282,7 +284,7 @@ static int gg_resolver_run(int fd, const char *hostname, int pthread)
 {
 	struct in_addr addr_ip[2], *addr_list = NULL;
 	unsigned int addr_count;
-	int res = 0;
+	int res;
 #ifdef GG_CONFIG_HAVE_PTHREAD
 	int old_state;
 #endif
@@ -290,6 +292,8 @@ static int gg_resolver_run(int fd, const char *hostname, int pthread)
 #ifdef GG_CONFIG_HAVE_PTHREAD
 	pthread_cleanup_push(gg_resolver_cleaner, &addr_list);
 #endif
+
+	res = 0;
 
 	if ((addr_ip[0].s_addr = inet_addr(hostname)) == INADDR_NONE) {
 		if (gg_gethostbyname_real(hostname, &addr_list, &addr_count, pthread) == -1) {
@@ -491,10 +495,17 @@ static void gg_resolver_fork_cleanup(void **priv_data, int force)
 /**
  * \internal Struktura przekazywana do wątku rozwiązującego nazwę.
  */
-struct gg_resolver_pthread_data {
-	pthread_t thread;	/*< Identyfikator wątku */
+struct gg_resolver_pthread_params {
+	pthread_barrier_t *init_barrier; /*< Bariera pilnująca poprawnej inicjalizacji wątku */
 	char *hostname;		/*< Nazwa serwera */
 	int wfd;		/*< Deskryptor do zapisu */
+};
+
+/**
+ * \internal Struktura opisująca wątek rozwiązujący nazwę.
+ */
+struct gg_resolver_pthread_data {
+	pthread_t thread;	/*< Identyfikator wątku */
 };
 
 /**
@@ -517,30 +528,52 @@ static void gg_resolver_pthread_cleanup(void **priv_data, int force)
 	data = (struct gg_resolver_pthread_data *) *priv_data;
 	*priv_data = NULL;
 
+#ifdef _WIN32
+	/* Mingw's implementation of pthreads seems to not like pthread_cancel.
+	 * Let's detach the thread and let it complete in background.
+	 */
+	if (force)
+		pthread_detach(data->thread);
+	else
+		pthread_join(data->thread, NULL);
+#else
 	if (force)
 		pthread_cancel(data->thread);
 
 	pthread_join(data->thread, NULL);
+#endif
 
-	close(data->wfd);
-	free(data->hostname);
 	free(data);
+}
+
+static void gg_resolver_pthread_params_cleanup(void *params_raw) {
+	struct gg_resolver_pthread_params *params = params_raw;
+
+	close(params->wfd);
+	free(params->hostname);
+	free(params);
 }
 
 /**
  * \internal Wątek rozwiązujący nazwę.
  *
- * \param arg Wskaźnik na strukturę \c gg_resolver_pthread_data
+ * \param arg Wskaźnik na strukturę \c gg_resolver_pthread_params
  */
 static void *gg_resolver_pthread_thread(void *arg)
 {
-	struct gg_resolver_pthread_data *data = arg;
+	struct gg_resolver_pthread_params *params = arg;
+	int res;
 
-	if (gg_resolver_run(data->wfd, data->hostname, 1) == -1)
-		pthread_exit((void*) -1);
-	else
-		pthread_exit(NULL);
+	pthread_cleanup_push(gg_resolver_pthread_params_cleanup, params);
 
+	/* Powiadom wątek główny, że już odebraliśmy parametry. */
+	pthread_barrier_wait(params->init_barrier);
+
+	res = gg_resolver_run(params->wfd, params->hostname, 1);
+
+	pthread_cleanup_pop(1);
+
+	pthread_exit((void*)(intptr_t)res);
 	return NULL;	/* żeby kompilator nie marudził */
 }
 
@@ -561,7 +594,9 @@ static void *gg_resolver_pthread_thread(void *arg)
 static int gg_resolver_pthread_start(int *fd, void **priv_data, const char *hostname)
 {
 	struct gg_resolver_pthread_data *data = NULL;
-	int pipes[2], new_errno;
+	struct gg_resolver_pthread_params *params = NULL;
+	int pipes[2], pipe_ready = 0, new_errno;
+	pthread_barrier_t init_barrier;
 
 	gg_debug(GG_DEBUG_FUNCTION, "** gg_resolver_pthread_start(%p, %p, \"%s\");\n", fd, priv_data, hostname);
 
@@ -572,37 +607,56 @@ static int gg_resolver_pthread_start(int *fd, void **priv_data, const char *host
 	}
 
 	data = malloc(sizeof(struct gg_resolver_pthread_data));
-
 	if (data == NULL) {
-		gg_debug(GG_DEBUG_MISC, "// gg_resolver_pthread_start() out of memory for resolver data\n");
-		return -1;
+		gg_debug(GG_DEBUG_MISC, "// gg_resolver_pthread_start() "
+			"out of memory for resolver data\n");
+		goto cleanup;
+	}
+
+	params = malloc(sizeof(struct gg_resolver_pthread_params));
+	if (params == NULL) {
+		gg_debug(GG_DEBUG_MISC, "// gg_resolver_pthread_start() "
+			"out of memory for resolver parameters\n");
+		goto cleanup;
+	}
+
+	params->hostname = strdup(hostname);
+	if (params->hostname == NULL) {
+		gg_debug(GG_DEBUG_MISC, "// gg_resolver_pthread_start() "
+			"out of memory for hostname\n");
+		goto cleanup;
 	}
 
 	if (socketpair(AF_LOCAL, SOCK_STREAM, 0, pipes) == -1) {
 		gg_debug(GG_DEBUG_MISC, "// gg_resolver_pthread_start() unable "
 			"to create pipes (errno=%d, %s)\n",
 			errno, strerror(errno));
-		free(data);
-		return -1;
-	}
-
-	data->hostname = strdup(hostname);
-
-	if (data->hostname == NULL) {
-		gg_debug(GG_DEBUG_MISC, "// gg_resolver_pthread_start() out of memory\n");
-		new_errno = errno;
 		goto cleanup;
 	}
+	params->wfd = pipes[1];
+	pipe_ready = 1;
 
-	data->wfd = pipes[1];
+	if (pthread_barrier_init(&init_barrier, NULL, 2) != 0) {
+		gg_debug(GG_DEBUG_MISC, "// gg_resolver_pthread_start() "
+			"can't create barrier\n");
+		goto cleanup;
+	}
+	params->init_barrier = &init_barrier;
 
-	if (pthread_create(&data->thread, NULL, gg_resolver_pthread_thread, data)) {
-		gg_debug(GG_DEBUG_MISC, "// gg_resolver_pthread_start() unable to create thread\n");
-		new_errno = errno;
+	if (pthread_create(&data->thread, NULL, gg_resolver_pthread_thread, params)) {
+		gg_debug(GG_DEBUG_MISC, "// gg_resolver_pthread_start() "
+			"unable to create thread\n");
+		pthread_barrier_destroy(&init_barrier);
 		goto cleanup;
 	}
 
 	gg_debug(GG_DEBUG_MISC, "// gg_resolver_pthread_start() %p\n", data);
+
+	/* Poczekaj, aż wątek rozwiązywania nazw potwierdzi odebranie
+	 * parametrów, aby mieć pewność, że go nie zabijemy zanim je zwolni.
+	 */
+	pthread_barrier_wait(&init_barrier);
+	pthread_barrier_destroy(&init_barrier);
 
 	*fd = pipes[0];
 	*priv_data = data;
@@ -610,13 +664,18 @@ static int gg_resolver_pthread_start(int *fd, void **priv_data, const char *host
 	return 0;
 
 cleanup:
-	if (data != NULL)
-		free(data->hostname);
+	new_errno = errno;
 
 	free(data);
 
-	close(pipes[0]);
-	close(pipes[1]);
+	if (params != NULL)
+		free(params->hostname);
+	free(params);
+
+	if (pipe_ready) {
+		close(pipes[0]);
+		close(pipes[1]);
+	}
 
 	errno = new_errno;
 
@@ -822,10 +881,10 @@ int gg_session_set_resolver(struct gg_session *gs, gg_resolver_t type)
 			return 0;
 		}
 
-#ifdef GG_CONFIG_HAVE_PTHREAD
-		type = GG_RESOLVER_PTHREAD;
-#elif defined(_WIN32)
+#ifdef _WIN32
 		type = GG_RESOLVER_WIN32;
+#elif defined(GG_CONFIG_HAVE_PTHREAD)
+		type = GG_RESOLVER_PTHREAD;
 #elif defined(GG_CONFIG_HAVE_FORK)
 		type = GG_RESOLVER_FORK;
 #endif
@@ -949,10 +1008,10 @@ int gg_http_set_resolver(struct gg_http *gh, gg_resolver_t type)
 			return 0;
 		}
 
-#ifdef GG_CONFIG_HAVE_PTHREAD
-		type = GG_RESOLVER_PTHREAD;
-#elif defined(_WIN32)
+#ifdef _WIN32
 		type = GG_RESOLVER_WIN32;
+#elif defined(GG_CONFIG_HAVE_PTHREAD)
+		type = GG_RESOLVER_PTHREAD;
 #elif defined(GG_CONFIG_HAVE_FORK)
 		type = GG_RESOLVER_FORK;
 #endif

@@ -26,18 +26,18 @@
  * \brief Funkcje obsługi przychodzących pakietów
  */
 
+#include "internal.h"
+
 #include <ctype.h>
 
 #include "fileio.h"
 #include "network.h"
 #include "strman.h"
-#include "libgadu.h"
 #include "resolver.h"
 #include "session.h"
 #include "protocol.h"
 #include "encoding.h"
 #include "message.h"
-#include "internal.h"
 #include "deflate.h"
 #include "tvbuff.h"
 #include "protobuf.h"
@@ -363,7 +363,7 @@ static int gg_session_handle_welcome(struct gg_session *gs, uint32_t type,
 static int gg_session_handle_login_ok(struct gg_session *gs, uint32_t type,
 	const char *ptr, size_t len, struct gg_event *ge)
 {
-	gg_debug_session(gs, GG_DEBUG_MISC, "// gg_watch_fd() login succeded\n");
+	gg_debug_session(gs, GG_DEBUG_MISC, "// gg_watch_fd() login succeeded\n");
 	ge->type = GG_EVENT_CONN_SUCCESS;
 	gs->state = GG_STATE_CONNECTED;
 	gs->check = GG_CHECK_READ;
@@ -1431,7 +1431,7 @@ static int gg_session_handle_recv_msg_110(struct gg_session *gs, uint32_t type,
 	ev->seq = seq;
 	ev->time = msg->time;
 
-	if (abs(msg->time - gg_server_time(gs)) > 2)
+	if (labs(msg->time - gg_server_time(gs)) > 2)
 		ev->msgclass |= GG_CLASS_QUEUED;
 
 	ev->message = NULL;
@@ -2397,7 +2397,7 @@ static int gg_session_handle_chat_info(struct gg_session *gs, uint32_t type,
 
 	uint64_t id;
 	uint32_t version;
-	uint32_t dummy1;
+	uint32_t map_size;
 	uint32_t participants_count;
 	uin_t *participants = NULL;
 
@@ -2406,16 +2406,25 @@ static int gg_session_handle_chat_info(struct gg_session *gs, uint32_t type,
 	id = gg_tvbuff_read_uint64(tvb);
 	gg_tvbuff_expected_uint32(tvb, 0); /* unknown */
 	version = gg_tvbuff_read_uint32(tvb);
-	dummy1 = gg_tvbuff_read_uint32(tvb);
-	if (gg_tvbuff_is_valid(tvb) && dummy1 == 1) {
-		uint32_t name_length;
 
-		name_length = gg_tvbuff_read_uint32(tvb);
-		gg_tvbuff_skip(tvb, name_length);
+	map_size = gg_tvbuff_read_uint32(tvb);
+	for (i = 0; i < map_size && gg_tvbuff_is_valid(tvb); i++) {
+		uint32_t key_length;
+		uint32_t value_length;
 
-		gg_tvbuff_expected_uint32(tvb, 0); /* unknown */
+		/* \todo Obsługa opisu (tytułu, tematu) pokoju.
+		 * Jeżeli klucz to "title", to w wartości mamy opis pokoju.
+		 * Dodatkowo, w momencie zmiany opisu pokoju dostajemy pakiet 0x54.
+		 */
+		key_length = gg_tvbuff_read_uint32(tvb);
+		gg_tvbuff_skip(tvb, key_length);
+
+		value_length = gg_tvbuff_read_uint32(tvb);
+		gg_tvbuff_skip(tvb, value_length);
+
 		gg_tvbuff_expected_uint32(tvb, 2); /* unknown */
 	}
+
 	participants_count = gg_tvbuff_read_uint32(tvb);
 	if (id == 0 && participants_count > 0) {
 		gg_debug_session(gs, GG_DEBUG_MISC | GG_DEBUG_WARNING,
@@ -2496,13 +2505,14 @@ static int gg_session_handle_chat_info_update(struct gg_session *gs,
 	if (msg->update_type == GG_CHAT_INFO_UPDATE_ENTERED) {
 		uin_t *old_part = chat->participants;
 		chat->participants = realloc(chat->participants,
-			sizeof(uin_t) * chat->participants_count);
+			sizeof(uin_t) * (chat->participants_count + 1));
 		if (chat->participants == NULL) {
 			chat->participants = old_part;
 			gg_debug_session(gs, GG_DEBUG_ERROR,
 				"// gg_session_handle_chat_info_update() "
 				"out of memory (count=%u)\n",
 				chat->participants_count);
+			gg110_chat_info_update__free_unpacked(msg, NULL);
 			return -1;
 		}
 		chat->participants_count++;
@@ -2512,15 +2522,14 @@ static int gg_session_handle_chat_info_update(struct gg_session *gs,
 		for (idx = 0; idx < chat->participants_count; idx++)
 			if (chat->participants[idx] == participant)
 				break;
-		if (chat->participants_count > 1 &&
-			idx < chat->participants_count)
-			chat->participants[idx] = chat->participants[chat->participants_count - 1];
 		if (idx < chat->participants_count) {
 			chat->participants_count--;
 			if (chat->participants_count == 0) {
 				free(chat->participants);
 				chat->participants = NULL;
 			} else {
+				chat->participants[idx] =
+					chat->participants[chat->participants_count];
 				chat->participants = realloc(chat->participants,
 					sizeof(uin_t)*chat->participants_count);
 			}

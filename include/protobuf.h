@@ -1,5 +1,3 @@
-/* $Id$ */
-
 /*
  *  (C) Copyright 2012 Tomek Wasilczyk <www.wasilczyk.pl>
  *
@@ -18,6 +16,8 @@
  *  USA.
  */
 
+#include "internal.h"
+
 #ifndef LIBGADU_PROTOBUF_H
 #define LIBGADU_PROTOBUF_H
 
@@ -25,14 +25,12 @@
 #include <errno.h>
 #include <string.h>
 
-#include "config.h"
 #ifdef GG_CONFIG_HAVE_PROTOBUF_C
 #include <protobuf-c/protobuf-c.h>
 #else
 #include "protobuf-c.h"
 #endif
 
-#include "internal.h"
 #include "fileio.h"
 
 typedef size_t (*gg_protobuf_size_cb_t)(const void *message);
